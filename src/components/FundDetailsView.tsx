@@ -2193,8 +2193,9 @@ export const printGeneralRegistryReport = (
             <td class="name-cell">${m.name}</td>
             ${!isProject ? `<td>${m.remainingPrevious > 0 ? `${m.remainingPrevious.toLocaleString()}` : '—'}</td>` : ''}
             ${months.map(month => {
-              const tx = mTrans.find(t => t.monthKey === month);
-              return `<td>${tx ? `${tx.amount}` : '—'}</td>`;
+              const txList = mTrans.filter(t => t.monthKey === month);
+              const mSum = txList.reduce((sum, item) => sum + item.amount, 0);
+              return `<td>${mSum > 0 ? `${mSum.toLocaleString()}` : '—'}</td>`;
             }).join('')}
             <td style="font-weight: bold; background-color: #f9fafb;">${m.requiredAmount.toLocaleString()}</td>
             <td style="font-weight: bold; background-color: #f9fafb;">${paid > 0 ? paid.toLocaleString() : '—'}</td>
@@ -2209,8 +2210,9 @@ export const printGeneralRegistryReport = (
         ${!isProject ? `<td>${orderedMembers.reduce((sum, m) => sum + m.remainingPrevious, 0).toLocaleString()}</td>` : ''}
         ${months.map(month => {
           const sum = orderedMembers.reduce((acc, m) => {
-            const tx = transactions.find(t => t.memberId === m.id && t.monthKey === month);
-            return acc + (tx ? tx.amount : 0);
+            const txList = transactions.filter(t => t.memberId === m.id && t.monthKey === month);
+            const mSum = txList.reduce((sum, item) => sum + item.amount, 0);
+            return acc + mSum;
           }, 0);
           return `<td>${sum > 0 ? sum.toLocaleString() : '—'}</td>`;
         }).join('')}
@@ -2957,10 +2959,11 @@ function FixedFundRegister({
       }
     } else {
       const mKey = type === 'khatm' ? 'khatm' : (monthKey || 'January');
-      const existing = transactions.find(t => t.memberId === memberId && t.monthKey === mKey);
-      if (existing) {
-        setCellEditAmount(existing.amount);
-        setCellEditDate(existing.paymentDate || new Date().toISOString().split('T')[0]);
+      const existingList = transactions.filter(t => t.memberId === memberId && t.monthKey === mKey);
+      if (existingList.length > 0) {
+        const totalAmount = existingList.reduce((sum, t) => sum + t.amount, 0);
+        setCellEditAmount(totalAmount);
+        setCellEditDate(existingList[0].paymentDate || new Date().toISOString().split('T')[0]);
       } else {
         setCellEditAmount(type === 'khatm' ? 3000 : 1000);
         setCellEditDate(new Date().toISOString().split('T')[0]);
@@ -3040,13 +3043,13 @@ function FixedFundRegister({
 
   // Pivot amounts aggregators
   const getMonthPayment = (memberId: string, monthKey: string) => {
-    const item = transactions.find(t => t.memberId === memberId && t.monthKey === monthKey);
-    return item ? item.amount : 0;
+    const items = transactions.filter(t => t.memberId === memberId && t.monthKey === monthKey);
+    return items.reduce((sum, item) => sum + item.amount, 0);
   };
 
   const getMonthDate = (memberId: string, monthKey: string) => {
-    const item = transactions.find(t => t.memberId === memberId && t.monthKey === monthKey);
-    return item ? item.paymentDate : '';
+    const items = transactions.filter(t => t.memberId === memberId && t.monthKey === monthKey);
+    return items.map(item => item.paymentDate).filter(Boolean).join(', ');
   };
 
   // Saved/mutated action handles
@@ -3076,21 +3079,23 @@ function FixedFundRegister({
     const { memberId, type, monthKey } = activeCellEdit;
     const mKey = type === 'khatm' ? 'khatm' : (monthKey || 'January');
 
-    const existing = transactions.find(t => t.memberId === memberId && t.monthKey === mKey);
+    const existingList = transactions.filter(t => t.memberId === memberId && t.monthKey === mKey);
+    const existing = existingList[0];
 
     let updatedList: FundMemberTransaction[] = [];
     if (shouldDelete) {
-      if (existing) {
-        updatedList = transactions.filter(t => t.id !== existing.id);
-        logAudit('DELETE', `On-Sheet Clear Payment (${mKey})`, memberId, JSON.stringify(existing), 'ENTRY PURGED');
+      if (existingList.length > 0) {
+        updatedList = transactions.filter(t => !(t.memberId === memberId && t.monthKey === mKey));
+        logAudit('DELETE', `On-Sheet Clear Payment (${mKey})`, memberId, JSON.stringify(existingList), 'ENTRIES PURGED');
       } else {
         updatedList = [...transactions];
       }
     } else {
-      if (existing) {
+      if (existingList.length > 0) {
+        const otherTxs = transactions.filter(t => !(t.memberId === memberId && t.monthKey === mKey));
         const updatedTx = { ...existing, amount: cellEditAmount, paymentDate: cellEditDate };
-        updatedList = transactions.map(t => t.id === existing.id ? updatedTx : t);
-        logAudit('EDIT', `On-Sheet Modify Payment (${mKey})`, memberId, JSON.stringify(existing), JSON.stringify(updatedTx));
+        updatedList = [...otherTxs, updatedTx];
+        logAudit('EDIT', `On-Sheet Modify Payment (${mKey})`, memberId, JSON.stringify(existingList), JSON.stringify(updatedTx));
       } else {
         const newTx: FundMemberTransaction = {
           id: `t-${Date.now()}`,

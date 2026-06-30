@@ -32,7 +32,7 @@ import {
   LayoutDashboard, Globe, Shield, Database, ShieldAlert, History, Activity as ActIcon, 
   Bell, Clock, MapPin, FolderKey, FileCheck, Check, Trash2, Edit2, Plus, X,
   Save, RotateCcw, AlertCircle, FileText, Moon, UserMinus, PlusCircle, AlignLeft, Send,
-  User, Users, Palette, Sliders, Search, Mic, Bot, HeartHandshake, Award
+  User, Users, Palette, Sliders, Search, Mic, Bot, HeartHandshake, Award, RefreshCw
 } from 'lucide-react';
 
 interface AdminPortalProps {
@@ -309,6 +309,13 @@ export default function AdminPortal({
   const [donorSearchQuery, setDonorSearchQuery] = useState('');
   const [isVoiceListening, setIsVoiceListening] = useState(false);
 
+  // Yearly Rollover & Reset State variables
+  const [rolloverFundId, setRolloverFundId] = useState('masjid-fund');
+  const [rolloverPasscode, setRolloverPasscode] = useState('');
+  const [rolloverError, setRolloverError] = useState('');
+  const [rolloverSuccess, setRolloverSuccess] = useState('');
+  const [showRolloverConfirm, setShowRolloverConfirm] = useState(false);
+
   // Derived filtered collections based on unified financeSearch
   const filteredMembers = members.filter(m => {
     if (!financeSearch) return true;
@@ -470,6 +477,89 @@ export default function AdminPortal({
   // ---------------- PORTALS/FINANCIAL PORTAL CRUD ----------------
   
   // Custom fixed password configuration modifiers
+  const handleYearlyRollover = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRolloverError('');
+    setRolloverSuccess('');
+
+    // 1. Verify passcode
+    const rolloverPassObj = passwords.find(p => p.id === 'yearly_rollover');
+    const correctPassword = rolloverPassObj ? rolloverPassObj.passwordValue : 'reset786';
+
+    if (rolloverPasscode !== correctPassword) {
+      setRolloverError('Aap ne ghalat passcode darj kiya hai! Dubara koshish karen.');
+      return;
+    }
+
+    // Only allow masjid-fund or bazm-fund
+    if (rolloverFundId !== 'masjid-fund' && rolloverFundId !== 'bazm-fund') {
+      setRolloverError('Ye action sirf Masjid Fund ya Bazm-e-Raza Fund ke liye mumkin hai.');
+      return;
+    }
+
+    // 2. Perform rollover calculation for members of the selected fund
+    const updatedMembers = members.map(m => {
+      if (m.fundId === rolloverFundId) {
+        // Find current transactions for this member
+        const mTrans = transactions.filter(t => t.memberId === m.id);
+        
+        // standard monthly payments sum (exclude extra khatm-ul-quran)
+        const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+        const remainingForYear = m.requiredAmount - paidSum;
+
+        // Current outstanding previous year dues
+        const prevOutstanding = (m.remainingPrevious || 0) - (m.paidPrevious || 0);
+        
+        // Sum outstanding previous year + remaining of current year
+        const newRemainingPrevious = Math.max(0, prevOutstanding + remainingForYear);
+
+        return {
+          ...m,
+          remainingPrevious: newRemainingPrevious,
+          paidPrevious: 0,
+          paidPreviousDate: '',
+        };
+      }
+      return m;
+    });
+
+    // 3. Clear transactions for this fund's members (keep other funds untouched)
+    const targetMembers = members.filter(m => m.fundId === rolloverFundId);
+    const targetMemberIds = targetMembers.map(m => m.id);
+    const updatedTransactions = transactions.filter(t => !targetMemberIds.includes(t.memberId));
+
+    // 4. Clear other collections: other_fund_entries & expenses for this fund
+    const updatedOthers = others.filter(o => o.fundId !== rolloverFundId);
+    const updatedExpenses = expenses.filter(e => e.fundId !== rolloverFundId);
+
+    // 5. Update state and LocalStorage
+    setMembers(updatedMembers);
+    setTransactions(updatedTransactions);
+    setOthers(updatedOthers);
+    setExpenses(updatedExpenses);
+
+    PortalDatabase.set('members', updatedMembers);
+    PortalDatabase.set('transactions', updatedTransactions);
+    PortalDatabase.set('other_fund_entries', updatedOthers);
+    PortalDatabase.set('expenses', updatedExpenses);
+
+    // 6. Log audit trail
+    logAudit(
+      'DELETE', 
+      'Yearly Rollover & Reset executed', 
+      rolloverFundId, 
+      `Members Count: ${targetMembers.length}`, 
+      `Ledger reset with rollover balance carried forward.`
+    );
+
+    // 7. Feedback and reset input states
+    const fundNameString = rolloverFundId === 'masjid-fund' ? 'Masjid Fund' : 'Bazm-e-Raza Fund';
+    setRolloverSuccess(`${fundNameString} ka saalana rollover aur data reset kamyabi se mukammal ho gaya hai! Tamam donors ke remaining balances carry-forward kar diye gaye hain.`);
+    setRolloverPasscode('');
+    setShowRolloverConfirm(false);
+    showToast(`${fundNameString} Rollover completed!`, "success");
+  };
+
   const handleUpdatePassword = (id: string, newVal: string) => {
     const updated = passwords.map(p => p.id === id ? { ...p, passwordValue: newVal } : p);
     logAudit('PASSWORD_CHANGE', 'Protected Crypt Access', id, '******', 'CHANGED');
@@ -1859,6 +1949,111 @@ export default function AdminPortal({
                 </div>
               </div>
               
+              {/* SECTION: Yearly Rollover & Reset */}
+              <div className="glass-panel p-6 rounded-2xl border border-amber-500/20 bg-gradient-to-r from-pine-bar/95 via-amber-950/5 to-pine-bar shadow-xl mt-6">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                    <RefreshCw className="w-5 h-5 text-amber-450" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-heading font-extrabold text-white uppercase tracking-wider flex items-center gap-1.5">
+                      🔄 Ledger Yearly Rollover & Reset (Saalana Data Reset aur Rollover)
+                    </h3>
+                    <p className="text-xs text-pine-text-body mt-1 max-w-3xl leading-relaxed">
+                      Naye saal ka aghaaz karte waqt, aap 1 click se purana data saaf kar sakte hain. Donors/Members delete <strong className="text-amber-450">nahi honge</strong>, sirf un ki monthly entries delete hon gi. Jo un ke unpaid/remaining balances hain wo automatically <strong className="text-emerald-400 font-bold">Previous Remaining (Pichla Baqi)</strong> me shift ho jayenge! Commitments delete nahi hon gi.
+                    </p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleYearlyRollover} className="space-y-4 max-w-2xl mt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs uppercase text-pine-text-body mb-1">Fund Register Select Karen</label>
+                      <select
+                        value={rolloverFundId}
+                        onChange={(e) => {
+                          setRolloverFundId(e.target.value);
+                          setRolloverError('');
+                          setRolloverSuccess('');
+                          setShowRolloverConfirm(false);
+                        }}
+                        className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none focus:border-pine-btn"
+                      >
+                        <option value="masjid-fund" className="bg-pine-bar text-white">🕌 Masjid Fund (Gregorian - Jan to Dec)</option>
+                        <option value="bazm-fund" className="bg-pine-bar text-white">🎪 Bazm-e-Raza Fund (Islamic Months)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs uppercase text-pine-text-body mb-1 font-sans">Saalana Rollover ka Passcode</label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="Rollover Passcode darj karen (e.g., reset786)"
+                        value={rolloverPasscode}
+                        onChange={(e) => setRolloverPasscode(e.target.value)}
+                        className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none focus:border-pine-btn"
+                      />
+                      <span className="text-[10px] text-pine-text-muted mt-1 block font-sans">Passcodes Security registry me tabdeel kiya ja sakta hai.</span>
+                    </div>
+                  </div>
+
+                  {rolloverError && (
+                    <div className="bg-rose-950/30 border border-rose-500/25 p-3 rounded-lg text-xs text-rose-300 font-sans">
+                      ⚠️ {rolloverError}
+                    </div>
+                  )}
+
+                  {rolloverSuccess && (
+                    <div className="bg-emerald-950/30 border border-emerald-500/25 p-3 rounded-lg text-xs text-emerald-350 font-sans">
+                      ✅ {rolloverSuccess}
+                    </div>
+                  )}
+
+                  {!showRolloverConfirm ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRolloverError('');
+                        setRolloverSuccess('');
+                        if (!rolloverPasscode) {
+                          setRolloverError('Pehle rollover ka passcode darj karen!');
+                          return;
+                        }
+                        setShowRolloverConfirm(true);
+                      }}
+                      className="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-4 rounded-lg text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-md"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Rollover Aghaaz Karen
+                    </button>
+                  ) : (
+                    <div className="bg-amber-950/25 border border-amber-500/30 p-4 rounded-xl space-y-3 font-sans">
+                      <p className="text-xs text-amber-300 font-bold">
+                        ⚠️ WARNING: Kya aap waqai {rolloverFundId === 'masjid-fund' ? 'Masjid Fund' : 'Bazm-e-Raza Fund'} ka rollover execute karna chahte hain? 
+                      </p>
+                      <p className="text-[11px] text-pine-text-body leading-relaxed">
+                        Is se is fund ki tamam monthly receipts/payments logs, extra fund receipts aur kharche (expenses) permanent delete ho jayenge. Donors ke bache hue balances new remaining balances me automatically transfer ho jayenge. Ye action wapas nahi liya ja sakta!
+                      </p>
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          type="submit"
+                          className="bg-rose-600 hover:bg-rose-500 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition-colors cursor-pointer"
+                        >
+                          Haan, Confirm & Execute Rollover
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowRolloverConfirm(false)}
+                          className="bg-pine-bar/80 hover:bg-pine-bar text-pine-text-muted py-1.5 px-3 rounded-lg text-xs transition-colors cursor-pointer border border-pine-border"
+                        >
+                          Cancel / Wapas Jayen
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </form>
+              </div>
+              
               {/* SECTION: Regular Donors */}
               <div className="space-y-4 pt-4 border-t border-pine-border/40">
                 <h3 className="text-xs font-bold text-pine-btn-hover uppercase tracking-widest flex items-center gap-2">
@@ -2770,7 +2965,7 @@ export default function AdminPortal({
               </div>
               
               {(() => {
-                const corePasswords = passwords.filter(p => p.id === 'admin_dashboard');
+                const corePasswords = passwords.filter(p => p.id === 'admin_dashboard' || p.id === 'yearly_rollover');
                 const masjidPasswords = passwords.filter(p => p.id.startsWith('masjid_'));
                 const bazmPasswords = passwords.filter(p => p.id.startsWith('bazm_'));
                 const projectPasswords = passwords.filter(p => p.id.startsWith('project_'));

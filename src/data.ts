@@ -49,6 +49,7 @@ export const INITIAL_PASSWORDS: ProtectedPagePassword[] = [
   { id: 'bazm_other', pageName: 'Bazm Other Fund', passwordValue: 'bother786' },
   { id: 'bazm_expenses', pageName: 'Bazm Fund Expenses', passwordValue: 'bexp786' },
   { id: 'bazm_commitments', pageName: 'Bazm Fund Commitments', passwordValue: 'bcom786' },
+  { id: 'yearly_rollover', pageName: 'Ledger Yearly Rollover/Reset', passwordValue: 'reset786' },
 ];
 
 export const INITIAL_PRAYER_TIMINGS: PrayerTiming[] = [
