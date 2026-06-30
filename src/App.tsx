@@ -1009,7 +1009,7 @@ export default function App() {
                   .map((staff) => (
                     <TiltCard key={staff.id} className="bg-gradient-to-b from-pine-card/50 to-pine-bar/60 border border-pine-border/40 hover:border-amber-500/50 transition-all p-6 flex flex-col items-center text-center">
                       <div className="relative mb-4">
-                        <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-amber-500/60 shadow-lg bg-pine-bg/50 flex items-center justify-center">
+                        <div className="w-80 h-80 max-w-full aspect-square rounded-2xl overflow-hidden border-2 border-amber-500/60 shadow-lg bg-pine-bg/50 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:border-amber-400">
                           {staff.imageUrl ? (
                             <img 
                               src={staff.imageUrl} 
@@ -1021,10 +1021,11 @@ export default function App() {
                                 (e.target as any).style.display = 'none';
                               }}
                             />
-                          ) : null}
-                          <Users className="w-8 h-8 text-pine-text-muted/50 absolute" />
+                          ) : (
+                            <Users className="w-12 h-12 text-pine-text-muted/50 absolute" />
+                          )}
                         </div>
-                        <span className="absolute bottom-0 right-1 bg-emerald-500 w-4 h-4 rounded-full border-2 border-pine-bar shadow-md" title="Active"></span>
+                        <span className="absolute bottom-1 right-2 bg-emerald-500 w-4 h-4 rounded-full border-2 border-pine-bar shadow-md" title="Active"></span>
                       </div>
 
                       <h3 className="text-lg font-heading font-extrabold text-white">{staff.name}</h3>
