@@ -1105,11 +1105,6 @@ export default function App() {
                     <p className="text-[11px] text-pine-text-muted font-sans mt-2 italic">{mapSettings.details}</p>
                   </div>
                   
-                  <div className="glass-panel p-5 rounded-xl border border-pine-border">
-                    <span className="text-[10px] text-pine-text-muted uppercase tracking-wider block mb-1">Weekly Jummah Khutbah</span>
-                    <p className="text-xs text-white">Arabic Khutba standard on 01:00 baje Pakistani time.</p>
-                  </div>
-
                   <a 
                     href="https://maps.google.com" 
                     target="_blank" 
