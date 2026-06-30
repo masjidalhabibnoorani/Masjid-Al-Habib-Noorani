@@ -12,6 +12,7 @@ import {
   ReligiousStaff
 } from './types';
 import { PortalDatabase, INITIAL_PASSWORDS } from './data';
+import { restoreAllFromCloud } from './firebase';
 import { gsap } from 'gsap';
 
 import { ToastProvider } from './components/Toast';
@@ -32,7 +33,7 @@ import AIChatWidget from './components/AIChatWidget';
 import { 
   ShieldAlert, BookOpen, Compass, Calendar, MapPin, DollarSign, ArrowUpRight, 
   Lock, CheckCircle, Smartphone, ExternalLink, ShieldCheck, Heart, Menu, X, Bell, Volume2,
-  Award, Users
+  Award, Users, Cloud, RefreshCw
 } from 'lucide-react';
 
 // Dynamic Theme Presets Definition
@@ -489,6 +490,50 @@ export default function App() {
     PortalDatabase.get('religious_staff', [])
   );
 
+  const [cloudSyncState, setCloudSyncState] = useState<'synced' | 'syncing' | 'error' | 'idle'>('idle');
+
+  // Load and sync from Google Cloud Firestore on startup
+  useEffect(() => {
+    async function loadCloudData() {
+      setCloudSyncState('syncing');
+      try {
+        const cloudData = await restoreAllFromCloud();
+        if (cloudData && Object.keys(cloudData).length > 0) {
+          // Write all to local storage
+          Object.entries(cloudData).forEach(([key, value]) => {
+            localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(value));
+          });
+          
+          // Hydrate react states
+          if (cloudData.passwords) setPasswords(cloudData.passwords);
+          if (cloudData.prayer_timings) setPrayerTimings(cloudData.prayer_timings);
+          if (cloudData.history_sections) setHistorySections(cloudData.history_sections);
+          if (cloudData.activities) setActivities(cloudData.activities);
+          if (cloudData.map_settings) setMapSettings(cloudData.map_settings);
+          if (cloudData.announcements) setAnnouncements(cloudData.announcements);
+          if (cloudData.funds) setFunds(cloudData.funds);
+          if (cloudData.members) setMembers(cloudData.members);
+          if (cloudData.transactions) setTransactions(cloudData.transactions);
+          if (cloudData.other_fund_entries) setOthers(cloudData.other_fund_entries);
+          if (cloudData.expenses) setExpenses(cloudData.expenses);
+          if (cloudData.projects) setProjects(cloudData.projects);
+          if (cloudData.commitments) setCommitments(cloudData.commitments);
+          if (cloudData.religious_staff) setReligiousStaff(cloudData.religious_staff);
+          if (cloudData.administrators) setAdministrators(cloudData.administrators);
+          if (cloudData.audit_logs) setAuditLogs(cloudData.audit_logs);
+          
+          setCloudSyncState('synced');
+        } else {
+          setCloudSyncState('idle');
+        }
+      } catch (error) {
+        console.error('Firebase cloud sync on startup failed:', error);
+        setCloudSyncState('error');
+      }
+    }
+    loadCloudData();
+  }, []);
+
   // Administrative Audit logging tracer
   const logAudit = (
     action: AuditLog['action'], 
@@ -774,6 +819,21 @@ export default function App() {
 
                   {/* Desktop Action Buttons */}
                   <div className="hidden md:flex items-center gap-2">
+                    {cloudSyncState === 'syncing' && (
+                      <span className="inline-flex items-center gap-1 text-[9px] uppercase font-bold text-sky-400 bg-sky-500/10 px-2.5 py-1 rounded-md border border-sky-500/20">
+                        <RefreshCw className="w-3 h-3 animate-spin" /> Syncing Cloud...
+                      </span>
+                    )}
+                    {cloudSyncState === 'synced' && (
+                      <span className="inline-flex items-center gap-1.5 text-[9px] uppercase font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
+                        <Cloud className="w-3 h-3 text-emerald-400" /> Cloud Synced
+                      </span>
+                    )}
+                    {cloudSyncState === 'error' && (
+                      <span className="inline-flex items-center gap-1.5 text-[9px] uppercase font-bold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-md border border-rose-500/20">
+                        <Cloud className="w-3 h-3 text-rose-400" /> Sync Failed
+                      </span>
+                    )}
                     <button 
                       onClick={() => setViewState('gateway')}
                       className="border border-pine-border text-[10px] font-button uppercase tracking-wider text-white hover:bg-pine-hover px-3.5 py-1.5 rounded-md cursor-pointer"

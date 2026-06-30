@@ -22,6 +22,7 @@ import {
   Commitment,
   ReligiousStaff
 } from './types';
+import { saveToCloud } from './firebase';
 
 // Gregorian months for Masjid Fund
 export const GREGORIAN_MONTHS = [
@@ -279,6 +280,8 @@ export class PortalDatabase {
   static set<T>(key: string, value: T): void {
     try {
       localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(value));
+      // Background async backup to Firestore
+      saveToCloud(key, value).catch(e => console.error('Cloud backup error:', e));
     } catch (e) {
       // Fail silent
     }
