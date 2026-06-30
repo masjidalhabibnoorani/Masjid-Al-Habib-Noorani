@@ -80,6 +80,8 @@ export default function FundDetailsView({
   const [activeTab, setActiveTab] = useState<TabType>('landing');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [portfolioMonthFilter, setPortfolioMonthFilter] = useState<number | null>(null);
+  const [portfolioStatusFilter, setPortfolioStatusFilter] = useState<string | null>(null);
+  const [isPrintDropdownOpen, setIsPrintDropdownOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [authorizedTabs, setAuthorizedTabs] = useState<Record<string, boolean>>({});
@@ -885,7 +887,7 @@ export default function FundDetailsView({
      try { return new Date(e.date).getMonth() === portfolioMonthFilter; } catch { return false; }
   }).reduce((sum, e) => sum + e.amount, 0);
 
-  const getPortfolioSumTotalAchieved = () => getPortfolioFixedSum() + getPortfolioOtherSum() + getPortfolioShopRentSum();
+  const getPortfolioSumTotalAchieved = () => getPortfolioFixedSum() + getPortfolioOtherSum();
   const getPortfolioNetBalance = () => getPortfolioSumTotalAchieved() - getPortfolioExpensesSum();
 
   // Math Auto Calculations Engine
@@ -1332,15 +1334,50 @@ export default function FundDetailsView({
                     <option key={m} value={idx}>{m}</option>
                   ))}
                 </select>
-                <button 
-                  onClick={() => printAnalyticalPortfolioStatement(
-                    fund, monthsList, currentMembers, transactions, currentOthers, currentExpenses,
-                    portfolioMonthFilter !== null ? { monthIndex: portfolioMonthFilter, name: monthsList[portfolioMonthFilter] } : undefined
+                <div className="relative inline-block text-left">
+                  <button 
+                    onClick={() => setIsPrintDropdownOpen(!isPrintDropdownOpen)}
+                    className="flex items-center gap-1.5 bg-pine-btn hover:bg-pine-btn-hover text-white text-xs font-button uppercase py-1.5 px-3 rounded-lg transition-colors"
+                  >
+                    <Printer className="w-3.5 h-3.5" /> Print Report
+                  </button>
+
+                  {isPrintDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-72 bg-pine-bar border border-pine-border rounded-lg shadow-xl z-50 overflow-hidden font-sans">
+                      <div className="px-3 py-2 border-b border-pine-border bg-black/20 text-[10px] text-pine-text-muted uppercase font-bold tracking-wider">
+                        Select Print Format / رپورٹ فارمیٹ:
+                      </div>
+                      <button
+                        onClick={() => {
+                          printAnalyticalPortfolioStatement(
+                            fund, monthsList, currentMembers, transactions, currentOthers, currentExpenses,
+                            portfolioMonthFilter !== null ? { monthIndex: portfolioMonthFilter, name: monthsList[portfolioMonthFilter] } : undefined,
+                            true
+                          );
+                          setIsPrintDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-xs text-white hover:bg-pine-hover border-b border-pine-border/40 transition-colors flex flex-col gap-0.5"
+                      >
+                        <span className="font-bold text-emerald-400">Print with Data Visualization</span>
+                        <span className="text-[10px] text-zinc-400">Charts aur visual statistics ke sath report (تصویری رپورٹ)</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          printAnalyticalPortfolioStatement(
+                            fund, monthsList, currentMembers, transactions, currentOthers, currentExpenses,
+                            portfolioMonthFilter !== null ? { monthIndex: portfolioMonthFilter, name: monthsList[portfolioMonthFilter] } : undefined,
+                            false
+                          );
+                          setIsPrintDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-xs text-white hover:bg-pine-hover transition-colors flex flex-col gap-0.5"
+                      >
+                        <span className="font-bold text-sky-400">Print without Data Visualization</span>
+                        <span className="text-[10px] text-zinc-400">Sada table aur figures ke sath direct report (سادہ رپورٹ)</span>
+                      </button>
+                    </div>
                   )}
-                  className="flex items-center gap-1.5 bg-pine-btn hover:bg-pine-btn-hover text-white text-xs font-button uppercase py-1.5 px-3 rounded-lg transition-colors"
-                >
-                  <Printer className="w-3.5 h-3.5" /> Print Report
-                </button>
+                </div>
               </div>
             </div>
 
@@ -1367,13 +1404,369 @@ export default function FundDetailsView({
               </TiltCard>
             </div>
 
+            {/* MASTER SYSTEM DATA VISUALIZATION DASHBOARD PANEL */}
+            {(() => {
+              let clearedCount = 0;       // Fully Paid (>= 100%)
+              let p75Count = 0;           // >= 75% and < 100%
+              let p50Count = 0;           // >= 50% and < 75%
+              let p25Count = 0;           // >= 25% and < 50%
+              let zeroCount = 0;          // < 25% (Zero/Low paid)
+
+              let clearedPaid = 0;
+              let p75Paid = 0;
+              let p50Paid = 0;
+              let p25Paid = 0;
+              let zeroPaid = 0;
+
+              const clearedMembersList: FundMember[] = [];
+              const p75MembersList: FundMember[] = [];
+              const p50MembersList: FundMember[] = [];
+              const p25MembersList: FundMember[] = [];
+              const zeroMembersList: FundMember[] = [];
+
+              currentMembers.forEach(m => {
+                const mTrans = transactions.filter(t => t.memberId === m.id);
+                const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+                const payPercent = m.requiredAmount > 0 ? (paidSum / m.requiredAmount) * 100 : 0;
+
+                if (payPercent >= 100) {
+                  clearedCount++;
+                  clearedPaid += paidSum;
+                  clearedMembersList.push(m);
+                } else if (payPercent >= 75) {
+                  p75Count++;
+                  p75Paid += paidSum;
+                  p75MembersList.push(m);
+                } else if (payPercent >= 50) {
+                  p50Count++;
+                  p50Paid += paidSum;
+                  p50MembersList.push(m);
+                } else if (payPercent >= 25) {
+                  p25Count++;
+                  p25Paid += paidSum;
+                  p25MembersList.push(m);
+                } else {
+                  zeroCount++;
+                  zeroPaid += paidSum;
+                  zeroMembersList.push(m);
+                }
+              });
+
+              const totalContributors = currentMembers.length || 1;
+              const clearedPercent = Math.round((clearedCount / totalContributors) * 100);
+              const p75Percent = Math.round((p75Count / totalContributors) * 100);
+              const p50Percent = Math.round((p50Count / totalContributors) * 100);
+              const p25Percent = Math.round((p25Count / totalContributors) * 100);
+              const zeroPercent = Math.round((zeroCount / totalContributors) * 100);
+
+              const totalPendingOutstanding = currentMembers.reduce((sum, m) => {
+                const mTrans = transactions.filter(t => t.memberId === m.id);
+                const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+                return sum + Math.max(0, m.requiredAmount - paidSum);
+              }, 0);
+
+              const fixedFundAchieved = getPortfolioFixedSum();
+              const otherDonationsAchieved = getPortfolioOtherSum();
+              const totalRevenueInflow = getPortfolioSumTotalAchieved();
+              const totalExpensesOutflow = getPortfolioExpensesSum();
+              
+              const fixedPercentOfInflow = totalRevenueInflow > 0 ? Math.round((fixedFundAchieved / totalRevenueInflow) * 100) : 0;
+              const otherPercentOfInflow = totalRevenueInflow > 0 ? Math.round((otherDonationsAchieved / totalRevenueInflow) * 100) : 0;
+              const expensePercentOfInflow = totalRevenueInflow > 0 ? Math.round((totalExpensesOutflow / totalRevenueInflow) * 100) : 0;
+
+              // Filtered list to display based on selected click status
+              let displayList: FundMember[] = [];
+              let displayTitle = '';
+              let displayThemeColor = '';
+              let displayStatusKey = '';
+
+              if (portfolioStatusFilter === 'cleared') {
+                displayList = clearedMembersList;
+                displayTitle = 'Fully Paid Contributors / ادائیگی مکمل کرنے والے';
+                displayThemeColor = 'border-emerald-500/30 bg-emerald-950/20 text-emerald-400';
+                displayStatusKey = 'Fully Paid / ادائیگی مکمل (100%)';
+              } else if (portfolioStatusFilter === 'p75') {
+                displayList = p75MembersList;
+                displayTitle = '75% or More Paid Contributors / ۷۵ فیصد یا زائد ادائیگی کرنے والے';
+                displayThemeColor = 'border-indigo-500/30 bg-indigo-950/20 text-indigo-400';
+                displayStatusKey = '75% or More / ۷۵ فیصد یا زائد';
+              } else if (portfolioStatusFilter === 'p50') {
+                displayList = p50MembersList;
+                displayTitle = '50% or More Paid Contributors / ۵۰ فیصد یا زائد ادائیگی کرنے والے';
+                displayThemeColor = 'border-blue-500/30 bg-blue-950/20 text-blue-400';
+                displayStatusKey = '50% or More / ۵۰ فیصد یا زائد';
+              } else if (portfolioStatusFilter === 'p25') {
+                displayList = p25MembersList;
+                displayTitle = '25% or More Paid Contributors / ۲۵ فیصد یا زائد ادائیگی کرنے والے';
+                displayThemeColor = 'border-amber-500/30 bg-amber-950/20 text-amber-400';
+                displayStatusKey = '25% or More / ۲۵ فیصد یا زائد';
+              } else if (portfolioStatusFilter === 'zero') {
+                displayList = zeroMembersList;
+                displayTitle = 'Zero/Below 25% Paid Contributors / صفر یا ۲۵٪ سے کم ادائیگی کرنے والے';
+                displayThemeColor = 'border-rose-500/30 bg-rose-950/20 text-rose-450';
+                displayStatusKey = 'Zero/Below 25% Paid / صفر یا ۲۵٪ سے کم';
+              }
+
+              return (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Financial Flow Breakdown Card */}
+                    <div className="glass-panel p-6 rounded-2xl border border-pine-border flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-center mb-4 border-b border-pine-border/40 pb-3">
+                          <h4 className="text-xs font-button uppercase tracking-wider text-white flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            Financial Inflow Sources / آمدنی کے ذرائع
+                          </h4>
+                          <span className="text-[10px] bg-pine-bar border border-pine-border text-pine-text-muted font-mono px-2 py-0.5 rounded">
+                            {portfolioMonthFilter !== null ? `Month: ${monthsList[portfolioMonthFilter]}` : 'Lifetime Metrics'}
+                          </span>
+                        </div>
+
+                        <div className="space-y-4">
+                          {/* Fixed Fund bar */}
+                          <div>
+                            <div className="flex justify-between text-xs font-sans mb-1">
+                              <span className="text-pine-text-body font-medium">Fixed Monthly Fund / فکسڈ ماہانہ فنڈ</span>
+                              <span className="text-white font-semibold font-mono">
+                                {fixedFundAchieved.toLocaleString()} Rs ({fixedPercentOfInflow}%)
+                              </span>
+                            </div>
+                            <div className="w-full bg-zinc-900/65 h-2 rounded-full overflow-hidden border border-pine-border/10">
+                              <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${fixedPercentOfInflow}%` }} />
+                            </div>
+                          </div>
+
+                          {/* Other Donations bar */}
+                          <div>
+                            <div className="flex justify-between text-xs font-sans mb-1">
+                              <span className="text-pine-text-body font-medium">Other Contributions / دیگر فنڈز</span>
+                              <span className="text-white font-semibold font-mono">
+                                {otherDonationsAchieved.toLocaleString()} Rs ({otherPercentOfInflow}%)
+                              </span>
+                            </div>
+                            <div className="w-full bg-zinc-900/65 h-2 rounded-full overflow-hidden border border-pine-border/10">
+                              <div className="bg-sky-400 h-full rounded-full transition-all duration-500" style={{ width: `${otherPercentOfInflow}%` }} />
+                            </div>
+                          </div>
+
+                          {/* Expense Outflow bar */}
+                          <div className="pt-2 border-t border-pine-border/20">
+                            <div className="flex justify-between text-xs font-sans mb-1">
+                              <span className="text-pine-text-body font-medium">Expenses / اخراجات</span>
+                              <span className="text-rose-450 font-semibold font-mono">
+                                {totalExpensesOutflow.toLocaleString()} Rs ({expensePercentOfInflow}%)
+                              </span>
+                            </div>
+                            <div className="w-full bg-zinc-900/65 h-2 rounded-full overflow-hidden border border-pine-border/10">
+                              <div className="bg-rose-500 h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, expensePercentOfInflow)}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 text-[10px] text-pine-text-muted bg-pine-hover/5 border border-pine-border/30 rounded-lg p-2.5 flex items-center gap-2">
+                        <Info className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+                        <p>
+                          These visual meters are fully dynamic and adjust automatically as you select different months.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Contributor Status Share Card with Toggles */}
+                    <div className="glass-panel p-6 rounded-2xl border border-pine-border">
+                      <div className="flex justify-between items-center mb-4 border-b border-pine-border/40 pb-3">
+                        <h4 className="text-xs font-button uppercase tracking-wider text-white flex items-center gap-2">
+                          <Users className="w-4 h-4 text-sky-400" />
+                          Contributor Performance / معاونین کی درجہ بندی
+                        </h4>
+                        <span className="text-[10px] font-mono text-zinc-400">
+                          Total: {totalContributors} Members
+                        </span>
+                      </div>
+
+                      <p className="text-[11px] text-pine-text-muted mb-4">
+                        Click on any status bar below to view and extract contact details of specific contributors in that group:
+                      </p>
+
+                      <div className="space-y-3">
+                        {/* Fully Paid Category button */}
+                        <button
+                          onClick={() => setPortfolioStatusFilter(portfolioStatusFilter === 'cleared' ? null : 'cleared')}
+                          className={`w-full text-left p-2.5 rounded-xl border transition-all duration-200 flex flex-col gap-1.5 ${
+                            portfolioStatusFilter === 'cleared'
+                              ? 'bg-emerald-950/30 border-emerald-500/80 ring-1 ring-emerald-500'
+                              : 'bg-zinc-950/20 border-pine-border/40 hover:border-emerald-500/40 hover:bg-emerald-950/10'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                              Fully Paid / ادائیگی مکمل ({clearedCount} Contributors)
+                            </span>
+                            <span className="font-mono font-bold text-emerald-400">{clearedPercent}%</span>
+                          </div>
+                          <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${clearedPercent}%` }} />
+                          </div>
+                        </button>
+
+                        {/* 75% or More Category button */}
+                        <button
+                          onClick={() => setPortfolioStatusFilter(portfolioStatusFilter === 'p75' ? null : 'p75')}
+                          className={`w-full text-left p-2.5 rounded-xl border transition-all duration-200 flex flex-col gap-1.5 ${
+                            portfolioStatusFilter === 'p75'
+                              ? 'bg-indigo-950/30 border-indigo-500/80 ring-1 ring-indigo-500'
+                              : 'bg-zinc-950/20 border-pine-border/40 hover:border-indigo-500/40 hover:bg-indigo-950/10'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-semibold text-indigo-400 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                              75% or More / ۷۵ فیصد یا زائد ({p75Count} Contributors)
+                            </span>
+                            <span className="font-mono font-bold text-indigo-400">{p75Percent}%</span>
+                          </div>
+                          <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${p75Percent}%` }} />
+                          </div>
+                        </button>
+
+                        {/* 50% or More Category button */}
+                        <button
+                          onClick={() => setPortfolioStatusFilter(portfolioStatusFilter === 'p50' ? null : 'p50')}
+                          className={`w-full text-left p-2.5 rounded-xl border transition-all duration-200 flex flex-col gap-1.5 ${
+                            portfolioStatusFilter === 'p50'
+                              ? 'bg-blue-950/30 border-blue-500/80 ring-1 ring-blue-500'
+                              : 'bg-zinc-950/20 border-pine-border/40 hover:border-blue-500/40 hover:bg-blue-950/10'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-semibold text-blue-400 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-blue-500" />
+                              50% or More / ۵۰ فیصد یا زائد ({p50Count} Contributors)
+                            </span>
+                            <span className="font-mono font-bold text-blue-400">{p50Percent}%</span>
+                          </div>
+                          <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-blue-500 h-full rounded-full" style={{ width: `${p50Percent}%` }} />
+                          </div>
+                        </button>
+
+                        {/* 25% or More Category button */}
+                        <button
+                          onClick={() => setPortfolioStatusFilter(portfolioStatusFilter === 'p25' ? null : 'p25')}
+                          className={`w-full text-left p-2.5 rounded-xl border transition-all duration-200 flex flex-col gap-1.5 ${
+                            portfolioStatusFilter === 'p25'
+                              ? 'bg-amber-950/30 border-amber-500/80 ring-1 ring-amber-500'
+                              : 'bg-zinc-950/20 border-pine-border/40 hover:border-amber-500/40 hover:bg-amber-950/10'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-semibold text-amber-400 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-amber-500" />
+                              25% or More / ۲۵ فیصد یا زائد ({p25Count} Contributors)
+                            </span>
+                            <span className="font-mono font-bold text-amber-400">{p25Percent}%</span>
+                          </div>
+                          <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-amber-500 h-full rounded-full" style={{ width: `${p25Percent}%` }} />
+                          </div>
+                        </button>
+
+                        {/* Zero Paid Category button */}
+                        <button
+                          onClick={() => setPortfolioStatusFilter(portfolioStatusFilter === 'zero' ? null : 'zero')}
+                          className={`w-full text-left p-2.5 rounded-xl border transition-all duration-200 flex flex-col gap-1.5 ${
+                            portfolioStatusFilter === 'zero'
+                              ? 'bg-rose-950/30 border-rose-500/80 ring-1 ring-rose-500'
+                              : 'bg-zinc-950/20 border-pine-border/40 hover:border-rose-500/40 hover:bg-rose-950/10'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-semibold text-rose-450 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-rose-500" />
+                              Zero Paid / صفر ادائیگی ({zeroCount} Contributors)
+                            </span>
+                            <span className="font-mono font-bold text-rose-450">{zeroPercent}%</span>
+                          </div>
+                          <div className="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-rose-500 h-full rounded-full" style={{ width: `${zeroPercent}%` }} />
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* DRILL DOWN CONTRIBUTOR LIST */}
+                  {portfolioStatusFilter !== null && (
+                    <div className={`p-6 rounded-2xl border ${displayThemeColor} animate-fade-in`}>
+                      <div className="flex justify-between items-center mb-4 pb-2 border-b border-pine-border/20">
+                        <div>
+                          <h4 className="text-sm font-semibold text-white tracking-wide">{displayTitle}</h4>
+                          <p className="text-[11px] text-pine-text-muted">
+                            Total {displayList.length} members classified as {displayStatusKey}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setPortfolioStatusFilter(null)}
+                          className="bg-pine-hover/10 text-white text-xs py-1 px-2.5 rounded-lg border border-pine-border hover:bg-pine-hover/20"
+                        >
+                          Clear Filter / ہٹائیں
+                        </button>
+                      </div>
+
+                      {displayList.length === 0 ? (
+                        <p className="text-center py-4 text-xs text-pine-text-muted">
+                          No contributors in this status group currently!
+                        </p>
+                      ) : (
+                        <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                          <table className="w-full text-xs text-left text-pine-text-body font-mono">
+                            <thead className="text-pine-text-muted border-b border-pine-border/40 pb-2">
+                              <tr>
+                                <th className="pb-2 font-semibold">Name / نام</th>
+                                <th className="pb-2 font-semibold text-center">Required / کل واجب</th>
+                                <th className="pb-2 font-semibold text-center">Paid / ادا شدہ</th>
+                                <th className="pb-2 font-semibold text-center">Remaining / بقایا</th>
+                                <th className="pb-2 font-semibold text-right">Phone / فون نمبر</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-pine-border/20">
+                              {displayList.map((m, index) => {
+                                const mTrans = transactions.filter(t => t.memberId === m.id);
+                                const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+                                const remaining = Math.max(0, m.requiredAmount - paidSum);
+                                return (
+                                  <tr key={m.id} className="hover:bg-pine-hover/10">
+                                    <td className="py-2 font-sans font-medium text-white flex items-center gap-1.5">
+                                      <span className="text-[10px] text-zinc-500 font-mono">#{index + 1}</span>
+                                      {m.name}
+                                    </td>
+                                    <td className="py-2 text-center text-zinc-300">{m.requiredAmount.toLocaleString()} Rs</td>
+                                    <td className="py-2 text-center text-emerald-400 font-bold">{paidSum.toLocaleString()} Rs</td>
+                                    <td className="py-2 text-center text-rose-400">{remaining.toLocaleString()} Rs</td>
+                                    <td className="py-2 text-right text-zinc-400">{m.phone || 'No Phone'}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Income Statement Table & Quick Vector Charts representation */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Custom SVG Income Trend Chart */}
               <div className="glass-panel p-6 rounded-2xl border border-pine-border flex flex-col justify-between">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-sm font-button uppercase tracking-wider text-white">Monthly Statement Comparison</h3>
-                  <span className="text-xs text-pine-text-muted font-mono">Current Year Metrics</span>
+                  <span className="text-xs text-pine-text-muted font-mono font-bold text-emerald-450">Current Year Live Metrics</span>
                 </div>
                 
                 {/* SVG Drawing Area */}
@@ -1394,39 +1787,32 @@ export default function FundDetailsView({
                     const otherMTotal = currentOthers.filter(o => {
                       try {
                         const oDate = new Date(o.date);
-                        if (fund.type === 'masjid') {
-                          return oDate.getMonth() === idx;
-                        }
-                        return false;
-                      } catch { return false; }
-                    }).reduce((s, item) => s + item.amount, 0);
-
-                    const expMTotal = currentExpenses.filter(e => {
-                      try {
-                        const eDate = new Date(e.date);
-                        if (fund.type === 'masjid') {
-                          return eDate.getMonth() === idx;
-                        }
-                        return false;
+                        return oDate.getMonth() === idx;
                       } catch { return false; }
                     }).reduce((s, item) => s + item.amount, 0);
 
                     const income = tMonthTotal + otherMTotal;
-                    const maxScalingLimit = Math.max(1, getSumTotalAchieved(), getExpensesSum()) || 10000;
-                    const incHeight = Math.max(4, Math.min(100, (income / maxScalingLimit) * 100 * 5));
-                    const expHeight = Math.max(4, Math.min(100, (expMTotal / maxScalingLimit) * 100 * 5));
+                    const expMTotal = currentExpenses.filter(e => {
+                      try {
+                        const eDate = new Date(e.date);
+                        return eDate.getMonth() === idx;
+                      } catch { return false; }
+                    }).reduce((s, item) => s + item.amount, 0);
+                    const maxScalingLimit = Math.max(1, getPortfolioSumTotalAchieved(), getPortfolioExpensesSum()) || 10000;
+                    const incHeight = Math.max(4, Math.min(100, (income / maxScalingLimit) * 100));
+                    const expHeight = Math.max(4, Math.min(100, (expMTotal / maxScalingLimit) * 100));
 
                     return (
                       <div key={m} className="flex-1 flex flex-col items-center gap-0.5 max-w-[40px] group relative h-full justify-end">
                         {/* Tooltip on hover */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 bg-pine-bar text-white px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-30 pointer-events-none">
-                          <p>In: {income.toLocaleString()} Rs</p>
-                          <p>Out: {expMTotal.toLocaleString()} Rs</p>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 bg-pine-bar text-white px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-30 pointer-events-none border border-pine-border">
+                          <p className="font-semibold text-emerald-400">Income: {income.toLocaleString()} Rs</p>
+                          <p className="font-semibold text-rose-450">Expense: {expMTotal.toLocaleString()} Rs</p>
                         </div>
                         {/* Income Bar */}
-                        <div className="w-2.5 bg-pine-btn rounded-t" style={{ height: `${incHeight}%` }} />
+                        <div className="w-2.5 bg-emerald-500 rounded-t transition-all duration-300 group-hover:bg-emerald-400" style={{ height: `${incHeight}%` }} />
                         {/* Expense Bar */}
-                        <div className="w-2.5 bg-rose-500/70 rounded-t" style={{ height: `${expHeight}%` }} />
+                        <div className="w-2.5 bg-rose-500/70 rounded-t transition-all duration-300 group-hover:bg-rose-450" style={{ height: `${expHeight}%` }} />
                         <span className="text-[9px] font-mono text-pine-text-muted mt-2 rotate-45 origin-left">{m.substring(0, 3)}</span>
                       </div>
                     );
@@ -1435,12 +1821,12 @@ export default function FundDetailsView({
                 
                 <div className="flex gap-4 text-[10px] font-mono justify-center mt-8">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 bg-pine-btn rounded" />
-                    <span>Monthly Income</span>
+                    <span className="w-2.5 h-2.5 bg-emerald-500 rounded" />
+                    <span>Total Income (ثابت + دیگر)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 bg-rose-500/70 rounded" />
-                    <span>Monthly Expenses</span>
+                    <span>Total Expenses (اخراجات)</span>
                   </div>
                 </div>
               </div>
@@ -1459,21 +1845,37 @@ export default function FundDetailsView({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-pine-border/40">
-                      {monthsList.map((m) => {
+                      {monthsList.map((m, idx) => {
                         let receipts = 0;
                         currentMembers.forEach(mem => {
                           const trans = transactions.filter(t => t.memberId === mem.id && t.monthKey === m);
                           receipts += trans.reduce((s, it) => s + it.amount, 0);
                         });
-                        // Simple custom calculation
-                        const statementNet = receipts - 0; // standard mock segment
+                        
+                        const otherReceipts = currentOthers.filter(o => {
+                          try {
+                            const oDate = new Date(o.date);
+                            return oDate.getMonth() === idx;
+                          } catch { return false; }
+                        }).reduce((s, o) => s + o.amount, 0);
+
+                        const totalInflow = receipts + otherReceipts;
+
+                        const monthExpenses = currentExpenses.filter(e => {
+                          try {
+                            const eDate = new Date(e.date);
+                            return eDate.getMonth() === idx;
+                          } catch { return false; }
+                        }).reduce((s, e) => s + e.amount, 0);
+
+                        const statementNet = totalInflow - monthExpenses;
                         return (
                           <tr key={m} className="hover:bg-pine-hover/5">
                             <td className="py-2.5 font-sans font-medium">{m}</td>
-                            <td className="py-2.5 text-emerald-405">+{receipts.toLocaleString()} Rs</td>
-                            <td className="py-2.5 text-rose-400">0 Rs</td>
-                            <td className={`py-2.5 ${statementNet >= 0 ? 'text-pine-success' : 'text-pine-error'}`}>
-                              {statementNet.toLocaleString()} Rs
+                            <td className="py-2.5 text-emerald-450">+{totalInflow.toLocaleString()} Rs</td>
+                            <td className="py-2.5 text-rose-400">-{monthExpenses.toLocaleString()} Rs</td>
+                            <td className={`py-2.5 font-bold ${statementNet >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
+                              {statementNet >= 0 ? '+' : ''}{statementNet.toLocaleString()} Rs
                             </td>
                           </tr>
                         );
@@ -2612,7 +3014,8 @@ export const printAnalyticalPortfolioStatement = (
   transactions: FundMemberTransaction[],
   currentOthers: OtherFundEntry[],
   currentExpenses: Expense[],
-  overrideMonthFilter?: { monthIndex: number; name: string }
+  overrideMonthFilter?: { monthIndex: number; name: string },
+  showVisuals: boolean = true
 ) => {
   const generatedDate = new Date().toLocaleString();
   
@@ -2646,6 +3049,89 @@ export const printAnalyticalPortfolioStatement = (
   const combinedIncome = totalFixed + totalOthers;
   const netReserve = combinedIncome - totalExpenses;
 
+  // Calculate dynamic heights for printed SVG chart
+  let maxMValue = 1000;
+  const monthlyData = months.map((m, idx) => {
+    let fixedMIn = 0;
+    currentMembers.forEach(mem => {
+      const list = transactions.filter(t => t.memberId === mem.id && t.monthKey === m);
+      fixedMIn += list.reduce((sum, item) => sum + item.amount, 0);
+    });
+
+    const otherMIn = currentOthers.filter(o => {
+      try {
+        const oDate = new Date(o.date);
+        return oDate.getMonth() === idx;
+      } catch { return false; }
+    }).reduce((sum, item) => sum + item.amount, 0);
+
+    const expMOut = currentExpenses.filter(e => {
+      try {
+        const eDate = new Date(e.date);
+        return eDate.getMonth() === idx;
+      } catch { return false; }
+    }).reduce((sum, item) => sum + item.amount, 0);
+
+    const totalIn = fixedMIn + otherMIn;
+    if (totalIn > maxMValue) maxMValue = totalIn;
+    if (expMOut > maxMValue) maxMValue = expMOut;
+
+    return {
+      month: m,
+      income: totalIn,
+      expense: expMOut
+    };
+  });
+
+  const svgChartBars = monthlyData.map((data, idx) => {
+    if (overrideMonthFilter && idx !== overrideMonthFilter.monthIndex) return '';
+    const inHeight = (data.income / maxMValue) * 110;
+    const outHeight = (data.expense / maxMValue) * 110;
+    const xOffset = 35 + idx * 43;
+    return `
+      <g>
+        <!-- Income bar -->
+        <rect x="${xOffset}" y="${140 - inHeight}" width="11" height="${Math.max(1, inHeight)}" fill="#10b981" rx="1" />
+        <!-- Expense bar -->
+        <rect x="${xOffset + 13}" y="${140 - outHeight}" width="11" height="${Math.max(1, outHeight)}" fill="#f43f5e" rx="1" />
+        <!-- Month Label -->
+        <text x="${xOffset + 12}" y="154" font-family="sans-serif" font-size="8px" text-anchor="middle" fill="#111827" font-weight="bold">${data.month.substring(0, 3)}</text>
+      </g>
+    `;
+  }).join('');
+
+  // Status breakdown calculations
+  const totalCount = currentMembers.length || 1;
+  let clearedCount = 0;       // Fully Paid (>= 100%)
+  let p75Count = 0;           // >= 75% and < 100%
+  let p50Count = 0;           // >= 50% and < 75%
+  let p25Count = 0;           // >= 25% and < 50%
+  let zeroCount = 0;          // < 25% (Zero/Low paid)
+
+  currentMembers.forEach(m => {
+    const mTrans = transactions.filter(t => t.memberId === m.id);
+    const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+    const payPercent = m.requiredAmount > 0 ? (paidSum / m.requiredAmount) * 100 : 0;
+
+    if (payPercent >= 100) {
+      clearedCount++;
+    } else if (payPercent >= 75) {
+      p75Count++;
+    } else if (payPercent >= 50) {
+      p50Count++;
+    } else if (payPercent >= 25) {
+      p25Count++;
+    } else {
+      zeroCount++;
+    }
+  });
+
+  const clearedPct = Math.round((clearedCount / totalCount) * 100);
+  const p75Pct = Math.round((p75Count / totalCount) * 100);
+  const p50Pct = Math.round((p50Count / totalCount) * 100);
+  const p25Pct = Math.round((p25Count / totalCount) * 100);
+  const zeroPct = Math.round((zeroCount / totalCount) * 100);
+
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Allow popups to print reports!');
@@ -2661,7 +3147,7 @@ export const printAnalyticalPortfolioStatement = (
   <style>
     @page {
       size: A4 portrait;
-      margin: 15mm;
+      margin: 10mm;
     }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -2670,16 +3156,16 @@ export const printAnalyticalPortfolioStatement = (
       color: #000000;
       background-color: #ffffff;
       line-height: 1.4;
-      font-size: 13px;
+      font-size: 11px;
     }
     .print-header {
       border-bottom: 4px double #000000;
-      padding-bottom: 12px;
-      margin-bottom: 20px;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
       text-align: center;
     }
     .print-header h1 {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 800;
       color: #000000;
       margin: 0;
@@ -2687,7 +3173,7 @@ export const printAnalyticalPortfolioStatement = (
       text-transform: uppercase;
     }
     .print-header h2 {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       color: #000000;
       margin: 4px 0 0;
@@ -2695,21 +3181,21 @@ export const printAnalyticalPortfolioStatement = (
       text-transform: uppercase;
     }
     .print-meta {
-      font-size: 8.5px;
+      font-size: 8px;
       font-family: monospace;
       color: #000000;
-      margin-top: 6px;
+      margin-top: 4px;
     }
     .summary-card {
       border: 1px solid #000000;
       border-radius: 4px;
-      padding: 12px;
+      padding: 8px;
       background-color: #f3f4f6;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       text-align: center;
-      gap: 12px;
+      gap: 8px;
     }
     .stat-box {
       border-right: 1px solid #000000;
@@ -2718,36 +3204,36 @@ export const printAnalyticalPortfolioStatement = (
       border-right: none;
     }
     .stat-box span {
-      font-size: 8px;
+      font-size: 7.5px;
       text-transform: uppercase;
       color: #000000;
       letter-spacing: 0.5px;
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       font-weight: bold;
     }
     .stat-box strong {
-      font-size: 13px;
+      font-size: 11px;
       font-family: monospace;
       color: #000000;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 24px;
-      font-size: 11px;
+      margin-bottom: 15px;
+      font-size: 10px;
     }
     th {
       background-color: #e5e7eb;
       color: #000000;
       font-weight: 700;
       text-transform: uppercase;
-      padding: 8px 12px;
+      padding: 5px 8px;
       border: 1px solid #000000;
       text-align: left;
     }
     td {
-      padding: 6px 12px;
+      padding: 4px 8px;
       border: 1px solid #000000;
       color: #000000;
     }
@@ -2758,6 +3244,28 @@ export const printAnalyticalPortfolioStatement = (
       background-color: #e5e7eb !important;
       font-weight: bold;
     }
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .chart-box {
+      border: 1.5px solid #000000;
+      border-radius: 5px;
+      padding: 8px;
+      background-color: #ffffff;
+    }
+    .chart-title {
+      font-size: 8.5px;
+      font-weight: bold;
+      text-transform: uppercase;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 4px;
+      margin-top: 0;
+      margin-bottom: 6px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -2766,7 +3274,7 @@ export const printAnalyticalPortfolioStatement = (
     <h2>COMPREHENSIVE FINANCIAL PORTFOLIO STATUS — ${fund.name.toUpperCase()}</h2>
     <div class="print-meta">
       Report Generated: ${generatedDate} | System Code: AHNT-PORTFOLIO-${fund.id.toUpperCase()}
-      ${overrideMonthFilter ? `<br><span style="font-size: 12px; color: #000000; font-weight: bold; margin-top: 8px; display: inline-block;">Filters Applied: Month ${overrideMonthFilter.name}</span>` : '<br><span style="font-size: 11px; margin-top: 8px; display: inline-block;">Period: Complete Ledger Lifecycle</span>'}
+      ${overrideMonthFilter ? `<br><span style="font-size: 10px; color: #000000; font-weight: bold; margin-top: 4px; display: inline-block;">Filters Applied: Month ${overrideMonthFilter.name}</span>` : '<br><span style="font-size: 9px; margin-top: 4px; display: inline-block;">Period: Complete Ledger Lifecycle</span>'}
     </div>
   </div>
 
@@ -2793,9 +3301,130 @@ export const printAnalyticalPortfolioStatement = (
     </div>
   </div>
 
-  <div style="margin-bottom: 20px; font-size: 11px; border: 1px dashed #000000; padding: 10px; border-radius: 4px; background-color: #f3f4f6;">
-    <strong>Net Liquid Balance Reserve / خالص فنڈ ریزرو بیلنس:</strong> 
-    <span style="font-family: monospace; font-size: 14px; font-weight: 900; color: #000000; margin-left: 8px;">
+  ${showVisuals ? `
+  <!-- CHARTS REPORTING ROW -->
+  <div class="charts-row">
+    <!-- Trend Analysis Bar Chart -->
+    <div class="chart-box">
+      <h3 class="chart-title">Inflow vs Outflow Trend</h3>
+      <svg width="100%" height="150" viewBox="0 0 570 170" style="background-color: #f9fafb;">
+        <!-- Grid horizontal lines -->
+        <line x1="30" y1="30" x2="550" y2="30" stroke="#cccccc" stroke-width="0.5" stroke-dasharray="2,2" />
+        <line x1="30" y1="85" x2="550" y2="85" stroke="#cccccc" stroke-width="0.5" stroke-dasharray="2,2" />
+        <line x1="30" y1="140" x2="550" y2="140" stroke="#000000" stroke-width="1.2" />
+        
+        <!-- Y axis markers -->
+        <text x="25" y="33" font-family="sans-serif" font-size="7.5px" text-anchor="end" fill="#4b5563">${maxMValue.toLocaleString()}</text>
+        <text x="25" y="88" font-family="sans-serif" font-size="7.5px" text-anchor="end" fill="#4b5563">${Math.round(maxMValue / 2).toLocaleString()}</text>
+        <text x="25" y="143" font-family="sans-serif" font-size="7.5px" text-anchor="end" fill="#4b5563">0</text>
+
+        <!-- SVG Bars from calculations -->
+        ${svgChartBars}
+
+        <!-- Legend inside chart -->
+        <rect x="420" y="8" width="8" height="8" fill="#10b981" />
+        <text x="432" y="15" font-family="sans-serif" font-size="7.5px" font-weight="bold">Income (آمدنی)</text>
+        <rect x="420" y="20" width="8" height="8" fill="#f43f5e" />
+        <text x="432" y="27" font-family="sans-serif" font-size="7.5px" font-weight="bold">Expenses (اخراجات)</text>
+      </svg>
+    </div>
+
+    <!-- Grand Budget Flow column 2 -->
+    <div class="chart-box">
+      <h3 class="chart-title">Grand Budget Allocation / میزانیہ خاکہ</h3>
+      <div style="padding: 2px; text-align: center;">
+        <svg width="100%" height="150" viewBox="0 0 180 150">
+          <text x="45" y="15" font-family="sans-serif" font-size="8px" font-weight="bold" text-anchor="middle" fill="#111827">INFLOWS / کل آمدن</text>
+          
+          <rect x="30" y="25" width="30" height="100" fill="#e5e7eb" rx="2" stroke="#000000" stroke-width="0.5" />
+          <rect x="30" y="${25 + (100 - (totalFixed / (combinedIncome || 1)) * 100)}" width="30" height="${(totalFixed / (combinedIncome || 1)) * 100}" fill="#10b981" rx="1" />
+          <rect x="30" y="25" width="30" height="${(totalOthers / (combinedIncome || 1)) * 100}" fill="#38bdf8" rx="1" />
+          
+          <text x="45" y="136" font-family="sans-serif" font-size="7px" text-anchor="middle" fill="#111827">Fixed: ${Math.round((totalFixed / (combinedIncome || 1)) * 100)}%</text>
+          <text x="45" y="145" font-family="sans-serif" font-size="7px" text-anchor="middle" fill="#4b5563">Other: ${Math.round((totalOthers / (combinedIncome || 1)) * 100)}%</text>
+
+          <text x="135" y="15" font-family="sans-serif" font-size="8px" font-weight="bold" text-anchor="middle" fill="#111827">ALLOCATION / تقسیم</text>
+          
+          <rect x="120" y="25" width="30" height="100" fill="#e5e7eb" rx="2" stroke="#000000" stroke-width="0.5" />
+          <rect x="120" y="${25 + (100 - (Math.max(0, netReserve) / (combinedIncome || 1)) * 100)}" width="30" height="${(Math.max(0, netReserve) / (combinedIncome || 1)) * 100}" fill="#3b82f6" rx="1" />
+          <rect x="120" y="25" width="30" height="${(totalExpenses / (combinedIncome || 1)) * 100}" fill="#f43f5e" rx="1" />
+
+          <text x="135" y="136" font-family="sans-serif" font-size="7px" text-anchor="middle" fill="#111827">Saved: ${Math.round((Math.max(0, netReserve) / (combinedIncome || 1)) * 100)}%</text>
+          <text x="135" y="145" font-family="sans-serif" font-size="7px" text-anchor="middle" fill="#4b5563">Spent: ${Math.round((totalExpenses / (combinedIncome || 1)) * 100)}%</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Contributor Distribution horizontal breakdown -->
+    <div class="chart-box">
+      <h3 class="chart-title">Contributor Status Share</h3>
+      <div style="padding: 2px 5px;">
+        <div style="font-size: 8px; font-weight: bold; margin-bottom: 8px; text-align: center; color: #374151;">
+          Total Contributors: ${totalCount} Active
+        </div>
+        
+        <!-- Fully Paid progress bar -->
+        <div style="margin-bottom: 5px;">
+          <div style="display: flex; justify-content: space-between; font-size: 7.5px; font-weight: bold; margin-bottom: 1px;">
+            <span>🟢 Fully Paid / مکمل</span>
+            <span>${clearedCount} (${clearedPct}%)</span>
+          </div>
+          <div style="width: 100%; height: 6px; background-color: #e5e7eb; border: 1px solid #000; border-radius: 1px;">
+            <div style="width: ${clearedPct}%; height: 100%; background-color: #10b981;"></div>
+          </div>
+        </div>
+
+        <!-- 75% or More progress bar -->
+        <div style="margin-bottom: 5px;">
+          <div style="display: flex; justify-content: space-between; font-size: 7.5px; font-weight: bold; margin-bottom: 1px;">
+            <span>🟣 75% or More / ۷۵٪</span>
+            <span>${p75Count} (${p75Pct}%)</span>
+          </div>
+          <div style="width: 100%; height: 6px; background-color: #e5e7eb; border: 1px solid #000; border-radius: 1px;">
+            <div style="width: ${p75Pct}%; height: 100%; background-color: #6366f1;"></div>
+          </div>
+        </div>
+
+        <!-- 50% or More progress bar -->
+        <div style="margin-bottom: 5px;">
+          <div style="display: flex; justify-content: space-between; font-size: 7.5px; font-weight: bold; margin-bottom: 1px;">
+            <span>🔵 50% or More / ۵۰٪</span>
+            <span>${p50Count} (${p50Pct}%)</span>
+          </div>
+          <div style="width: 100%; height: 6px; background-color: #e5e7eb; border: 1px solid #000; border-radius: 1px;">
+            <div style="width: ${p50Pct}%; height: 100%; background-color: #3b82f6;"></div>
+          </div>
+        </div>
+
+        <!-- 25% or More progress bar -->
+        <div style="margin-bottom: 5px;">
+          <div style="display: flex; justify-content: space-between; font-size: 7.5px; font-weight: bold; margin-bottom: 1px;">
+            <span>🟡 25% or More / ۲۵٪</span>
+            <span>${p25Count} (${p25Pct}%)</span>
+          </div>
+          <div style="width: 100%; height: 6px; background-color: #e5e7eb; border: 1px solid #000; border-radius: 1px;">
+            <div style="width: ${p25Pct}%; height: 100%; background-color: #f59e0b;"></div>
+          </div>
+        </div>
+
+        <!-- Zero Activity progress bar -->
+        <div style="margin-bottom: 3px;">
+          <div style="display: flex; justify-content: space-between; font-size: 7.5px; font-weight: bold; margin-bottom: 1px;">
+            <span>🔴 Zero Paid / صفر</span>
+            <span>${zeroCount} (${zeroPct}%)</span>
+          </div>
+          <div style="width: 100%; height: 6px; background-color: #e5e7eb; border: 1px solid #000; border-radius: 1px;">
+            <div style="width: ${zeroPct}%; height: 100%; background-color: #ef4444;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  ` : ''}
+
+  <div style="margin-bottom: 12px; font-size: 10px; border: 1.5px solid #000000; padding: 6px; border-radius: 4px; background-color: #f3f4f6; display: flex; justify-content: space-between; align-items: center;">
+    <strong>Net Reserve Savings Balance / بقایا بچت:</strong> 
+    <span style="font-family: monospace; font-size: 12px; font-weight: 900; color: #000000;">
       ${netReserve.toLocaleString()} Rs
     </span>
   </div>
@@ -2974,6 +3603,41 @@ function FixedFundRegister({
   // Current active fund members only
   const currentFundMembers = members.filter(m => m.fundId === fund.id);
 
+  // Precalculate contributor performance filters counts for Fixed Fund
+  const countFFFullyPaid = currentFundMembers.filter(m => {
+    const mTrans = transactions.filter(t => t.memberId === m.id);
+    const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+    return paidSum >= m.requiredAmount;
+  }).length;
+
+  const countFF75Plus = currentFundMembers.filter(m => {
+    const mTrans = transactions.filter(t => t.memberId === m.id);
+    const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+    const payPercent = m.requiredAmount > 0 ? (paidSum / m.requiredAmount) * 100 : 0;
+    return payPercent >= 75;
+  }).length;
+
+  const countFF50Plus = currentFundMembers.filter(m => {
+    const mTrans = transactions.filter(t => t.memberId === m.id);
+    const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+    const payPercent = m.requiredAmount > 0 ? (paidSum / m.requiredAmount) * 100 : 0;
+    return payPercent >= 50;
+  }).length;
+
+  const countFF25Plus = currentFundMembers.filter(m => {
+    const mTrans = transactions.filter(t => t.memberId === m.id);
+    const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+    const payPercent = m.requiredAmount > 0 ? (paidSum / m.requiredAmount) * 100 : 0;
+    return payPercent >= 25;
+  }).length;
+
+  const countFFZeroPaid = currentFundMembers.filter(m => {
+    const mTrans = transactions.filter(t => t.memberId === m.id);
+    const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+    const payPercent = m.requiredAmount > 0 ? (paidSum / m.requiredAmount) * 100 : 0;
+    return payPercent < 25;
+  }).length;
+
   // Apply default sorting
   const sortedMembers = [...currentFundMembers].sort((a, b) => {
     if (sortBy === 'name') {
@@ -3021,6 +3685,14 @@ function FixedFundRegister({
     if (activeFilter === 'with-khatm') return isKhatmDone;
     if (activeFilter === 'all-cleared') return isCleared;
     if (activeFilter === 'prev-cleared') return m.remainingPrevious <= 0;
+
+    // 5 contributor performance filters
+    const payPercent = m.requiredAmount > 0 ? (paidSum / m.requiredAmount) * 100 : 0;
+    if (activeFilter === 'ff-fully-paid') return payPercent >= 100;
+    if (activeFilter === 'ff-75-plus') return payPercent >= 75;
+    if (activeFilter === 'ff-50-plus') return payPercent >= 50;
+    if (activeFilter === 'ff-25-plus') return payPercent >= 25;
+    if (activeFilter === 'ff-zero-paid') return payPercent < 25;
 
     return true;
   });
@@ -3242,6 +3914,8 @@ function FixedFundRegister({
         </div>
       </div>
 
+
+
       {/* Control panel: Sorting & Comprehensive Filter Buttons */}
       <div className="bg-pine-card border border-pine-border/80 p-5 rounded-2xl space-y-4 shadow-xl font-sans">
         
@@ -3433,6 +4107,62 @@ function FixedFundRegister({
               }`}
             >
               Low Contributors ↓
+            </button>
+
+            {/* Performance filters */}
+            <button
+              onClick={() => setActiveFilter('ff-fully-paid')}
+              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
+                activeFilter === 'ff-fully-paid' 
+                  ? 'bg-emerald-600 border-emerald-500 text-white shadow-md ring-1 ring-emerald-500' 
+                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
+              }`}
+            >
+              {"Fully Paid (>= 100%)"} ({countFFFullyPaid})
+            </button>
+
+            <button
+              onClick={() => setActiveFilter('ff-75-plus')}
+              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
+                activeFilter === 'ff-75-plus' 
+                  ? 'bg-indigo-600 border-indigo-500 text-white shadow-md ring-1 ring-indigo-500' 
+                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
+              }`}
+            >
+              75% or More Paid ({countFF75Plus})
+            </button>
+
+            <button
+              onClick={() => setActiveFilter('ff-50-plus')}
+              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
+                activeFilter === 'ff-50-plus' 
+                  ? 'bg-blue-650 border-blue-500 text-white shadow-md ring-1 ring-blue-500' 
+                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
+              }`}
+            >
+              50% or More Paid ({countFF50Plus})
+            </button>
+
+            <button
+              onClick={() => setActiveFilter('ff-25-plus')}
+              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
+                activeFilter === 'ff-25-plus' 
+                  ? 'bg-amber-600 border-amber-500 text-zinc-900 shadow-md ring-1 ring-amber-500' 
+                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
+              }`}
+            >
+              25% or More Paid ({countFF25Plus})
+            </button>
+
+            <button
+              onClick={() => setActiveFilter('ff-zero-paid')}
+              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
+                activeFilter === 'ff-zero-paid' 
+                  ? 'bg-rose-950 border-rose-550 text-rose-400 shadow-md ring-1 ring-rose-500' 
+                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
+              }`}
+            >
+              Zero Paid (under 25%) ({countFFZeroPaid})
             </button>
           </div>
         </div>
@@ -4420,6 +5150,8 @@ function OtherFundRegister(props: any) {
           </button>
         </div>
       </div>
+
+
 
       {/* Inline Direct Inflow Add Form */}
       {isFundAdminUnlocked && showAddForm && (
