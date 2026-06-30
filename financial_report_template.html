@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Al-Habib Waqf Endowment - Standalone Financial Portal</title>
+  
+  <!-- Tailwind CSS CDN for gorgeous UI -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons (via CDN) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #020806;
+      color: #e4e4e7;
+    }
+    .font-urdu {
+      font-family: 'Noto Nastaliq Urdu', serif;
+      line-height: 2.2;
+    }
+    .glass-card {
+      background: rgba(8, 26, 23, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+    }
+    .print-only {
+      display: none;
+    }
+
+    /* Print styling overrides */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #111111 !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+        padding: 20px !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .print-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-top: 15px !important;
+        font-size: 11px !important;
+      }
+      .print-table th {
+        background: #0f5144 !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        padding: 8px 4px !important;
+        border: 1px solid #0f5144 !important;
+        text-align: center !important;
+      }
+      .print-table td {
+        border: 1px solid #ccd5d1 !important;
+        padding: 8px 4px !important;
+        text-align: center !important;
+        color: #111 !important;
+      }
+      .print-table td.shop-title {
+        text-align: left !important;
+        font-weight: bold !important;
+        padding-left: 8px !important;
+      }
+      .paid-badge {
+        background-color: #d4edda !important;
+        color: #155724 !important;
+        font-weight: bold !important;
+      }
+      .pending-badge {
+        background-color: #f8d7da !important;
+        color: #721c24 !important;
+        font-weight: 500 !important;
+      }
+      .vacant-badge {
+        background-color: #f1f3f5 !important;
+        color: #6c757d !important;
+      }
+      .header-print {
+        text-align: center !important;
+        border-bottom: 3px double #0f5144 !important;
+        padding-bottom: 15px !important;
+        margin-bottom: 20px !important;
+      }
+      .header-print h1 {
+        font-size: 24px !important;
+        color: #0f5144 !important;
+        margin: 0 !important;
+        text-transform: uppercase !important;
+        font-weight: 800 !important;
+      }
+      .meta-box-print {
+        display: flex !important;
+        justify-content: space-between !important;
+        margin-bottom: 20px !important;
+        font-size: 11px !important;
+        background: #fdfdfd !important;
+        padding: 12px !important;
+        border: 1px solid #e1e7e4 !important;
+        border-radius: 6px !important;
+        color: #333 !important;
+      }
+      .summary-print-container {
+        margin-top: 25px !important;
+        display: grid !important;
+        grid-template-cols: repeat(3, 1fr) !important;
+        gap: 15px !important;
+      }
+      .summary-print-card {
+        border: 1px solid #ccd5d1 !important;
+        padding: 10px !important;
+        border-radius: 6px !important;
+        background-color: #fcfdfe !important;
+        text-align: center !important;
+        color: #333 !important;
+      }
+      .summary-print-card h4 {
+        margin: 0 0 5px 0 !important;
+        color: #0f5144 !important;
+        font-size: 10px !important;
+        text-transform: uppercase !important;
+      }
+      .summary-print-card span {
+        font-size: 16px !important;
+        font-weight: bold !important;
+        font-family: monospace !important;
+      }
+      .footer-print {
+        margin-top: 50px !important;
+        border-top: 1px solid #ccd5d1 !important;
+        padding-top: 15px !important;
+        text-align: center !important;
+        font-size: 10px !important;
+        color: #555 !important;
+      }
+      .sign-row-print {
+        display: flex !important;
+        justify-content: space-between !important;
+        margin-top: 50px !important;
+        font-size: 11px !important;
+      }
+      .sign-line-print {
+        border-top: 1px solid #222 !important;
+        width: 180px !important;
+        text-align: center !important;
+        padding-top: 5px !important;
+        font-weight: bold !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+  <!-- ================= NO-PRINT WORKSPACE (BROWSER DASHBOARD) ================= -->
+  <div class="no-print flex-1 flex flex-col">
+    <!-- Navbar -->
+    <header class="border-b border-emerald-950/40 bg-zinc-950/80 sticky top-0 z-40 backdrop-blur">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-lg shadow-emerald-950/30">
+            <i data-lucide="building-2" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-sm font-extrabold tracking-wider text-emerald-400 uppercase">Al-Habib Trust</h1>
+            <p class="text-[10px] text-zinc-400 font-medium">Commercial Waqf Rents & Financial Portal</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-emerald-900/20 uppercase tracking-wider">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>Print Report (رپورٹ پرنٹ کریں)</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl mx-auto px-4 py-6 w-full space-y-6">
+      
+      <!-- Welcome Intro -->
+      <div class="p-6 rounded-2xl glass-card relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>🕌</span> Al-Habib Waqf Commercial Endowment Reporting System
+          </h2>
+          <p class="text-xs text-zinc-400 max-w-2xl leading-relaxed">
+            Yeh standalone report system hai jis me aap dukanon ka rent manage aur print kar sakte hain. Is file ko aap offline bhi open kar sakte hain aur changes local storage me save rahengi.
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <div class="px-3 py-2 bg-zinc-950/50 rounded-xl border border-emerald-500/10 text-center min-w-[90px]">
+            <span class="block text-[10px] uppercase text-zinc-500 font-bold">Total Shops</span>
+            <span id="stats-total-shops" class="text-base font-bold text-white font-mono">0</span>
+          </div>
+          <div class="px-3 py-2 bg-zinc-950/50 rounded-xl border border-emerald-500/10 text-center min-w-[90px]">
+            <span class="block text-[10px] uppercase text-emerald-500 font-bold">Paid This Yr</span>
+            <span id="stats-total-paid" class="text-base font-bold text-emerald-400 font-mono">0 Rs</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Left / Right Grid for adding/managing -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Add/Edit Shop Form -->
+        <div class="glass-card p-5 rounded-2xl space-y-4 h-fit">
+          <div class="border-b border-emerald-950/40 pb-2 flex justify-between items-center">
+            <h3 class="text-xs font-extrabold uppercase tracking-widest text-emerald-400 flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-400"></i>
+              <span>Add New Waqf Shop</span>
+            </h3>
+            <span class="text-[10px] text-zinc-500 font-urdu font-semibold">نئی دکان شامل کریں</span>
+          </div>
+          
+          <form id="add-shop-form" onsubmit="addNewShop(event)" class="space-y-3">
+            <div>
+              <label class="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Shop Name (دکان کا نام)</label>
+              <input type="text" id="shop-name" placeholder="e.g. Shop No. 5" required
+                class="w-full bg-zinc-950 border border-zinc-800 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-emerald-500">
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Monthly Rent Rs (کرایہ فی مہینہ)</label>
+              <input type="number" id="shop-rent" value="15000" required
+                class="w-full bg-zinc-950 border border-zinc-800 text-white text-xs font-mono rounded-lg p-2.5 focus:outline-none focus:border-emerald-500">
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold rounded-lg uppercase tracking-wider transition-colors cursor-pointer">
+              Add Shop & Lease
+            </button>
+          </form>
+
+          <div class="border-t border-emerald-950/40 pt-4 mt-2">
+            <div class="border-b border-emerald-950/40 pb-2 mb-3 flex justify-between items-center">
+              <h3 class="text-xs font-extrabold uppercase tracking-widest text-teal-400 flex items-center gap-1.5">
+                <i data-lucide="banknote" class="w-4 h-4 text-teal-400"></i>
+                <span>Collect Rent Payment</span>
+              </h3>
+              <span class="text-[10px] text-zinc-500 font-urdu font-semibold">کرایہ وصولی درج کریں</span>
+            </div>
+
+            <form id="pay-rent-form" onsubmit="logRentPayment(event)" class="space-y-3">
+              <div>
+                <label class="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Select Shop (دکان منتخب کریں)</label>
+                <select id="pay-shop-select" required
+                  class="w-full bg-zinc-950 border border-zinc-800 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-teal-500 font-sans cursor-pointer">
+                  <!-- Injected via JS -->
+                </select>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Month (مہینہ)</label>
+                  <select id="pay-month" required
+                    class="w-full bg-zinc-950 border border-zinc-800 text-white text-xs rounded-lg p-2.5 focus:outline-none focus:border-teal-500 font-sans cursor-pointer">
+                    <option value="January">January</option>
+                    <option value="February">February</option>
+                    <option value="March">March</option>
+                    <option value="April">April</option>
+                    <option value="May">May</option>
+                    <option value="June">June</option>
+                    <option value="July">July</option>
+                    <option value="August">August</option>
+                    <option value="September">September</option>
+                    <option value="October">October</option>
+                    <option value="November">November</option>
+                    <option value="December">December</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Amount Rs (رقم)</label>
+                  <input type="number" id="pay-amount" value="15000" required
+                    class="w-full bg-zinc-950 border border-zinc-800 text-white text-xs font-mono rounded-lg p-2.5 focus:outline-none focus:border-teal-500">
+                </div>
+              </div>
+              <button type="submit" class="w-full py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-extrabold rounded-lg uppercase tracking-wider transition-colors cursor-pointer">
+                Save Payment (جمع کریں)
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Ledger Matrix Panel -->
+        <div class="glass-card p-5 rounded-2xl md:col-span-2 space-y-4 overflow-hidden flex flex-col">
+          <div class="flex justify-between items-center border-b border-emerald-950/40 pb-3 flex-wrap gap-2">
+            <div>
+              <h3 class="text-xs font-extrabold uppercase tracking-widest text-zinc-300">Endowment Portfolio Ledger Index</h3>
+              <p class="text-[10px] text-zinc-400">Real-time payment sheet synced locally</p>
+            </div>
+            <button onclick="resetToDefaults()" class="text-[10px] uppercase tracking-wider font-extrabold text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 cursor-pointer">
+              <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reset Data
+            </button>
+          </div>
+
+          <!-- Responsive Table Container -->
+          <div class="overflow-x-auto border border-zinc-800/60 rounded-xl bg-zinc-950/40">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-zinc-950 text-zinc-400 text-[10px] uppercase tracking-wider border-b border-zinc-800/80">
+                  <th class="p-3">Shop Details</th>
+                  <th class="p-3 text-center">Status</th>
+                  <th class="p-3 text-right">Rent</th>
+                  <th class="p-3 text-center">Payments</th>
+                  <th class="p-3 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="shops-table-body" class="divide-y divide-zinc-850">
+                <!-- Injected dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Page Footer -->
+    <footer class="border-t border-emerald-950/40 py-6 mt-12 bg-zinc-950/40 text-center text-xs text-zinc-500 font-medium">
+      Al-Habib Waqf Commercial Endowment Portal • Build for offline standalone usage
+    </footer>
+  </div>
+
+  <!-- ================= PRINT-ONLY TEMPLATE LAYOUT ================= -->
+  <div class="print-only">
+    <div class="header-print">
+      <h1>Al-Habib Noorani Shops Rent Ledger Register</h1>
+      <p>Bahtar Morr, Wah Cantt, Punjab, Pakistan • Waqf Commercial Endowment Portal</p>
+    </div>
+    
+    <div class="meta-box-print">
+      <div>
+        <strong>Filter Scope:</strong> All Commercial Shops (تمام دکانیں)<br>
+        <strong>Reporting Period:</strong> Gregorian Year 2026 (Annual Statement)<br>
+        <strong>Status:</strong> Active Leased Portfolio
+      </div>
+      <div style="text-align: right;">
+        <strong>Report Issue Date:</strong> <span id="print-issue-date"></span><br>
+        <strong>Authorized Auditor:</strong> General Secretary Al-Habib trust<br>
+        <strong>Reference:</strong> SEC/2026/SHOP-LEDGER
+      </div>
+    </div>
+
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th style="width: 150px; text-align: left; padding-left: 8px;">Shop Details / dukan</th>
+          <th style="width: 50px;">Jan</th>
+          <th style="width: 50px;">Feb</th>
+          <th style="width: 50px;">Mar</th>
+          <th style="width: 50px;">Apr</th>
+          <th style="width: 50px;">May</th>
+          <th style="width: 50px;">Jun</th>
+          <th style="width: 50px;">Jul</th>
+          <th style="width: 50px;">Aug</th>
+          <th style="width: 50px;">Sep</th>
+          <th style="width: 50px;">Oct</th>
+          <th style="width: 50px;">Nov</th>
+          <th style="width: 50px;">Dec</th>
+          <th style="width: 80px;">Required</th>
+          <th style="width: 80px;">Paid</th>
+          <th style="width: 80px;">Remaining</th>
+        </tr>
+      </thead>
+      <tbody id="print-table-body">
+        <!-- Generated on window.print call -->
+      </tbody>
+    </table>
+
+    <div class="summary-print-container">
+      <div class="summary-print-card">
+        <h4>Total Expected Target (مجموعی مطلوبہ)</h4>
+        <span id="print-expected">0 Rs</span>
+      </div>
+      <div class="summary-print-card" style="background-color: #f1f9f5; border-color: #c3e6cb;">
+        <h4 style="color: #155724;">Total Collected Rents (مجموعی وصول شدہ)</h4>
+        <span id="print-collected" style="color: #155724;">0 Rs</span>
+      </div>
+      <div class="summary-print-card" style="background-color: #fff3cd; border-color: #ffeeba;">
+        <h4 style="color: #856404;">Total Remaining Deficit (مجموعی بقایا جات)</h4>
+        <span id="print-deficit" style="color: #856404;">0 Rs</span>
+      </div>
+    </div>
+
+    <div class="sign-row-print">
+      <div class="sign-line-print">Prepared By: Accountant</div>
+      <div class="sign-line-print">Verified By: Cashier</div>
+      <div class="sign-line-print">Approved: General Secretary</div>
+    </div>
+
+    <div class="footer-print">
+      This document is verified and authenticated by Al-Habib Trust Waqf board, audited on the timestamp of printing.
+    </div>
+  </div>
+
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    const GREGORIAN_MONTHS = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const INITIAL_SHOPS = [
+      {
+        id: "shop-1",
+        name: "Shop No. 1 (Karyana Store)",
+        monthlyRent: 15000,
+        isRented: true,
+        payments: {
+          "January": { isPaid: true, paymentDate: "2026-01-10", amountPaid: 15000 },
+          "February": { isPaid: true, paymentDate: "2026-02-12", amountPaid: 15000 },
+          "March": { isPaid: true, paymentDate: "2026-03-08", amountPaid: 15000 },
+          "April": { isPaid: true, paymentDate: "2026-04-05", amountPaid: 15000 }
+        }
+      },
+      {
+        id: "shop-2",
+        name: "Shop No. 2 (Medical Hall)",
+        monthlyRent: 18000,
+        isRented: true,
+        payments: {
+          "January": { isPaid: true, paymentDate: "2026-01-05", amountPaid: 18000 },
+          "February": { isPaid: true, paymentDate: "2026-02-05", amountPaid: 18000 },
+          "March": { isPaid: false },
+          "April": { isPaid: true, paymentDate: "2026-04-10", amountPaid: 18000 }
+        }
+      },
+      {
+        id: "shop-3",
+        name: "Shop No. 3 (Tailor shop)",
+        monthlyRent: 12000,
+        isRented: true,
+        payments: {
+          "January": { isPaid: true, paymentDate: "2026-01-15", amountPaid: 12000 },
+          "February": { isPaid: false }
+        }
+      },
+      {
+        id: "shop-4",
+        name: "Shop No. 4 (Waqf Office Office)",
+        monthlyRent: 10000,
+        isRented: false,
+        payments: {}
+      }
+    ];
+
+    // Load state
+    let shops = JSON.parse(localStorage.getItem('al_habib_shops')) || INITIAL_SHOPS;
+
+    function saveState() {
+      localStorage.setItem('al_habib_shops', JSON.stringify(shops));
+      renderDashboard();
+    }
+
+    function resetToDefaults() {
+      if (confirm("Kya aap data ko wapas initial state par reset karna chahte hain?")) {
+        shops = JSON.parse(JSON.stringify(INITIAL_SHOPS));
+        saveState();
+      }
+    }
+
+    function addNewShop(event) {
+      event.preventDefault();
+      const name = document.getElementById('shop-name').value;
+      const rent = Number(document.getElementById('shop-rent').value);
+      
+      const newShop = {
+        id: 'shop-' + Date.now(),
+        name: name,
+        monthlyRent: rent,
+        isRented: true,
+        payments: {}
+      };
+
+      shops.push(newShop);
+      document.getElementById('add-shop-form').reset();
+      document.getElementById('shop-rent').value = "15000";
+      saveState();
+    }
+
+    function deleteShop(shopId) {
+      if (confirm("Kya aap waqai is dukan ko delete karna chahte hain? Tamam record delete ho jaye ga.")) {
+        shops = shops.filter(s => s.id !== shopId);
+        saveState();
+      }
+    }
+
+    function logRentPayment(event) {
+      event.preventDefault();
+      const shopId = document.getElementById('pay-shop-select').value;
+      const month = document.getElementById('pay-month').value;
+      const amount = Number(document.getElementById('pay-amount').value);
+
+      const shop = shops.find(s => s.id === shopId);
+      if (shop) {
+        if (!shop.payments) shop.payments = {};
+        shop.payments[month] = {
+          isPaid: true,
+          paymentDate: new Date().toISOString().split('T')[0],
+          amountPaid: amount
+        };
+        saveState();
+      }
+    }
+
+    function toggleRented(shopId) {
+      const shop = shops.find(s => s.id === shopId);
+      if (shop) {
+        shop.isRented = !shop.isRented;
+        if (!shop.isRented) {
+          shop.payments = {};
+        }
+        saveState();
+      }
+    }
+
+    function calculateStats(shop) {
+      let required = 0;
+      let paid = 0;
+      
+      if (!shop.isRented) {
+        return { required, paid, remaining: 0 };
+      }
+
+      // Calculate for all months of Gregorian year 2026
+      GREGORIAN_MONTHS.forEach(m => {
+        required += shop.monthlyRent;
+        const p = shop.payments && shop.payments[m];
+        if (p && p.isPaid) {
+          paid += p.amountPaid;
+        }
+      });
+
+      return {
+        required,
+        paid,
+        remaining: Math.max(0, required - paid)
+      };
+    }
+
+    function renderDashboard() {
+      const tableBody = document.getElementById('shops-table-body');
+      const selectShop = document.getElementById('pay-shop-select');
+      
+      tableBody.innerHTML = '';
+      selectShop.innerHTML = '';
+
+      let totalPaidAll = 0;
+
+      shops.forEach(shop => {
+        const stats = calculateStats(shop);
+        totalPaidAll += stats.paid;
+
+        // Add to drop down if rented
+        if (shop.isRented) {
+          const opt = document.createElement('option');
+          opt.value = shop.id;
+          opt.textContent = `${shop.name} (${shop.monthlyRent} Rs/mo)`;
+          selectShop.appendChild(opt);
+        }
+
+        // Generate payments count bubble
+        const totalMonthsPaid = GREGORIAN_MONTHS.filter(m => shop.payments && shop.payments[m] && shop.payments[m].isPaid).length;
+
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-zinc-900/40 transition-colors text-zinc-300';
+        row.innerHTML = `
+          <td class="p-3">
+            <span class="block font-bold text-white">${shop.name}</span>
+            <span class="text-[10px] text-zinc-500">Rent Lease: ${shop.monthlyRent.toLocaleString()} Rs/mo</span>
+          </td>
+          <td class="p-3 text-center">
+            <button onclick="toggleRented('${shop.id}')" class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-widest cursor-pointer ${shop.isRented ? 'bg-emerald-950/40 border border-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}">
+              ${shop.isRented ? 'Leased (کرایہ پر)' : 'Vacant (خالی)'}
+            </button>
+          </td>
+          <td class="p-3 text-right font-mono font-bold text-emerald-400">
+            ${shop.monthlyRent.toLocaleString()} Rs
+          </td>
+          <td class="p-3 text-center font-semibold">
+            <span class="px-2 py-0.5 rounded-full bg-teal-950/40 text-teal-300 border border-teal-500/10 text-[10px]">
+              ${totalMonthsPaid} / 12 Paid
+            </span>
+          </td>
+          <td class="p-3 text-center">
+            <button onclick="deleteShop('${shop.id}')" class="p-1.5 hover:bg-rose-950/40 text-rose-500 rounded-md transition-colors cursor-pointer" title="Delete Shop">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      // Update counters
+      document.getElementById('stats-total-shops').textContent = shops.length;
+      document.getElementById('stats-total-paid').textContent = totalPaidAll.toLocaleString() + ' Rs';
+
+      // Update Print Data
+      updatePrintContent();
+
+      // Refresh icons
+      lucide.createIcons();
+    }
+
+    function updatePrintContent() {
+      // Issue date
+      document.getElementById('print-issue-date').textContent = new Date().toLocaleDateString('ur-PK') || new Date().toLocaleDateString();
+
+      const printBody = document.getElementById('print-table-body');
+      printBody.innerHTML = '';
+
+      let totalExpected = 0;
+      let totalCollected = 0;
+
+      shops.forEach(shop => {
+        const stats = calculateStats(shop);
+        totalExpected += stats.required;
+        totalCollected += stats.paid;
+
+        const row = document.createElement('tr');
+        
+        let monthCells = '';
+        GREGORIAN_MONTHS.forEach(m => {
+          if (!shop.isRented) {
+            monthCells += `<td class="vacant-badge">Vacant</td>`;
+          } else {
+            const p = shop.payments && shop.payments[m];
+            if (p && p.isPaid) {
+              monthCells += `<td class="paid-badge">${p.amountPaid.toLocaleString()}</td>`;
+            } else {
+              monthCells += `<td class="pending-badge">Pending</td>`;
+            }
+          }
+        });
+
+        row.innerHTML = `
+          <td class="shop-title">
+            ${shop.name}<br>
+            <span style="font-size: 9px; color: #666; font-weight: normal;">Lease: ${shop.monthlyRent.toLocaleString()} Rs/mo</span>
+          </td>
+          ${monthCells}
+          <td style="font-weight: bold; background: #fafafa;">${stats.required.toLocaleString()}</td>
+          <td style="font-weight: bold; background: #eafcf1; color: #155724;">${stats.paid.toLocaleString()}</td>
+          <td style="font-weight: bold; background: #fdf6f6; color: #721c24;">${stats.remaining.toLocaleString()}</td>
+        `;
+        printBody.appendChild(row);
+      });
+
+      // Update print metrics
+      document.getElementById('print-expected').textContent = totalExpected.toLocaleString() + ' Rs';
+      document.getElementById('print-collected').textContent = totalCollected.toLocaleString() + ' Rs';
+      document.getElementById('print-deficit').textContent = Math.max(0, totalExpected - totalCollected).toLocaleString() + ' Rs';
+    }
+
+    // Initialize UI on load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderDashboard();
+    });
+  </script>
+</body>
+</html>

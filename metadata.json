@@ -1,0 +1,6 @@
+{
+  "name": "Masjid Al Habib Noorani",
+  "description": "Premium multi-fund mosque web portal for Masjid Al Habib Noorani (Wah Cantt) featuring live prayer timers, infinite announcements, financial portfolios, and active project tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

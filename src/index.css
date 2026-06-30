@@ -1,0 +1,254 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-pine-bg: var(--custom-pine-bg, #284C43);
+  --color-pine-bar: var(--custom-pine-bar, #1A3A32);
+  --color-pine-card: var(--custom-pine-card, #487164);
+  --color-pine-hover: var(--custom-pine-hover, #5D7F71);
+  --color-pine-btn: var(--custom-pine-btn, #01796F);
+  --color-pine-btn-hover: var(--custom-pine-btn-hover, #51A773);
+  --color-pine-active: var(--custom-pine-active, #2A6041);
+  --color-pine-text-heading: var(--text-pine-heading, #F5F5F5);
+  --color-pine-text-body: var(--text-pine-body, #B8D0C0);
+  --color-pine-text-muted: var(--text-pine-muted, #8CA89A);
+  --color-pine-border: var(--custom-pine-border, #2E5E49);
+  --color-pine-success: var(--custom-pine-btn-hover, #51A773);
+  --color-pine-warning: #D4A53A;
+  --color-pine-error: #B54D4D;
+
+  /* Dynamically map all emerald colors to custom theme colors for instant universal theming */
+  --color-emerald-950: var(--custom-pine-bar, #1A3A32);
+  --color-emerald-900: var(--custom-pine-bar, #16332C);
+  --color-emerald-800: var(--custom-pine-active, #2A6041);
+  --color-emerald-700: var(--custom-pine-active, #2A6041);
+  --color-emerald-650: var(--custom-pine-btn, #01796F);
+  --color-emerald-600: var(--custom-pine-btn, #01796F);
+  --color-emerald-500: var(--custom-pine-btn-hover, #51A773);
+  --color-emerald-450: var(--custom-pine-btn-hover, #51A773);
+  --color-emerald-400: var(--custom-pine-btn-hover, #51A773);
+  --color-emerald-350: var(--custom-pine-btn-hover, #51A773);
+  --color-emerald-300: var(--custom-pine-btn-hover, #51A773);
+
+  --font-sans: "Inter", sans-serif;
+  --font-heading: "Poppins", sans-serif;
+  --font-button: "Montserrat", sans-serif;
+  --font-weight-body: 400;
+}
+
+/* Base scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-pine-bar);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-pine-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-pine-card);
+}
+
+/* Glassmorphism utility with native srgb color-mix to support dynamic themes */
+.glass-panel {
+  background: color-mix(in srgb, var(--color-pine-card, #487164) 95%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-pine-border, #2E5E49) 75%, transparent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.glass-panel-heavy {
+  background: color-mix(in srgb, var(--color-pine-bar, #1A3A32) 98%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-pine-border, #2E5E49) 85%, transparent);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* High Contrast mode refinements */
+.high-contrast {
+  --text-pine-heading: #ffffff !important;
+  --text-pine-body: #e2e8f0 !important;
+  text-rendering: optimizeLegibility;
+}
+
+.high-contrast h1, 
+.high-contrast h2, 
+.high-contrast h3, 
+.high-contrast h4 {
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Global text enhancement for readability */
+@layer base {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-weight: var(--font-weight-body, 400);
+  }
+}
+
+.text-sharp {
+  text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+
+/* Glow gradient rotation animation */
+@keyframes borderGlowRotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.neon-border-glow {
+  position: relative;
+}
+
+.neon-border-glow::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  z-index: -1;
+  background: linear-gradient(270deg, #01796F, #51A773, #2A6041, #D4A53A);
+  background-size: 400% 400%;
+  animation: borderGlowRotate 6s ease infinite;
+  border-radius: 9px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.neon-border-glow:hover::after {
+  opacity: 1;
+}
+
+/* Smooth Infinite Ticker marquee */
+@keyframes marquee {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.ticker-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ticker-content {
+  display: inline-block;
+  animation: marquee 150s linear infinite;
+  padding-left: 100%;
+}
+
+.ticker-content:hover {
+  animation-play-state: paused;
+}
+
+/* Desktop-only custom cursor hide */
+@media (min-width: 1024px) {
+  body.custom-cursor-enabled {
+    cursor: none;
+  }
+  body.custom-cursor-enabled a,
+  body.custom-cursor-enabled button,
+  body.custom-cursor-enabled [role="button"],
+  body.custom-cursor-enabled input,
+  body.custom-cursor-enabled select,
+  body.custom-cursor-enabled textarea {
+    cursor: none;
+  }
+}
+
+/* HIGH FIDELITY UNIFIED PRINTING STYLESHEET */
+@media print {
+  /* Set pure white print surface with zero offsets */
+  html, body {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    font-size: 11pt !important;
+  }
+
+  /* Universal element visibility lock */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Expose specific print report and receipt channels */
+  .print-receipt-area, .print-receipt-area *,
+  .print-report-area, .print-report-area * {
+    visibility: visible !important;
+  }
+
+  /* Position absolute layouts to completely occupy single page grids */
+  .print-receipt-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: 1px solid #000000 !important;
+    padding: 24px !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .print-report-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Table styling adjustments for printers */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+
+  th, td {
+    border: 1px solid #666666 !important;
+    color: #000000 !important;
+    padding: 4px 6px !important;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+  }
+
+  /* Force browsers to output background colors/borders correctly */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely suppress scrollbars, background layers and interactive markers */
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  .no-print, .print\:hidden {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Primary Landing Page -->
+  <url>
+    <loc>https://ais-pre-oiorzfvyufjn3te2lqqahj-998979640292.asia-southeast1.run.app/</loc>
+    <lastmod>2026-06-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Anchor Section: Namaz Timings -->
+  <url>
+    <loc>https://ais-pre-oiorzfvyufjn3te2lqqahj-998979640292.asia-southeast1.run.app/#namaz-timings-section</loc>
+    <lastmod>2026-06-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Anchor Section: History -->
+  <url>
+    <loc>https://ais-pre-oiorzfvyufjn3te2lqqahj-998979640292.asia-southeast1.run.app/#history-section</loc>
+    <lastmod>2026-06-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Anchor Section: Scholars & Imams -->
+  <url>
+    <loc>https://ais-pre-oiorzfvyufjn3te2lqqahj-998979640292.asia-southeast1.run.app/#religious-scholars-section</loc>
+    <lastmod>2026-06-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Anchor Section: Activities -->
+  <url>
+    <loc>https://ais-pre-oiorzfvyufjn3te2lqqahj-998979640292.asia-southeast1.run.app/#activities-section</loc>
+    <lastmod>2026-06-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Anchor Section: Location -->
+  <url>
+    <loc>https://ais-pre-oiorzfvyufjn3te2lqqahj-998979640292.asia-southeast1.run.app/#location-section</loc>
+    <lastmod>2026-06-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Anchor Section: Financial Ledger -->
+  <url>
+    <loc>https://ais-pre-oiorzfvyufjn3te2lqqahj-998979640292.asia-southeast1.run.app/#financials-section</loc>
+    <lastmod>2026-06-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+</urlset>

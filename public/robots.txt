@@ -1,0 +1,6 @@
+# robots.txt for Masjid Al-Habib Noorani Wah Cantt
+User-agent: *
+Allow: /
+
+# Sitemap Location
+Sitemap: https://ais-pre-oiorzfvyufjn3te2lqqahj-998979640292.asia-southeast1.run.app/sitemap.xml
