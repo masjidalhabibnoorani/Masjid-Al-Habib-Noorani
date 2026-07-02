@@ -231,13 +231,22 @@ export default function AdminPortal({
   });
 
   // Bulk financial creation forms
-  const [newMemberForm, setNewMemberForm] = useState({
+  const [newMemberForm, setNewMemberForm] = useState<{
+    fundId: string;
+    name: string;
+    phone: string;
+    requiredAmount: number;
+    remainingPrevious: number;
+    paidPrevious: number;
+    targetSNo?: number | '';
+  }>({
     fundId: 'masjid-fund',
     name: '',
     phone: '',
     requiredAmount: 12000,
     remainingPrevious: 0,
-    paidPrevious: 0
+    paidPrevious: 0,
+    targetSNo: ''
   });
 
   const [newTransactionForm, setNewTransactionForm] = useState({
@@ -587,7 +596,40 @@ export default function AdminPortal({
       paidPrevious: Number(newMemberForm.paidPrevious)
     };
 
-    const updated = [...members, m];
+    let updated = [...members];
+    const targetSNo = Number(newMemberForm.targetSNo);
+
+    if (targetSNo && targetSNo > 0) {
+      // Find current members of this fund
+      const currentFundM = members.filter(item => item.fundId === newMemberForm.fundId);
+      if (targetSNo <= currentFundM.length) {
+        // Find the member currently at that position (0-indexed)
+        const targetMember = currentFundM[targetSNo - 1];
+        const globalIndex = members.findIndex(item => item.id === targetMember.id);
+        if (globalIndex !== -1) {
+          updated.splice(globalIndex, 0, m);
+        } else {
+          updated.push(m);
+        }
+      } else {
+        // Append after the last member of this fund
+        const lastIndex = members.map((item, i) => item.fundId === newMemberForm.fundId ? i : -1).reduce((max, cur) => cur > -1 ? cur : max, -1);
+        if (lastIndex !== -1) {
+          updated.splice(lastIndex + 1, 0, m);
+        } else {
+          updated.push(m);
+        }
+      }
+    } else {
+      // Append after the last member of this specific fund
+      const lastIndex = members.map((item, i) => item.fundId === newMemberForm.fundId ? i : -1).reduce((max, cur) => cur > -1 ? cur : max, -1);
+      if (lastIndex !== -1) {
+        updated.splice(lastIndex + 1, 0, m);
+      } else {
+        updated.push(m);
+      }
+    }
+
     logAudit('ADD', `Fund Member Registered`, m.id, '', JSON.stringify(m));
     setMembers(updated);
     PortalDatabase.set('members', updated);
@@ -599,7 +641,8 @@ export default function AdminPortal({
       phone: '',
       requiredAmount: 12000,
       remainingPrevious: 0,
-      paidPrevious: 0
+      paidPrevious: 0,
+      targetSNo: ''
     });
   };
 
@@ -2327,6 +2370,23 @@ export default function AdminPortal({
                             className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg"
                           />
                         </div>
+                      </div>
+
+                      <div className="bg-amber-950/15 border border-amber-500/10 p-3.5 rounded-xl space-y-1">
+                        <label className="block text-xs uppercase text-amber-400 font-bold">
+                          Target Serial Number (S.No / Tarteeb Number) - Optional
+                        </label>
+                        <p className="text-[10px] text-zinc-400 leading-relaxed">
+                          Agar aap is member ko darmiyan me kisi khas number par rakhna chahte hain (e.g. 76), to yahan likhein. Purana 76 aur us ke baad wale automatic 1 number aage ho jayenge! Khali chorne par ye aakhir me add ho ga.
+                        </p>
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="e.g. 76 (Khali chorne par aakhir me add ho ga)"
+                          value={newMemberForm.targetSNo || ''}
+                          onChange={(e) => setNewMemberForm({ ...newMemberForm, targetSNo: e.target.value ? Number(e.target.value) : '' })}
+                          className="w-full bg-pine-bar/60 border border-amber-500/20 py-2 px-3 text-xs text-amber-200 rounded-lg focus:outline-none focus:border-amber-500/50 font-mono"
+                        />
                       </div>
                       
                       {/* Conditionally show Previous Dues for Masjid and Bazm only */}

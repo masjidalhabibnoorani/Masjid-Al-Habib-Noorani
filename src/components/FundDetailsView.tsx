@@ -3563,6 +3563,7 @@ function FixedFundRegister({
     remainingPrevious?: number;
     paidPrevious?: number;
     paidPreviousDate?: string;
+    targetSNo?: number;
   } | null>(null);
 
   const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
@@ -3823,7 +3824,40 @@ function FixedFundRegister({
         paidPreviousDate: activeMemberEdit.paidPreviousDate || ''
       };
 
-      const updatedList = [...members, newM];
+      let updatedList = [...members];
+      const targetSNo = activeMemberEdit.targetSNo;
+      
+      if (targetSNo && targetSNo > 0) {
+        // Find current members of this fund
+        const currentFundM = members.filter(m => m.fundId === fund.id);
+        if (targetSNo <= currentFundM.length) {
+          // Find the member currently at that position (0-indexed)
+          const targetMember = currentFundM[targetSNo - 1];
+          const globalIndex = members.findIndex(m => m.id === targetMember.id);
+          if (globalIndex !== -1) {
+            updatedList.splice(globalIndex, 0, newM);
+          } else {
+            updatedList.push(newM);
+          }
+        } else {
+          // If targetSNo is larger than the count, place it after the last member of this fund
+          const lastIndex = members.map((m, i) => m.fundId === fund.id ? i : -1).reduce((max, cur) => cur > -1 ? cur : max, -1);
+          if (lastIndex !== -1) {
+            updatedList.splice(lastIndex + 1, 0, newM);
+          } else {
+            updatedList.push(newM);
+          }
+        }
+      } else {
+        // Append after the last member of this specific fund, keeping groups unified
+        const lastIndex = members.map((m, i) => m.fundId === fund.id ? i : -1).reduce((max, cur) => cur > -1 ? cur : max, -1);
+        if (lastIndex !== -1) {
+          updatedList.splice(lastIndex + 1, 0, newM);
+        } else {
+          updatedList.push(newM);
+        }
+      }
+
       setMembers(updatedList);
       PortalDatabase.set('members', updatedList);
       logAudit('ADD', 'Register Contributor Profile', newM.id, '', JSON.stringify(newM));
@@ -4653,6 +4687,25 @@ function FixedFundRegister({
                   />
                 </div>
               </div>
+
+              {!activeMemberEdit.memberId && (
+                <div className="bg-amber-950/15 border border-amber-500/10 p-3.5 rounded-xl space-y-1">
+                  <label className="block text-[11px] uppercase tracking-wider text-amber-400 font-bold">
+                    Target Serial Number (S.No / Tarteeb Number) - Optional
+                  </label>
+                  <p className="text-[10px] text-zinc-400 leading-relaxed">
+                    Agar aap is member ko darmiyan me kisi khas number par rakhna chahte hain (e.g. 76), to yahan likhein. Purana 76 aur us ke baad wale automatic 1 number aage ho jayenge! Khali chorne par ye aakhir me add ho ga.
+                  </p>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 76 (Khali chorne par aakhir me add ho ga)"
+                    value={activeMemberEdit.targetSNo || ''}
+                    onChange={(e) => setActiveMemberEdit({ ...activeMemberEdit, targetSNo: e.target.value ? Number(e.target.value) : undefined })}
+                    className="w-full bg-pine-bar/60 border border-amber-500/20 py-2 px-3 text-xs text-amber-200 rounded-lg focus:outline-none focus:border-amber-500/50 mt-1 font-mono"
+                  />
+                </div>
+              )}
 
               {/* Configure previous totals inside form as optional settings (Only for Masjid/Bazm) */}
               {(fund.type === 'masjid' || fund.type === 'bazm') && (
