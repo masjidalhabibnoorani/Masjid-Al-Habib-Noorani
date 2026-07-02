@@ -3740,9 +3740,11 @@ function FixedFundRegister({
       paidPreviousDate: cellEditPrevDate
     };
 
-    const updatedList = members.map(m => m.id === mId ? updated : m);
-    setMembers(updatedList);
-    PortalDatabase.set('members', updatedList);
+    setMembers(prevMembers => {
+      const updatedList = prevMembers.map(m => m.id === mId ? updated : m);
+      PortalDatabase.set('members', updatedList);
+      return updatedList;
+    });
     logAudit('EDIT', 'On-Sheet Adjust Previous Dues', mId, JSON.stringify(original), JSON.stringify(updated));
     setActiveCellEdit(null);
   };
@@ -3807,9 +3809,11 @@ function FixedFundRegister({
         paidPreviousDate: activeMemberEdit.paidPreviousDate || ''
       };
 
-      const updatedList = members.map(m => m.id === mId ? updated : m);
-      setMembers(updatedList);
-      PortalDatabase.set('members', updatedList);
+      setMembers(prevMembers => {
+        const updatedList = prevMembers.map(m => m.id === mId ? updated : m);
+        PortalDatabase.set('members', updatedList);
+        return updatedList;
+      });
       logAudit('EDIT', 'Modify Contributor Profile', mId, JSON.stringify(original), JSON.stringify(updated));
     } else {
       // Create Profile
@@ -3824,42 +3828,43 @@ function FixedFundRegister({
         paidPreviousDate: activeMemberEdit.paidPreviousDate || ''
       };
 
-      let updatedList = [...members];
-      const targetSNo = activeMemberEdit.targetSNo;
-      
-      if (targetSNo && targetSNo > 0) {
-        // Find current members of this fund
-        const currentFundM = members.filter(m => m.fundId === fund.id);
-        if (targetSNo <= currentFundM.length) {
-          // Find the member currently at that position (0-indexed)
-          const targetMember = currentFundM[targetSNo - 1];
-          const globalIndex = members.findIndex(m => m.id === targetMember.id);
-          if (globalIndex !== -1) {
-            updatedList.splice(globalIndex, 0, newM);
+      setMembers(prevMembers => {
+        let updatedList = [...prevMembers];
+        const targetSNo = activeMemberEdit.targetSNo;
+        
+        if (targetSNo && targetSNo > 0) {
+          // Find current members of this fund
+          const currentFundM = prevMembers.filter(m => m.fundId === fund.id);
+          if (targetSNo <= currentFundM.length) {
+            // Find the member currently at that position (0-indexed)
+            const targetMember = currentFundM[targetSNo - 1];
+            const globalIndex = prevMembers.findIndex(m => m.id === targetMember.id);
+            if (globalIndex !== -1) {
+              updatedList.splice(globalIndex, 0, newM);
+            } else {
+              updatedList.push(newM);
+            }
           } else {
-            updatedList.push(newM);
+            // If targetSNo is larger than the count, place it after the last member of this fund
+            const lastIndex = prevMembers.map((m, i) => m.fundId === fund.id ? i : -1).reduce((max, cur) => cur > -1 ? cur : max, -1);
+            if (lastIndex !== -1) {
+              updatedList.splice(lastIndex + 1, 0, newM);
+            } else {
+              updatedList.push(newM);
+            }
           }
         } else {
-          // If targetSNo is larger than the count, place it after the last member of this fund
-          const lastIndex = members.map((m, i) => m.fundId === fund.id ? i : -1).reduce((max, cur) => cur > -1 ? cur : max, -1);
+          // Append after the last member of this specific fund, keeping groups unified
+          const lastIndex = prevMembers.map((m, i) => m.fundId === fund.id ? i : -1).reduce((max, cur) => cur > -1 ? cur : max, -1);
           if (lastIndex !== -1) {
             updatedList.splice(lastIndex + 1, 0, newM);
           } else {
             updatedList.push(newM);
           }
         }
-      } else {
-        // Append after the last member of this specific fund, keeping groups unified
-        const lastIndex = members.map((m, i) => m.fundId === fund.id ? i : -1).reduce((max, cur) => cur > -1 ? cur : max, -1);
-        if (lastIndex !== -1) {
-          updatedList.splice(lastIndex + 1, 0, newM);
-        } else {
-          updatedList.push(newM);
-        }
-      }
-
-      setMembers(updatedList);
-      PortalDatabase.set('members', updatedList);
+        PortalDatabase.set('members', updatedList);
+        return updatedList;
+      });
       logAudit('ADD', 'Register Contributor Profile', newM.id, '', JSON.stringify(newM));
     }
 
@@ -3875,14 +3880,17 @@ function FixedFundRegister({
     const original = members.find(m => m.id === memberToDelete);
     if (!original) return;
     
-    const updatedMembers = members.filter(m => m.id !== memberToDelete);
-    const updatedTx = transactions.filter(t => t.memberId !== memberToDelete);
+    setMembers(prevMembers => {
+      const updatedMembers = prevMembers.filter(m => m.id !== memberToDelete);
+      PortalDatabase.set('members', updatedMembers);
+      return updatedMembers;
+    });
 
-    setMembers(updatedMembers);
-    PortalDatabase.set('members', updatedMembers);
-
-    setTransactions(updatedTx);
-    PortalDatabase.set('transactions', updatedTx);
+    setTransactions(prevTx => {
+      const updatedTx = prevTx.filter(t => t.memberId !== memberToDelete);
+      PortalDatabase.set('transactions', updatedTx);
+      return updatedTx;
+    });
 
     logAudit('DELETE', 'Purged Contributor Profile', memberToDelete, JSON.stringify(original), 'MEMBER PURGED');
     setMemberToDelete(null);
@@ -5122,9 +5130,11 @@ function OtherFundRegister(props: any) {
       amount: Number(newAmount),
       details: newDetails
     };
-    const updated = [...others, entry];
-    setOthers(updated);
-    PortalDatabase.set('other_fund_entries', updated);
+    setOthers(prevOthers => {
+      const updated = [...prevOthers, entry];
+      PortalDatabase.set('other_fund_entries', updated);
+      return updated;
+    });
     logAudit('ADD', 'Direct Other Inflow Donation Logged', entry.id, '', JSON.stringify(entry));
     
     // reset form fields
@@ -5154,9 +5164,11 @@ function OtherFundRegister(props: any) {
     const x = others.find(item => item.id === id);
     if (!x) return;
     if (window.confirm(`Aap donation entry [${x.source} - ${x.amount} Rs] ko delete karna chahte hain?`)) {
-      const updated = others.filter(item => item.id !== id);
-      setOthers(updated);
-      PortalDatabase.set('other_fund_entries', updated);
+      setOthers(prevOthers => {
+        const updated = prevOthers.filter(item => item.id !== id);
+        PortalDatabase.set('other_fund_entries', updated);
+        return updated;
+      });
       logAudit('DELETE', 'Other Donation Entry', id, JSON.stringify(x), 'DELETED');
     }
   };
@@ -5164,9 +5176,11 @@ function OtherFundRegister(props: any) {
   const handleSaveEdit = (edited: OtherFundEntry) => {
     const original = others.find(item => item.id === edited.id);
     if (!original) return;
-    const updated = others.map(item => item.id === edited.id ? edited : item);
-    setOthers(updated);
-    PortalDatabase.set('other_fund_entries', updated);
+    setOthers(prevOthers => {
+      const updated = prevOthers.map(item => item.id === edited.id ? edited : item);
+      PortalDatabase.set('other_fund_entries', updated);
+      return updated;
+    });
     logAudit('EDIT', 'Other Donation Entry', edited.id, JSON.stringify(original), JSON.stringify(edited));
     setEditingEntry(null);
   };
@@ -5498,9 +5512,11 @@ function ExpensesRegister({
       date: newExpDate,
       details: newExpDetails
     };
-    const updated = [...expenses, exp];
-    setExpenses(updated);
-    PortalDatabase.set('expenses', updated);
+    setExpenses(prevExpenses => {
+      const updated = [...prevExpenses, exp];
+      PortalDatabase.set('expenses', updated);
+      return updated;
+    });
     logAudit('ADD', 'Direct Operational Spend Registered Directly', exp.id, '', JSON.stringify(exp));
 
     // reset fields
@@ -5529,9 +5545,11 @@ function ExpensesRegister({
     const x = expenses.find(item => item.id === id);
     if (!x) return;
     if (window.confirm(`Aap expense record [${x.name} - ${x.amount} Rs] ko delete karna chahte hain?`)) {
-      const updated = expenses.filter(item => item.id !== id);
-      setExpenses(updated);
-      PortalDatabase.set('expenses', updated);
+      setExpenses(prevExpenses => {
+        const updated = prevExpenses.filter(item => item.id !== id);
+        PortalDatabase.set('expenses', updated);
+        return updated;
+      });
       logAudit('DELETE', 'Expense Entry', id, JSON.stringify(x), 'DELETED');
     }
   };
@@ -5539,9 +5557,11 @@ function ExpensesRegister({
   const handleSaveEditExpense = (edited: Expense) => {
     const original = expenses.find(item => item.id === edited.id);
     if (!original) return;
-    const updated = expenses.map(item => item.id === edited.id ? edited : item);
-    setExpenses(updated);
-    PortalDatabase.set('expenses', updated);
+    setExpenses(prevExpenses => {
+      const updated = prevExpenses.map(item => item.id === edited.id ? edited : item);
+      PortalDatabase.set('expenses', updated);
+      return updated;
+    });
     logAudit('EDIT', 'Expense Entry', edited.id, JSON.stringify(original), JSON.stringify(edited));
     setEditingExpense(null);
   };
