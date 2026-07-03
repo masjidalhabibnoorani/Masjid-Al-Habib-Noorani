@@ -89,7 +89,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 const debounceTimers = new Map<string, any>();
 const activeSaves = { count: 0 };
 
-function isCloudBypassed(): boolean {
+export function isCloudBypassed(): boolean {
   try {
     const bypassUntil = localStorage.getItem('masjid_habib_cloud_bypass_until');
     if (bypassUntil) {
@@ -104,6 +104,14 @@ function isCloudBypassed(): boolean {
     // ignore
   }
   return false;
+}
+
+export function clearCloudBypass(): void {
+  try {
+    localStorage.removeItem('masjid_habib_cloud_bypass_until');
+  } catch (e) {
+    // ignore
+  }
 }
 
 function setCloudBypass() {

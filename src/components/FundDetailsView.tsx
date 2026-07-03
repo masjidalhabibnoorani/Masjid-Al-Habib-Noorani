@@ -1730,14 +1730,14 @@ export default function FundDetailsView({
                         </p>
                       ) : (
                         <div className="overflow-x-auto max-h-80 overflow-y-auto">
-                          <table className="w-full text-xs text-left text-pine-text-body font-mono">
+                          <table className="w-full text-[10px] sm:text-xs text-left text-pine-text-body font-mono">
                             <thead className="text-pine-text-muted border-b border-pine-border/40 pb-2">
                               <tr>
-                                <th className="pb-2 font-semibold">Name / نام</th>
-                                <th className="pb-2 font-semibold text-center">Required / کل واجب</th>
-                                <th className="pb-2 font-semibold text-center">Paid / ادا شدہ</th>
-                                <th className="pb-2 font-semibold text-center">Remaining / بقایا</th>
-                                <th className="pb-2 font-semibold text-right">Phone / فون نمبر</th>
+                                <th className="pb-2 px-1 sm:px-2 font-semibold">Name / نام</th>
+                                <th className="pb-2 px-1 sm:px-2 font-semibold text-center">Required / کل واجب</th>
+                                <th className="pb-2 px-1 sm:px-2 font-semibold text-center">Paid / ادا شدہ</th>
+                                <th className="pb-2 px-1 sm:px-2 font-semibold text-center">Remaining / بقایا</th>
+                                <th className="pb-2 px-1 sm:px-2 font-semibold text-right">Phone / فون نمبر</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-pine-border/20">
@@ -1747,14 +1747,14 @@ export default function FundDetailsView({
                                 const remaining = Math.max(0, m.requiredAmount - paidSum);
                                 return (
                                   <tr key={m.id} className="hover:bg-pine-hover/10">
-                                    <td className="py-2 font-sans font-medium text-white flex items-center gap-1.5">
-                                      <span className="text-[10px] text-zinc-500 font-mono">#{index + 1}</span>
+                                    <td className="py-2 px-1 sm:px-2 font-sans font-medium text-white flex items-center gap-1.5">
+                                      <span className="text-[9px] text-zinc-500 font-mono">#{index + 1}</span>
                                       {m.name}
                                     </td>
-                                    <td className="py-2 text-center text-zinc-300">{m.requiredAmount.toLocaleString()} Rs</td>
-                                    <td className="py-2 text-center text-emerald-400 font-bold">{paidSum.toLocaleString()} Rs</td>
-                                    <td className="py-2 text-center text-rose-400">{remaining.toLocaleString()} Rs</td>
-                                    <td className="py-2 text-right text-zinc-400">{m.phone || 'No Phone'}</td>
+                                    <td className="py-2 px-1 sm:px-2 text-center text-zinc-300">{m.requiredAmount.toLocaleString()} Rs</td>
+                                    <td className="py-2 px-1 sm:px-2 text-center text-emerald-400 font-bold">{paidSum.toLocaleString()} Rs</td>
+                                    <td className="py-2 px-1 sm:px-2 text-center text-rose-400">{remaining.toLocaleString()} Rs</td>
+                                    <td className="py-2 px-1 sm:px-2 text-right text-zinc-400">{m.phone || 'No Phone'}</td>
                                   </tr>
                                 );
                               })}
@@ -1843,13 +1843,13 @@ export default function FundDetailsView({
               <div className="glass-panel p-6 rounded-2xl border border-pine-border flex flex-col justify-between">
                 <h3 className="text-sm font-button uppercase tracking-wider text-white mb-6">Financial Ledger Ledger</h3>
                 <div className="overflow-x-auto h-64">
-                  <table className="w-full text-xs text-left text-pine-text-body font-mono">
+                  <table className="w-full text-[10px] sm:text-xs text-left text-pine-text-body font-mono">
                     <thead>
                       <tr className="border-b border-pine-border text-pine-text-muted pb-2">
-                        <th className="pb-2">Chronology</th>
-                        <th className="pb-2">Inflow (Achieved)</th>
-                        <th className="pb-2">Outflow (Expenses)</th>
-                        <th className="pb-2">Net Status</th>
+                        <th className="pb-2 px-1 sm:px-2">Chronology</th>
+                        <th className="pb-2 px-1 sm:px-2">Inflow (Achieved)</th>
+                        <th className="pb-2 px-1 sm:px-2">Outflow (Expenses)</th>
+                        <th className="pb-2 px-1 sm:px-2">Net Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-pine-border/40">
@@ -1879,10 +1879,10 @@ export default function FundDetailsView({
                         const statementNet = totalInflow - monthExpenses;
                         return (
                           <tr key={m} className="hover:bg-pine-hover/5">
-                            <td className="py-2.5 font-sans font-medium">{m}</td>
-                            <td className="py-2.5 text-emerald-450">+{totalInflow.toLocaleString()} Rs</td>
-                            <td className="py-2.5 text-rose-400">-{monthExpenses.toLocaleString()} Rs</td>
-                            <td className={`py-2.5 font-bold ${statementNet >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
+                            <td className="py-2 px-1 sm:px-2 font-sans font-medium">{m}</td>
+                            <td className="py-2 px-1 sm:px-2 text-emerald-450">+{totalInflow.toLocaleString()} Rs</td>
+                            <td className="py-2 px-1 sm:px-2 text-rose-400">-{monthExpenses.toLocaleString()} Rs</td>
+                            <td className={`py-2 px-1 sm:px-2 font-bold ${statementNet >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
                               {statementNet >= 0 ? '+' : ''}{statementNet.toLocaleString()} Rs
                             </td>
                           </tr>
@@ -5337,27 +5337,27 @@ function OtherFundRegister(props: any) {
 
       {/* Spreadsheet List */}
       <div className="overflow-x-auto rounded-xl border border-pine-border bg-pine-bar/25">
-        <table className="w-full text-left font-sans text-xs border-collapse">
+        <table className="w-full text-left font-sans text-[10px] sm:text-xs border-collapse">
           <thead>
-            <tr className="bg-pine-bar text-pine-text-heading font-button text-[10px] uppercase tracking-wider border-b border-pine-border">
-              <th className="py-3.5 px-5">Receipt Date</th>
-              <th className="py-3.5 px-5">Source / Contributor Name</th>
-              <th className="py-3.5 px-5 text-right">Registered Amount</th>
-              <th className="py-3.5 px-5">Reference Details</th>
+            <tr className="bg-pine-bar text-pine-text-heading font-button text-[9px] sm:text-[10px] uppercase tracking-wider border-b border-pine-border">
+              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Receipt Date</th>
+              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Source / Contributor Name</th>
+              <th className="py-2 px-2 sm:py-3.5 sm:px-5 text-right font-semibold">Registered Amount</th>
+              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Reference Details</th>
               {isFundAdminUnlocked && (
-                <th className="py-3.5 px-5 text-center w-28">Actions</th>
+                <th className="py-2 px-2 sm:py-3.5 sm:px-5 text-center w-28">Actions</th>
               )}
             </tr>
           </thead>
           <tbody className="divide-y divide-pine-border/40 font-mono">
             {filteredOthers.map((o) => (
               <tr key={o.id} className="hover:bg-pine-hover/5">
-                <td className="py-3.5 px-5 text-pine-text-muted">{o.date}</td>
-                <td className="py-3.5 px-5 font-sans font-semibold text-white">{o.source}</td>
-                <td className="py-3.5 px-5 text-right font-bold text-pine-success">{o.amount.toLocaleString()} Rs</td>
-                <td className="py-3.5 px-5 text-pine-text-body font-sans text-xs max-w-sm truncate">{o.details}</td>
+                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-pine-text-muted">{o.date}</td>
+                <td className="py-2 px-2 sm:py-3.5 sm:px-5 font-sans font-semibold text-white">{o.source}</td>
+                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-right font-bold text-pine-success">{o.amount.toLocaleString()} Rs</td>
+                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-pine-text-body font-sans text-xs max-w-sm truncate">{o.details}</td>
                 {isFundAdminUnlocked && (
-                  <td className="py-2.5 px-5 text-center">
+                  <td className="py-1.5 px-2 sm:py-2.5 sm:px-5 text-center">
                     <div className="inline-flex items-center gap-1">
                       <button
                         type="button"
@@ -5716,27 +5716,27 @@ function ExpensesRegister({
 
       {/* Expense ledger layout spreadsheet */}
       <div className="overflow-x-auto rounded-xl border border-pine-border bg-pine-bar/25">
-        <table className="w-full text-left font-sans text-xs border-collapse">
+        <table className="w-full text-left font-sans text-[10px] sm:text-xs border-collapse">
           <thead>
-            <tr className="bg-pine-bar text-pine-text-heading font-button text-[10px] uppercase tracking-wider border-b border-pine-border">
-              <th className="py-3.5 px-5">Debit Date</th>
-              <th className="py-3.5 px-5">Expenditure Name</th>
-              <th className="py-3.5 px-5 text-right">Debit Amount</th>
-              <th className="py-3.5 px-5">Reference/Voucher Details</th>
+            <tr className="bg-pine-bar text-pine-text-heading font-button text-[9px] sm:text-[10px] uppercase tracking-wider border-b border-pine-border">
+              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Debit Date</th>
+              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Expenditure Name</th>
+              <th className="py-2 px-2 sm:py-3.5 sm:px-5 text-right font-semibold">Debit Amount</th>
+              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Reference/Voucher Details</th>
               {isFundAdminUnlocked && (
-                <th className="py-3.5 px-5 text-center w-28">Actions</th>
+                <th className="py-2 px-2 sm:py-3.5 sm:px-5 text-center w-28">Actions</th>
               )}
             </tr>
           </thead>
           <tbody className="divide-y divide-pine-border/40 font-mono">
             {filteredExpenses.map((e) => (
               <tr key={e.id} className="hover:bg-pine-hover/5">
-                <td className="py-3.5 px-5 text-pine-text-muted">{e.date}</td>
-                <td className="py-3.5 px-5 font-sans font-semibold text-white">{e.name}</td>
-                <td className="py-3.5 px-5 text-right font-bold text-rose-450">{e.amount.toLocaleString()} Rs</td>
-                <td className="py-3.5 px-5 text-pine-text-body font-sans text-xs max-w-sm truncate">{e.details}</td>
+                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-pine-text-muted">{e.date}</td>
+                <td className="py-2 px-2 sm:py-3.5 sm:px-5 font-sans font-semibold text-white">{e.name}</td>
+                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-right font-bold text-rose-450">{e.amount.toLocaleString()} Rs</td>
+                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-pine-text-body font-sans text-xs max-w-sm truncate">{e.details}</td>
                 {isFundAdminUnlocked && (
-                  <td className="py-2.5 px-5 text-center">
+                  <td className="py-1.5 px-2 sm:py-2.5 sm:px-5 text-center">
                     <div className="inline-flex items-center gap-1">
                       <button
                         type="button"
@@ -5971,38 +5971,38 @@ function CommitmentsRegister({
 
       <div className="glass-panel rounded-2xl border border-pine-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left font-sans text-sm">
+          <table className="w-full text-left font-sans text-xs sm:text-sm">
             <thead>
               <tr className="bg-black/40 border-b border-pine-border text-pine-text-body">
-                <th className="py-4 px-6 font-semibold w-12">#</th>
-                <th className="py-4 px-6 font-semibold">Name & Contact</th>
-                <th className="py-4 px-6 font-semibold text-right">Amount Due</th>
-                <th className="py-4 px-6 font-semibold">Details (Note)</th>
+                <th className="py-2 px-3 sm:py-4 sm:px-6 font-semibold w-12">#</th>
+                <th className="py-2 px-3 sm:py-4 sm:px-6 font-semibold">Name & Contact</th>
+                <th className="py-2 px-3 sm:py-4 sm:px-6 font-semibold text-right">Amount Due</th>
+                <th className="py-2 px-3 sm:py-4 sm:px-6 font-semibold">Details (Note)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {commitments.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-pine-text-muted text-sm italic">
+                  <td colSpan={4} className="py-8 sm:py-12 text-center text-pine-text-muted text-xs sm:text-sm italic">
                     No active commitments found for this fund.
                   </td>
                 </tr>
               ) : (
                 commitments.map((c, i) => (
                   <tr key={c.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="py-4 px-6 font-mono text-zinc-500">{i + 1}</td>
-                    <td className="py-4 px-6">
+                    <td className="py-2 px-3 sm:py-4 sm:px-6 font-mono text-zinc-500">{i + 1}</td>
+                    <td className="py-2 px-3 sm:py-4 sm:px-6">
                       <div 
-                        className="font-bold text-white mb-0.5 cursor-pointer hover:text-pine-btn-hover transition-colors underline decoration-dotted"
+                        className="font-bold text-white mb-0.5 cursor-pointer hover:text-pine-btn-hover transition-colors underline decoration-dotted text-xs sm:text-sm"
                         onClick={() => handlePrintNotice(c)}
                         title="Click to print notice"
                       >
                         {c.name}
                       </div>
-                      <div className="text-xs font-mono text-zinc-400">{c.phone || 'No phone provided'}</div>
+                      <div className="text-[10px] sm:text-xs font-mono text-zinc-400">{c.phone || 'No phone provided'}</div>
                     </td>
-                    <td className="py-4 px-6 text-right font-mono font-bold text-rose-400">{c.amountDue.toLocaleString()} Rs</td>
-                    <td className="py-4 px-6 text-zinc-400 text-xs" title={c.notes}>{c.notes || '-'}</td>
+                    <td className="py-2 px-3 sm:py-4 sm:px-6 text-right font-mono font-bold text-rose-400 text-xs sm:text-sm">{c.amountDue.toLocaleString()} Rs</td>
+                    <td className="py-2 px-3 sm:py-4 sm:px-6 text-zinc-400 text-[10px] sm:text-xs max-w-[120px] sm:max-w-none truncate" title={c.notes}>{c.notes || '-'}</td>
                   </tr>
                 ))
               )}

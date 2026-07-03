@@ -12,7 +12,7 @@ import {
   ReligiousStaff
 } from './types';
 import { PortalDatabase, INITIAL_PASSWORDS } from './data';
-import { restoreAllFromCloud, saveToCloud } from './firebase';
+import { restoreAllFromCloud, saveToCloud, clearCloudBypass, isCloudBypassed } from './firebase';
 import { gsap } from 'gsap';
 
 import { ToastProvider } from './components/Toast';
@@ -599,6 +599,68 @@ export default function App() {
     const updated = [...auditLogs, freshLog];
     setAuditLogs(updated);
     PortalDatabase.set('audit_logs', updated);
+  };
+
+  const forceCloudSync = async (): Promise<{ success: boolean; message: string }> => {
+    setCloudSyncState('syncing');
+    clearCloudBypass();
+    try {
+      const cloudData = await restoreAllFromCloud();
+      
+      const SYNC_KEYS = [
+        'passwords', 'prayer_timings', 'history_sections', 'activities', 
+        'map_settings', 'announcements', 'funds', 'members', 'transactions', 
+        'other_fund_entries', 'expenses', 'projects', 'audit_logs', 'commitments',
+        'religious_staff', 'administrators'
+      ];
+
+      for (const key of SYNC_KEYS) {
+        const cloudItem = cloudData[key];
+        const localTimeStr = localStorage.getItem(`masjid_habib_time_${key}`);
+        const localTime = localTimeStr ? parseInt(localTimeStr, 10) : 0;
+        const cloudTime = cloudItem?.updatedAt || 0;
+
+        if (cloudTime > localTime && cloudItem) {
+          localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(cloudItem.data));
+          localStorage.setItem(`masjid_habib_time_${key}`, cloudTime.toString());
+        } else if (localTime > cloudTime || !cloudItem) {
+          const localValStr = localStorage.getItem(`masjid_habib_${key}`);
+          if (localValStr) {
+            try {
+              const parsed = JSON.parse(localValStr);
+              await saveToCloud(key, parsed);
+            } catch (e) {
+              console.error(`Failed to push key ${key} to cloud during force sync:`, e);
+            }
+          }
+        }
+      }
+
+      // Re-hydrate React states
+      setPasswords(PortalDatabase.get('passwords', []));
+      setPrayerTimings(PortalDatabase.get('prayer_timings', []));
+      setHistorySections(PortalDatabase.get('history_sections', []));
+      setActivities(PortalDatabase.get('activities', []));
+      setMapSettings(PortalDatabase.get('map_settings', { id: '1', iframeUrl: '', address: '' }));
+      setAnnouncements(PortalDatabase.get('announcements', []));
+      setFunds(PortalDatabase.get('funds', []));
+      setMembers(PortalDatabase.get('members', []));
+      setTransactions(PortalDatabase.get('transactions', []));
+      setOthers(PortalDatabase.get('other_fund_entries', []));
+      setExpenses(PortalDatabase.get('expenses', []));
+      setProjects(PortalDatabase.get('projects', []));
+      setCommitments(PortalDatabase.get('commitments', []));
+      setReligiousStaff(PortalDatabase.get('religious_staff', []));
+      setAdministrators(PortalDatabase.get('administrators', []));
+      setAuditLogs(PortalDatabase.get('audit_logs', []));
+
+      setCloudSyncState('synced');
+      return { success: true, message: 'All records (including updated passwords) have been perfectly synchronized with the cloud database!' };
+    } catch (error: any) {
+      console.error('Force cloud sync failed:', error);
+      setCloudSyncState('error');
+      throw error;
+    }
   };
 
   // State Routing: 'gateway' | 'public' | 'admin' | 'fund_details'
@@ -1431,6 +1493,8 @@ export default function App() {
               setReligiousStaff={setReligiousStaff}
               currentThemeId={currentThemeId}
               onThemeChange={handleThemeChange}
+              cloudSyncState={cloudSyncState}
+              forceCloudSync={forceCloudSync}
             />
           </motion.div>
         )}

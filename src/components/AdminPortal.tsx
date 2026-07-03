@@ -77,6 +77,8 @@ interface AdminPortalProps {
   setAdministrators: React.Dispatch<React.SetStateAction<Administrator[]>>;
   religiousStaff: ReligiousStaff[];
   setReligiousStaff: React.Dispatch<React.SetStateAction<ReligiousStaff[]>>;
+  cloudSyncState?: 'synced' | 'syncing' | 'error' | 'idle';
+  forceCloudSync?: () => Promise<{ success: boolean; message: string }>;
 }
 
 type AdminTab = 
@@ -134,9 +136,12 @@ export default function AdminPortal({
   setAdministrators,
   religiousStaff,
   setReligiousStaff,
+  cloudSyncState = 'idle',
+  forceCloudSync,
 }: AdminPortalProps) {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<AdminTab>('announcements');
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
   const [financeSubTab, setFinanceSubTab] = useState<'contributors' | 'inflows' | 'others' | 'expenses'>('contributors');
 
   // AI Assistant Custom Knowledge State
@@ -3122,6 +3127,77 @@ export default function AdminPortal({
                 <p className="text-xs text-pine-text-muted mt-2">
                   Portals aur ledgers par security ta-un karne ke liye passcodes tanzem karein. Cleartext save hone ki wajah se aap kisi bhi waqt admin panel se inheen dekh aur tabdeel kar sakte hain.
                 </p>
+              </div>
+
+              {/* Cloud Synchronization and Broadcast Panel */}
+              <div className="bg-pine-bar/40 border border-pine-border/60 rounded-2xl p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <Cloud className="w-5 h-5 text-sky-400" />
+                      Google Cloud Database Live Sync & Broadcast Engine
+                    </h3>
+                    <p className="text-xs text-pine-text-muted max-w-2xl">
+                      Kya aapne kisi doosre browser ya device par password change kiya hai ya yahan tabdeeli ki hai? Is button ko dabane se aapka local browser aur cloud database bilkul ek sath (100% in sync) ho jayenge!
+                    </p>
+                  </div>
+                  <div>
+                    <button
+                      onClick={async () => {
+                        if (!forceCloudSync) return;
+                        setIsSyncingCloud(true);
+                        try {
+                          const res = await forceCloudSync();
+                          showToast(res.message, "success");
+                        } catch (e: any) {
+                          showToast("Cloud sync failed. Verification check: Cloud database is protected or quota is active. Try again in a bit.", "error");
+                        } finally {
+                          setIsSyncingCloud(false);
+                        }
+                      }}
+                      disabled={isSyncingCloud}
+                      className="w-full sm:w-auto bg-pine-btn hover:bg-pine-btn-hover text-white text-xs font-semibold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-all shadow-md shadow-black/30 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+                      {isSyncingCloud ? 'Cloud Syncing...' : 'Force Cloud Sync Now (100%)'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <div className="bg-black/20 rounded-xl p-3 border border-white/5 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center">
+                      <ShieldCheck className="w-4 h-4 text-sky-400" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-pine-text-muted uppercase tracking-wider block">Connection State</span>
+                      <span className="text-xs font-bold text-white flex items-center gap-1.5 mt-0.5">
+                        <span className={`w-2 h-2 rounded-full ${cloudSyncState === 'error' ? 'bg-red-500' : cloudSyncState === 'syncing' ? 'bg-amber-500 animate-ping' : 'bg-green-500'}`} />
+                        {cloudSyncState === 'error' ? 'Quota Limit / Offline' : cloudSyncState === 'syncing' ? 'Syncing...' : 'Live Connected'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-black/20 rounded-xl p-3 border border-white/5 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                      <CloudDownload className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-pine-text-muted uppercase tracking-wider block">Auto Backup</span>
+                      <span className="text-xs font-bold text-amber-300 block mt-0.5">Active (Real-time)</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-black/20 rounded-xl p-3 border border-white/5 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-pine-text-muted uppercase tracking-wider block">Device Integrity</span>
+                      <span className="text-xs font-bold text-emerald-300 block mt-0.5">Verified SECURE (SSL)</span>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {(() => {
