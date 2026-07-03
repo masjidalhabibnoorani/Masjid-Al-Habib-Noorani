@@ -387,6 +387,9 @@ export default function App() {
   };
 
   // System States (Synced from PortalDatabase / localStorage)
+  const [cloudSyncState, setCloudSyncState] = useState<'synced' | 'syncing' | 'error' | 'idle'>('idle');
+  const [hasLoadedFromCloud, setHasLoadedFromCloud] = useState<boolean>(false);
+
   const [passwords, setPasswords] = useState<ProtectedPagePassword[]>(() => 
     PortalDatabase.get('passwords', [])
   );
@@ -429,6 +432,8 @@ export default function App() {
 
   // Auto-healing Project security keys registry synchronization and system passwords healing
   useEffect(() => {
+    if (!hasLoadedFromCloud) return;
+
     let passwordsUpdated = false;
     const currentPasswords = [...passwords];
     
@@ -478,7 +483,7 @@ export default function App() {
       setPasswords(currentPasswords);
       PortalDatabase.set('passwords', currentPasswords);
     }
-  }, [projects, passwords]);
+  }, [projects, passwords, hasLoadedFromCloud]);
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => 
     PortalDatabase.get('audit_logs', [])
@@ -489,8 +494,6 @@ export default function App() {
   const [religiousStaff, setReligiousStaff] = useState<ReligiousStaff[]>(() => 
     PortalDatabase.get('religious_staff', [])
   );
-
-  const [cloudSyncState, setCloudSyncState] = useState<'synced' | 'syncing' | 'error' | 'idle'>('idle');
 
   // Load and sync from Google Cloud Firestore on startup
   useEffect(() => {
@@ -529,9 +532,23 @@ export default function App() {
       } catch (error) {
         console.error('Firebase cloud sync on startup failed:', error);
         setCloudSyncState('error');
+      } finally {
+        setHasLoadedFromCloud(true);
       }
     }
     loadCloudData();
+  }, []);
+
+  // Listen for background auto-save sync state updates
+  useEffect(() => {
+    const handleStatusChange = (e: Event) => {
+      const customEvent = e as CustomEvent<'synced' | 'syncing' | 'error' | 'idle'>;
+      setCloudSyncState(customEvent.detail);
+    };
+    window.addEventListener('cloud-sync-status', handleStatusChange);
+    return () => {
+      window.removeEventListener('cloud-sync-status', handleStatusChange);
+    };
   }, []);
 
   // Administrative Audit logging tracer

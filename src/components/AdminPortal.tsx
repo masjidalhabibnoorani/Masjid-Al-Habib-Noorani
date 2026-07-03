@@ -1472,13 +1472,26 @@ export default function AdminPortal({
                 </p>
               </div>
 
+              {/* Automatic Saving Announcement Banner */}
+              <div className="p-5 rounded-2xl border border-emerald-500/30 bg-emerald-950/15 text-emerald-300 flex flex-col md:flex-row items-start md:items-center gap-4 shadow-lg">
+                <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                  <ShieldCheck className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">✨ Real-Time Auto-Save Active (خودکار بچاؤ چالو ہے)</h4>
+                  <p className="text-[11px] text-emerald-300/80 leading-normal mt-0.5">
+                    Aap jo bhi tabdeeliyan karte hain ya delete karte hain, wo **Google Cloud Database** mein **usi waqt** automatic save ho jati hain. Aap ko koi "Push" ya "Pull" karne ki jhanjat bilkul nahi hai! Web portal khulte hi cloud database se live data khud hi load ho jata hai.
+                  </p>
+                </div>
+              </div>
+
               {/* Connection Status Panel */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-sky-500/20 bg-gradient-to-br from-pine-bar via-sky-950/5 to-pine-bar shadow-xl space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-sky-500/10 border border-sky-500/20 flex items-center justify-center">
-                        <ShieldCheck className="w-5 h-5 text-sky-400" />
+                        <Cloud className="w-5 h-5 text-sky-400" />
                       </div>
                       <div>
                         <h3 className="text-xs uppercase font-bold tracking-wider text-white">Google Cloud Integration</h3>
@@ -1486,7 +1499,7 @@ export default function AdminPortal({
                       </div>
                     </div>
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] uppercase font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" /> Cloud Online
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" /> Auto-Sync Live
                     </span>
                   </div>
 
@@ -1510,49 +1523,7 @@ export default function AdminPortal({
                     </div>
                   </div>
 
-                  {/* Actions Section */}
-                  <div className="border-t border-pine-border/30 pt-6">
-                    <h4 className="text-xs uppercase font-bold tracking-wider text-sky-300 mb-4">Manual Remote Synchronization</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <button
-                        onClick={handleCloudBackup}
-                        disabled={cloudSyncStatus === 'loading'}
-                        className="p-4 rounded-xl bg-sky-950/30 hover:bg-sky-950/50 border border-sky-500/20 hover:border-sky-400 text-left transition-all group flex flex-col justify-between"
-                      >
-                        <div className="flex items-center justify-between w-full mb-3">
-                          <span className="p-2 rounded-lg bg-sky-500/15 text-sky-400">
-                            <CloudUpload className="w-5 h-5" />
-                          </span>
-                          <span className="text-[9px] uppercase font-bold bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded">Push</span>
-                        </div>
-                        <div>
-                          <h5 className="text-xs font-bold text-white uppercase tracking-wide">Back Up local state to Cloud</h5>
-                          <p className="text-[10px] text-pine-text-muted mt-1 leading-normal">
-                            Aapka mojooda local browser record Firestore cloud database me backup ho jayega.
-                          </p>
-                        </div>
-                      </button>
 
-                      <button
-                        onClick={handleCloudRestore}
-                        disabled={cloudSyncStatus === 'loading'}
-                        className="p-4 rounded-xl bg-amber-950/30 hover:bg-amber-950/50 border border-amber-500/20 hover:border-amber-400 text-left transition-all group flex flex-col justify-between"
-                      >
-                        <div className="flex items-center justify-between w-full mb-3">
-                          <span className="p-2 rounded-lg bg-amber-500/15 text-amber-400">
-                            <CloudDownload className="w-5 h-5" />
-                          </span>
-                          <span className="text-[9px] uppercase font-bold bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded">Pull</span>
-                        </div>
-                        <div>
-                          <h5 className="text-xs font-bold text-white uppercase tracking-wide">Pull remote state from Cloud</h5>
-                          <p className="text-[10px] text-pine-text-muted mt-1 leading-normal">
-                            Cloud database se safe state download karke local browser me sync karein (replaces local).
-                          </p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
 
                   {/* Cloud Sync Logs */}
                   {cloudSyncStatus !== 'idle' && (

@@ -85,20 +85,74 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(JSON.stringify(errInfo));
 }
 
+// Track active debounce timers and in-flight cloud saving operations to optimize write quotas
+const debounceTimers = new Map<string, any>();
+const activeSaves = { count: 0 };
+
+function emitSyncStatus(status: 'synced' | 'syncing' | 'error' | 'idle') {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: status }));
+  }
+}
+
 /**
- * Saves a single key-value pair to Firestore
+ * Saves a single key-value pair to Firestore (Debounced to protect against write quotas)
  */
 export async function saveToCloud(key: string, data: any): Promise<void> {
   const path = `portal_data/${key}`;
-  try {
-    const docRef = doc(db, 'portal_data', key);
-    await setDoc(docRef, {
-      data: data,
-      updatedAt: Date.now()
-    });
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+
+  // Clear existing timer if any
+  if (debounceTimers.has(key)) {
+    clearTimeout(debounceTimers.get(key));
+    debounceTimers.delete(key);
+  } else {
+    // Increment active saves to show loading state
+    activeSaves.count++;
+    emitSyncStatus('syncing');
   }
+
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(async () => {
+      debounceTimers.delete(key);
+      try {
+        const docRef = doc(db, 'portal_data', key);
+        await setDoc(docRef, {
+          data: data,
+          updatedAt: Date.now()
+        });
+
+        activeSaves.count = Math.max(0, activeSaves.count - 1);
+        if (activeSaves.count === 0) {
+          emitSyncStatus('synced');
+        }
+        resolve();
+      } catch (error) {
+        activeSaves.count = Math.max(0, activeSaves.count - 1);
+        emitSyncStatus('error');
+
+        const errMessage = error instanceof Error ? error.message : String(error);
+        const isQuotaError = 
+          errMessage.includes('resource-exhausted') || 
+          errMessage.includes('quota') || 
+          errMessage.includes('Quota limit exceeded') ||
+          errMessage.includes('Limit exceeded');
+
+        if (isQuotaError) {
+          console.warn(`[Firestore Quota Protection] Cloud write limit reached for key "${key}". Saving in browser local storage only.`);
+          resolve(); // Resolve gracefully to allow local operations
+        } else {
+          try {
+            handleFirestoreError(error, OperationType.WRITE, path);
+          } catch (e) {
+            reject(e);
+            return;
+          }
+        }
+      }
+    }, 2000); // 2 seconds debounce groups rapid slider drags, typing keystrokes, or color pickers into single writes
+
+    debounceTimers.set(key, timer);
+  });
 }
 
 /**

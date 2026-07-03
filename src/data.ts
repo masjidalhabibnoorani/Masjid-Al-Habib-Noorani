@@ -264,6 +264,13 @@ export const DEFAULT_NOTICE_TEMPLATE = `السلام علیکم ورحمۃ ال�
 
 // LocalStorage Database Driver Wrapper
 export class PortalDatabase {
+  static setLocalOnly<T>(key: string, value: T): void {
+    try {
+      localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(value));
+    } catch (e) {
+      // Fail silent
+    }
+  }
   static get<T>(key: string, defaultValue: T): T {
     try {
       const stored = localStorage.getItem(`masjid_habib_${key}`);
@@ -273,7 +280,7 @@ export class PortalDatabase {
     } catch (e) {
       // Fail silent
     }
-    this.set(key, defaultValue);
+    this.setLocalOnly(key, defaultValue);
     return defaultValue;
   }
 
@@ -294,27 +301,27 @@ export class PortalDatabase {
       const isCleanOrEmpty = !passwordsStored || passwordsStored === '[]' || JSON.parse(passwordsStored ?? '[]').length === 0;
       
       if (force || isCleanOrEmpty) {
-        this.set('passwords', INITIAL_PASSWORDS);
-        this.set('prayer_timings', INITIAL_PRAYER_TIMINGS);
-        this.set('history_sections', INITIAL_HISTORY);
-        this.set('activities', INITIAL_ACTIVITIES);
-        this.set('map_settings', INITIAL_MAP);
-        this.set('announcements', INITIAL_ANNOUNCEMENTS);
-        this.set('administrators', INITIAL_ADMINISTRATORS);
-        this.set('religious_staff', INITIAL_RELIGIOUS_STAFF);
-        this.set('funds', INITIAL_FUNDS);
-        this.set('members', [...INITIAL_MASJID_MEMBERS, ...INITIAL_BAZM_MEMBERS, ...INITIAL_PROJECT_MEMBERS]);
-        this.set('transactions', [...INITIAL_MASJID_TRANSACTIONS, ...INITIAL_BAZM_TRANSACTIONS, ...INITIAL_PROJECT_TRANSACTIONS]);
-        this.set('other_fund_entries', [...INITIAL_MASJID_OTHERS, ...INITIAL_BAZM_OTHERS, ...INITIAL_PROJECT_OTHERS]);
-        this.set('expenses', [...INITIAL_MASJID_EXPENSES, ...INITIAL_BAZM_EXPENSES, ...INITIAL_PROJECT_EXPENSES]);
-        this.set('projects', [INITIAL_PROJECT_RECORD]);
-        this.set('audit_logs', INITIAL_AUDIT_LOGS);
-        this.set('commitments', INITIAL_COMMITMENTS);
-        this.set('notice_template', DEFAULT_NOTICE_TEMPLATE);
+        this.setLocalOnly('passwords', INITIAL_PASSWORDS);
+        this.setLocalOnly('prayer_timings', INITIAL_PRAYER_TIMINGS);
+        this.setLocalOnly('history_sections', INITIAL_HISTORY);
+        this.setLocalOnly('activities', INITIAL_ACTIVITIES);
+        this.setLocalOnly('map_settings', INITIAL_MAP);
+        this.setLocalOnly('announcements', INITIAL_ANNOUNCEMENTS);
+        this.setLocalOnly('administrators', INITIAL_ADMINISTRATORS);
+        this.setLocalOnly('religious_staff', INITIAL_RELIGIOUS_STAFF);
+        this.setLocalOnly('funds', INITIAL_FUNDS);
+        this.setLocalOnly('members', [...INITIAL_MASJID_MEMBERS, ...INITIAL_BAZM_MEMBERS, ...INITIAL_PROJECT_MEMBERS]);
+        this.setLocalOnly('transactions', [...INITIAL_MASJID_TRANSACTIONS, ...INITIAL_BAZM_TRANSACTIONS, ...INITIAL_PROJECT_TRANSACTIONS]);
+        this.setLocalOnly('other_fund_entries', [...INITIAL_MASJID_OTHERS, ...INITIAL_BAZM_OTHERS, ...INITIAL_PROJECT_OTHERS]);
+        this.setLocalOnly('expenses', [...INITIAL_MASJID_EXPENSES, ...INITIAL_BAZM_EXPENSES, ...INITIAL_PROJECT_EXPENSES]);
+        this.setLocalOnly('projects', [INITIAL_PROJECT_RECORD]);
+        this.setLocalOnly('audit_logs', INITIAL_AUDIT_LOGS);
+        this.setLocalOnly('commitments', INITIAL_COMMITMENTS);
+        this.setLocalOnly('notice_template', DEFAULT_NOTICE_TEMPLATE);
       } else {
         // Fallback for existing browser sessions that don't have religious_staff yet
         if (!localStorage.getItem('masjid_habib_religious_staff')) {
-          this.set('religious_staff', INITIAL_RELIGIOUS_STAFF);
+          this.setLocalOnly('religious_staff', INITIAL_RELIGIOUS_STAFF);
         }
       }
     } catch (e) {
