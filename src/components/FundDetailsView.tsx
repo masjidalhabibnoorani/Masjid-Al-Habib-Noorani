@@ -1259,58 +1259,66 @@ export default function FundDetailsView({
 
             {/* Committee Listing dynamic block */}
             <div className="space-y-6 pt-6 border-t border-pine-border/30">
-              <div className="flex flex-col gap-1 font-sans">
-                <h3 className="text-lg font-heading font-bold text-white flex items-center gap-2">
-                  <Users className="w-5 h-5 text-pine-btn-hover" />
+              <div className="flex flex-col gap-1 font-sans text-center md:text-left">
+                <h3 className="text-lg font-heading font-bold text-white flex items-center justify-center md:justify-start gap-2">
+                  <Users className="w-5 h-5 text-amber-400" />
                   Intezamia Committee (Board of Trustees)
                 </h3>
                 <p className="text-xs text-pine-text-muted">Masjid Al Habib Noorani Wah Cantt structural organizing committee managing this ledger section.</p>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-pine-border/60">
-                <table className="w-full text-left font-sans text-sm">
-                  <thead className="bg-pine-bar/60 text-pine-text-muted text-xs uppercase tracking-wider">
-                    <tr>
-                      <th className="py-3 px-4 font-semibold">Member Details</th>
-                      <th className="py-3 px-4 font-semibold">Position</th>
-                      <th className="py-3 px-4 font-semibold text-right">Contact / Note</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-pine-border/45 bg-pine-bg">
-                    {currentAdmins.map((adm) => (
-                      <tr key={adm.id} className="hover:bg-pine-hover/10 transition-colors">
-                        <td className="py-4 px-4">
-                          <div className="flex flex-col items-center gap-2">
-                             <img 
-                                src={resolveImageUrl(adm.image) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=240'} 
-                                alt={adm.name} 
-                                referrerPolicy="no-referrer" 
-                                onClick={() => setSelectedImage(resolveImageUrl(adm.image) || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=240')}
-                                className="w-80 h-80 rounded-2xl object-cover shadow-lg border border-pine-btn/65 cursor-pointer hover:border-emerald-500 hover:opacity-95 transition-all duration-300 hover:scale-105" 
-                              />
-                               <h4 className="font-heading font-extrabold text-white text-lg">{adm.name}</h4>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="text-lg font-bold text-emerald-300 bg-emerald-900/40 px-2 py-1 rounded-md tracking-wide">{adm.position}</span>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <div className="flex items-center justify-end gap-2 text-base text-white font-mono font-bold">
-                            <Phone className="w-4 h-4 text-emerald-400" /> {adm.phone || '-'}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {currentAdmins.length === 0 && (
-                      <tr>
-                        <td colSpan={3} className="py-12 text-center text-xs text-pine-text-muted font-sans border-t border-dashed border-pine-border/60">
-                          No registered committee administrators found for this ledger.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
+                {currentAdmins.map((adm) => {
+                  const resolvedImg = resolveImageUrl(adm.image);
+                  return (
+                    <TiltCard key={adm.id} className="bg-gradient-to-b from-pine-card/50 to-pine-bar/60 border border-pine-border/40 hover:border-amber-500/50 transition-all p-6 flex flex-col items-center text-center">
+                      <div className="relative mb-4">
+                        <div 
+                          onClick={() => resolvedImg && setSelectedImage(resolvedImg)}
+                          className={`w-80 h-80 max-w-full aspect-square rounded-2xl overflow-hidden border-2 border-amber-500/60 shadow-lg bg-pine-bg/50 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:border-amber-400 ${resolvedImg ? 'cursor-pointer' : ''}`}
+                        >
+                          {resolvedImg ? (
+                            <img 
+                              src={resolvedImg} 
+                              alt={adm.name} 
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                (e.target as any).src = '';
+                                (e.target as any).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <User className="w-16 h-16 text-pine-text-muted/40 absolute" />
+                          )}
+                        </div>
+                        <span className="absolute bottom-1 right-2 bg-emerald-500 w-4 h-4 rounded-full border-2 border-pine-bar shadow-md" title="Active"></span>
+                      </div>
+
+                      <h3 className="text-lg font-heading font-extrabold text-white">{adm.name}</h3>
+                      <p className="text-xs font-semibold text-amber-400 mt-1 uppercase tracking-wider font-button">{adm.position}</p>
+                      
+                      {adm.phone && (
+                        <div className="mt-4 pt-3 border-t border-pine-border/30 w-full flex items-center justify-center gap-2 text-xs text-pine-text-body">
+                          <span className="text-pine-text-muted">Raabta / Phone:</span>
+                          <a 
+                            href={`tel:${adm.phone}`}
+                            className="font-mono text-white hover:text-amber-400 font-semibold transition-colors bg-pine-bg/40 px-2.5 py-1 rounded border border-pine-border/20"
+                          >
+                            {adm.phone}
+                          </a>
+                        </div>
+                      )}
+                    </TiltCard>
+                  );
+                })}
               </div>
+
+              {currentAdmins.length === 0 && (
+                <div className="py-12 text-center text-xs text-pine-text-muted font-sans border border-dashed border-pine-border/60 rounded-2xl">
+                  No registered committee administrators found for this ledger.
+                </div>
+              )}
             </div>
           </div>
         )}
