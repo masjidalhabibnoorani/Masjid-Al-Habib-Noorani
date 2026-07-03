@@ -287,6 +287,7 @@ export class PortalDatabase {
   static set<T>(key: string, value: T): void {
     try {
       localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(value));
+      localStorage.setItem(`masjid_habib_time_${key}`, Date.now().toString());
       // Background async backup to Firestore
       saveToCloud(key, value).catch(e => console.error('Cloud backup error:', e));
     } catch (e) {

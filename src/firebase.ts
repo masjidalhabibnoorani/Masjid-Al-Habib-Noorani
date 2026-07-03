@@ -89,6 +89,33 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 const debounceTimers = new Map<string, any>();
 const activeSaves = { count: 0 };
 
+function isCloudBypassed(): boolean {
+  try {
+    const bypassUntil = localStorage.getItem('masjid_habib_cloud_bypass_until');
+    if (bypassUntil) {
+      const untilTime = parseInt(bypassUntil, 10);
+      if (Date.now() < untilTime) {
+        return true;
+      } else {
+        localStorage.removeItem('masjid_habib_cloud_bypass_until');
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+  return false;
+}
+
+function setCloudBypass() {
+  try {
+    // Bypass cloud calls for 12 hours when quota is exhausted
+    const bypassTime = Date.now() + 12 * 60 * 60 * 1000; 
+    localStorage.setItem('masjid_habib_cloud_bypass_until', bypassTime.toString());
+  } catch (e) {
+    // ignore
+  }
+}
+
 function emitSyncStatus(status: 'synced' | 'syncing' | 'error' | 'idle') {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('cloud-sync-status', { detail: status }));
@@ -99,6 +126,10 @@ function emitSyncStatus(status: 'synced' | 'syncing' | 'error' | 'idle') {
  * Saves a single key-value pair to Firestore (Debounced to protect against write quotas)
  */
 export async function saveToCloud(key: string, data: any): Promise<void> {
+  if (isCloudBypassed()) {
+    emitSyncStatus('synced');
+    return;
+  }
   const path = `portal_data/${key}`;
 
   // Clear existing timer if any
@@ -116,10 +147,16 @@ export async function saveToCloud(key: string, data: any): Promise<void> {
       debounceTimers.delete(key);
       try {
         const docRef = doc(db, 'portal_data', key);
+        const now = Date.now();
         await setDoc(docRef, {
           data: data,
-          updatedAt: Date.now()
+          updatedAt: now
         });
+
+        // Update local timestamp to be in perfect sync with the cloud
+        try {
+          localStorage.setItem(`masjid_habib_time_${key}`, now.toString());
+        } catch (e) {}
 
         activeSaves.count = Math.max(0, activeSaves.count - 1);
         if (activeSaves.count === 0) {
@@ -128,7 +165,6 @@ export async function saveToCloud(key: string, data: any): Promise<void> {
         resolve();
       } catch (error) {
         activeSaves.count = Math.max(0, activeSaves.count - 1);
-        emitSyncStatus('error');
 
         const errMessage = error instanceof Error ? error.message : String(error);
         const isQuotaError = 
@@ -139,8 +175,11 @@ export async function saveToCloud(key: string, data: any): Promise<void> {
 
         if (isQuotaError) {
           console.warn(`[Firestore Quota Protection] Cloud write limit reached for key "${key}". Saving in browser local storage only.`);
+          setCloudBypass();
+          emitSyncStatus('synced');
           resolve(); // Resolve gracefully to allow local operations
         } else {
+          emitSyncStatus('error');
           try {
             handleFirestoreError(error, OperationType.WRITE, path);
           } catch (e) {
@@ -156,28 +195,15 @@ export async function saveToCloud(key: string, data: any): Promise<void> {
 }
 
 /**
- * Fetches a single key-value pair from Firestore
- */
-export async function fetchFromCloud(key: string): Promise<any | null> {
-  const path = `portal_data/${key}`;
-  try {
-    const docRef = doc(db, 'portal_data', key);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data().data;
-    }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, path);
-  }
-  return null;
-}
-
-/**
  * Saves all local storage state to Cloud Firestore (Backup)
  */
 export async function backupAllToCloud(): Promise<void> {
+  if (isCloudBypassed()) {
+    return;
+  }
   const batch = writeBatch(db);
   let hasData = false;
+  const now = Date.now();
 
   for (const key of SYNC_KEYS) {
     const localVal = localStorage.getItem(`masjid_habib_${key}`);
@@ -187,7 +213,7 @@ export async function backupAllToCloud(): Promise<void> {
         const docRef = doc(db, 'portal_data', key);
         batch.set(docRef, {
           data: parsed,
-          updatedAt: Date.now()
+          updatedAt: now
         });
         hasData = true;
       } catch (e) {
@@ -199,8 +225,25 @@ export async function backupAllToCloud(): Promise<void> {
   if (hasData) {
     try {
       await batch.commit();
+      // Update all local timestamps to match 'now'
+      for (const key of SYNC_KEYS) {
+        try {
+          localStorage.setItem(`masjid_habib_time_${key}`, now.toString());
+        } catch (e) {}
+      }
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, 'portal_data');
+      const errMessage = error instanceof Error ? error.message : String(error);
+      const isQuotaError = 
+        errMessage.includes('resource-exhausted') || 
+        errMessage.includes('quota') || 
+        errMessage.includes('Quota limit exceeded') ||
+        errMessage.includes('Limit exceeded');
+
+      if (isQuotaError) {
+        setCloudBypass();
+      } else {
+        handleFirestoreError(error, OperationType.WRITE, 'portal_data');
+      }
     }
   }
 }
@@ -208,8 +251,12 @@ export async function backupAllToCloud(): Promise<void> {
 /**
  * Fetches all database states from Cloud Firestore (Restore)
  */
-export async function restoreAllFromCloud(): Promise<Record<string, any>> {
-  const result: Record<string, any> = {};
+export async function restoreAllFromCloud(): Promise<Record<string, { data: any, updatedAt: number }>> {
+  const result: Record<string, { data: any, updatedAt: number }> = {};
+  if (isCloudBypassed()) {
+    console.warn("[Firestore Quota Protection] Cloud reads bypassed due to active quota limit protection.");
+    return result;
+  }
   try {
     const querySnapshot = await getDocs(collection(db, 'portal_data'));
     
@@ -217,12 +264,58 @@ export async function restoreAllFromCloud(): Promise<Record<string, any>> {
       const key = docSnap.id;
       if (SYNC_KEYS.includes(key)) {
         const docData = docSnap.data();
-        result[key] = docData.data;
+        result[key] = {
+          data: docData.data,
+          updatedAt: docData.updatedAt || 0
+        };
       }
     });
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, 'portal_data');
+    const errMessage = error instanceof Error ? error.message : String(error);
+    const isQuotaError = 
+      errMessage.includes('resource-exhausted') || 
+      errMessage.includes('quota') || 
+      errMessage.includes('Quota limit exceeded') ||
+      errMessage.includes('Limit exceeded');
+
+    if (isQuotaError) {
+      console.warn(`[Firestore Quota Protection] Cloud read limit reached. Bypassing cloud integration.`);
+      setCloudBypass();
+    } else {
+      handleFirestoreError(error, OperationType.LIST, 'portal_data');
+    }
   }
 
   return result;
+}
+
+/**
+ * Fetches a single key-value pair from Firestore
+ */
+export async function fetchFromCloud(key: string): Promise<any | null> {
+  if (isCloudBypassed()) {
+    return null;
+  }
+  const path = `portal_data/${key}`;
+  try {
+    const docRef = doc(db, 'portal_data', key);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().data;
+    }
+  } catch (error) {
+    const errMessage = error instanceof Error ? error.message : String(error);
+    const isQuotaError = 
+      errMessage.includes('resource-exhausted') || 
+      errMessage.includes('quota') || 
+      errMessage.includes('Quota limit exceeded') ||
+      errMessage.includes('Limit exceeded');
+
+    if (isQuotaError) {
+      setCloudBypass();
+    } else {
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  }
+  return null;
 }

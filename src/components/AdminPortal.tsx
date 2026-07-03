@@ -12,7 +12,6 @@ import {
 } from '../types';
 import { useToast } from './Toast';
 import { GREGORIAN_MONTHS, ISLAMIC_MONTHS, PortalDatabase } from '../data';
-import { backupAllToCloud, restoreAllFromCloud } from '../firebase';
 import TiltCard from './TiltCard';
 import Counter from './Counter';
 
@@ -93,8 +92,8 @@ type AdminTab =
   | 'religious_staff'
   | 'themes'
   | 'ai'
-  | 'cloud'
-  | 'commitments';
+  | 'commitments'
+  | 'backup';
 
 export default function AdminPortal({
   onLogout,
@@ -316,8 +315,6 @@ export default function AdminPortal({
   // Backup & JSON state uploading references
   const [backupRestoreInput, setBackupRestoreInput] = useState('');
   const [restoreStatus, setRestoreStatus] = useState('');
-  const [cloudSyncStatus, setCloudSyncStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [cloudSyncMsg, setCloudSyncMsg] = useState('');
   const [financeSearch, setFinanceSearch] = useState('');
   const [inflowFundFilter, setInflowFundFilter] = useState<string>('masjid-fund');
   const [donorSearchQuery, setDonorSearchQuery] = useState('');
@@ -1127,71 +1124,6 @@ export default function AdminPortal({
     }
   };
 
-  const handleCloudBackup = async () => {
-    setCloudSyncStatus('loading');
-    setCloudSyncMsg('Backing up all registers, members, transactions, and settings to Google Cloud Firestore...');
-    try {
-      await backupAllToCloud();
-      setCloudSyncStatus('success');
-      setCloudSyncMsg('✅ ALL local records successfully backed up to Firestore (Google Cloud Database)! Other administrators can now sync with this latest state.');
-      logAudit('BACKUP_CREATE', 'Cloud Backup Center', 'firebase_firestore', '', 'Manual Cloud Backup');
-    } catch (e: any) {
-      console.error(e);
-      setCloudSyncStatus('error');
-      setCloudSyncMsg(`❌ Cloud Backup failed: ${e.message || e.toString()}`);
-    }
-  };
-
-  const handleCloudRestore = async () => {
-    if (!window.confirm("WARNING / انتباہ:\n\nAapka local browser data cloud data se overwrite ho jayega. Kiya aap waqai cloud data se restore karna chahte hain?")) {
-      return;
-    }
-    setCloudSyncStatus('loading');
-    setCloudSyncMsg('Fetching all records from Cloud Firestore...');
-    try {
-      const cloudData = await restoreAllFromCloud();
-      
-      if (Object.keys(cloudData).length > 0) {
-        // Hydrate all local arrays and local storage
-        Object.entries(cloudData).forEach(([key, value]) => {
-          localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(value));
-        });
-
-        // Set React states
-        setPasswords(cloudData.passwords || passwords);
-        setPrayerTimings(cloudData.prayer_timings || prayerTimings);
-        setHistorySections(cloudData.history_sections || historySections);
-        setActivities(cloudData.activities || activities);
-        setMapSettings(cloudData.map_settings || mapSettings);
-        setAnnouncements(cloudData.announcements || announcements);
-        setFunds(cloudData.funds || funds);
-        setMembers(cloudData.members || members);
-        setTransactions(cloudData.transactions || transactions);
-        if (cloudData.other_fund_entries) setOthers(cloudData.other_fund_entries);
-        if (cloudData.expenses) setExpenses(cloudData.expenses);
-        setProjects(cloudData.projects || projects);
-        setAuditLogs(cloudData.audit_logs || auditLogs);
-        if (cloudData.religious_staff) setReligiousStaff(cloudData.religious_staff);
-        if (cloudData.administrators) setAdministrators(cloudData.administrators);
-
-        setCloudSyncStatus('success');
-        setCloudSyncMsg('✅ DATA RESTORED SUCCESSFUL! Your browser has synced with the Cloud database state. The portal will reload in 2 seconds...');
-        logAudit('BACKUP_RESTORE', 'Cloud Backup Center', 'firebase_restore', '', 'Manual Cloud Restore');
-        
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      } else {
-        setCloudSyncStatus('error');
-        setCloudSyncMsg('❌ No backup data found in the Cloud database. Please create a backup first!');
-      }
-    } catch (e: any) {
-      console.error(e);
-      setCloudSyncStatus('error');
-      setCloudSyncMsg(`❌ Cloud Restore failed: ${e.message || e.toString()}`);
-    }
-  };
-
   // Math calculated counts for Admin Header index
   const getCombinedInflow = () => members.reduce((sum, m) => sum + m.paidPrevious, 0) + transactions.reduce((sum, t) => sum + t.amount, 0);
 
@@ -1335,12 +1267,12 @@ export default function AdminPortal({
             <Bot className="w-4 h-4 shrink-0 text-teal-400" /> AI Assistant Knowledge
           </button>
           <button 
-            onClick={() => setActiveTab('cloud')}
+            onClick={() => setActiveTab('backup')}
             className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'cloud' ? 'bg-pine-active text-white font-semibold animate-pulse' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+              activeTab === 'backup' ? 'bg-pine-active text-white font-semibold animate-pulse' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <Cloud className="w-4 h-4 shrink-0 text-sky-400" /> Cloud Sync & Backups
+            <Database className="w-4 h-4 shrink-0 text-amber-400" /> Save & Restore Backup
           </button>
           
         </aside>
@@ -1460,111 +1392,92 @@ export default function AdminPortal({
             </div>
           )}
 
-          {/* TAB: Cloud Sync & Remoter Database */}
-          {activeTab === 'cloud' && (
+          {/* TAB: Save & Restore Backup */}
+          {activeTab === 'backup' && (
             <div className="space-y-6 animate-fade-in font-sans">
               <div>
                 <h2 className="text-xl font-heading font-extrabold text-white border-b border-pine-border pb-4 uppercase tracking-wider flex items-center gap-2">
-                  <Cloud className="w-6 h-6 text-sky-400" /> Cloud Sync & Backups (گوگل کلاؤڈ ڈیٹا بیس)
+                  <Database className="w-6 h-6 text-amber-400" /> Save & Restore Local Backup
                 </h2>
-                <p className="text-xs text-pine-text-muted mt-1">
-                  Google Cloud Firestore real-time integration allows complete data persistence, resolving browser cache clearance risks, storage limits, and security vulnerabilities.
+                <p className="text-xs text-pine-text-muted mt-1 font-sans">
+                  Aap apne browser ka poora data (all transactions, members, passwords, and setup details) aik single safe file mein download kar sakte hain, aur kisi bhi dosray device par upload kar ke restore kar sakte hain.
                 </p>
               </div>
 
-              {/* Automatic Saving Announcement Banner */}
-              <div className="p-5 rounded-2xl border border-emerald-500/30 bg-emerald-950/15 text-emerald-300 flex flex-col md:flex-row items-start md:items-center gap-4 shadow-lg">
-                <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
-                  <ShieldCheck className="w-6 h-6 animate-pulse" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
+                
+                {/* Panel 1: Download Backup */}
+                <div className="glass-panel p-6 rounded-2xl border border-pine-border bg-pine-bar/40 space-y-5 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-button uppercase tracking-wider text-amber-400 font-bold flex items-center gap-2">
+                      <Save className="w-4 h-4" /> 1. Download Backup (Data Mehfooz Karein)
+                    </h3>
+                    <p className="text-xs text-pine-text-body leading-relaxed font-sans">
+                      Apni website ka tamam local state (passwords, prayer times, history, members, commitments, ledger cashflows, etc.) aik **`.json`** file ke roop mein mehfooz karein. Is file ko aap apne pass safe rakh sakte hain aur backup ke liye use kar sakte hain.
+                    </p>
+                    <div className="bg-amber-950/20 border border-amber-900/30 p-3.5 rounded-xl space-y-1.5">
+                      <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">🛡️ Browser Protection Status</span>
+                      <p className="text-[11px] text-amber-200/80 leading-relaxed font-sans">
+                        Aapka tamam data aapke browser ki safe local memory mein 100% permanently save hai. Agar Google Cloud ka free quota temporary tor par mukammal ho jaye, tab bhi aapka local computer data bilkul safe rahega.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleDownloadBackup}
+                    className="w-full mt-6 bg-amber-600 hover:bg-amber-500 text-white font-button font-bold text-xs py-3 px-4 rounded-xl uppercase tracking-wider transition-all duration-300 shadow-lg hover:shadow-amber-500/20 active:scale-[0.98]"
+                  >
+                    Download Backup File (.json)
+                  </button>
                 </div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">✨ Real-Time Auto-Save Active (خودکار بچاؤ چالو ہے)</h4>
-                  <p className="text-[11px] text-emerald-300/80 leading-normal mt-0.5">
-                    Aap jo bhi tabdeeliyan karte hain ya delete karte hain, wo **Google Cloud Database** mein **usi waqt** automatic save ho jati hain. Aap ko koi "Push" ya "Pull" karne ki jhanjat bilkul nahi hai! Web portal khulte hi cloud database se live data khud hi load ho jata hai.
+
+                {/* Panel 2: Restore Backup */}
+                <div className="glass-panel p-6 rounded-2xl border border-pine-border bg-pine-bar/40 space-y-4">
+                  <h3 className="text-sm font-button uppercase tracking-wider text-teal-400 font-bold flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4" /> 2. Restore Backup (Purana Data Wapas Lain)
+                  </h3>
+                  <p className="text-xs text-pine-text-body leading-relaxed font-sans">
+                    Agar aapne pehle backup file download ki thi, to us file ka data niche text area mein paste karein aur **"Restore Local Data"** button dabayein.
                   </p>
-                </div>
-              </div>
-
-              {/* Connection Status Panel */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-sky-500/20 bg-gradient-to-br from-pine-bar via-sky-950/5 to-pine-bar shadow-xl space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-sky-500/10 border border-sky-500/20 flex items-center justify-center">
-                        <Cloud className="w-5 h-5 text-sky-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-xs uppercase font-bold tracking-wider text-white">Google Cloud Integration</h3>
-                        <p className="text-[10px] text-pine-text-muted font-mono uppercase">Firestore DB ID: ai-studio-masjidalhabibnoo-815150fe-5703-4e6f-a2f5-cbc72b1c9d32</p>
-                      </div>
-                    </div>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] uppercase font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" /> Auto-Sync Live
-                    </span>
-                  </div>
-
-                  {/* Remote Sync Metrics */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
-                    <div className="bg-pine-bar/60 p-3 rounded-xl border border-pine-border/40 text-center">
-                      <span className="block text-[10px] uppercase text-pine-text-muted">Members</span>
-                      <span className="text-lg font-heading font-extrabold text-white">{members.length}</span>
-                    </div>
-                    <div className="bg-pine-bar/60 p-3 rounded-xl border border-pine-border/40 text-center">
-                      <span className="block text-[10px] uppercase text-pine-text-muted">Transactions</span>
-                      <span className="text-lg font-heading font-extrabold text-white">{transactions.length}</span>
-                    </div>
-                    <div className="bg-pine-bar/60 p-3 rounded-xl border border-pine-border/40 text-center">
-                      <span className="block text-[10px] uppercase text-pine-text-muted">Expenses</span>
-                      <span className="text-lg font-heading font-extrabold text-white">{expenses.length}</span>
-                    </div>
-                    <div className="bg-pine-bar/60 p-3 rounded-xl border border-pine-border/40 text-center">
-                      <span className="block text-[10px] uppercase text-pine-text-muted">Projects</span>
-                      <span className="text-lg font-heading font-extrabold text-white">{projects.length}</span>
-                    </div>
-                  </div>
-
-
-
-                  {/* Cloud Sync Logs */}
-                  {cloudSyncStatus !== 'idle' && (
-                    <div className={`p-4 rounded-xl border ${
-                      cloudSyncStatus === 'loading' ? 'bg-sky-950/25 border-sky-500/20 text-sky-300' :
-                      cloudSyncStatus === 'success' ? 'bg-emerald-950/25 border-emerald-500/20 text-emerald-300' :
-                      'bg-rose-950/25 border-rose-500/20 text-rose-300'
-                    } text-xs font-mono flex items-center gap-3 animate-fade-in`}>
-                      <RefreshCw className={`w-4 h-4 shrink-0 ${cloudSyncStatus === 'loading' ? 'animate-spin' : ''}`} />
-                      <p className="leading-relaxed">{cloudSyncMsg}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Educational Side Panel */}
-                <div className="glass-panel p-6 rounded-2xl border border-pine-border bg-pine-bar/20 space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-sky-400">Cloud Sync (ڈیٹا بیس گائیڈ)</h3>
                   
-                  <div className="space-y-4 text-xs leading-relaxed text-pine-text-body">
+                  <form onSubmit={handleRestoreBackup} className="space-y-4">
                     <div>
-                      <h4 className="font-bold text-white">1. Data Loss Protection (ڈیٹا کا ضامن)</h4>
-                      <p className="text-[11px] text-pine-text-muted mt-0.5">
-                        Browser cache clear karne se ya local storage wipe hone se ab aapka data zaya nahi hoga. Firestore Cloud me records safe rehte hain.
-                      </p>
+                      <label className="block text-[10px] text-pine-text-body uppercase font-bold mb-1.5 font-sans">
+                        Backup JSON Text Area (Paste Backup Contents Here)
+                      </label>
+                      <textarea
+                        value={backupRestoreInput}
+                        onChange={(e) => setBackupRestoreInput(e.target.value)}
+                        rows={6}
+                        placeholder='e.g., Paste the entire contents of your "masjid_habib_backup_XXXX.json" file here...'
+                        className="w-full bg-pine-bar/90 border border-pine-border p-3.5 text-xs text-white rounded-xl focus:outline-none focus:border-pine-btn font-mono shadow-inner"
+                      />
                     </div>
 
-                    <div>
-                      <h4 className="font-bold text-white">2. No 5MB Storage Limits (کوئی لیمٹ نہیں)</h4>
-                      <p className="text-[11px] text-pine-text-muted mt-0.5">
-                        Local storage ki 5MB limit ab khatam ho chuki hai. Hazaron receipts aur transaction logs baghair kisi error ke save honge.
-                      </p>
-                    </div>
+                    {restoreStatus && (
+                      <div className={`p-3 rounded-xl text-xs font-bold ${
+                        restoreStatus.startsWith('✅') 
+                          ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/40' 
+                          : 'bg-rose-950/40 text-rose-400 border border-rose-900/40'
+                      }`}>
+                        {restoreStatus}
+                      </div>
+                    )}
 
-                    <div>
-                      <h4 className="font-bold text-white">3. real-time Auto Sync (خودکار بچاؤ)</h4>
-                      <p className="text-[11px] text-pine-text-muted mt-0.5">
-                        Jab bhi aap koi entry add, edit, ya delete karte hain, background engine usey khud-b-khud Cloud par update kar deta hai.
-                      </p>
-                    </div>
-                  </div>
+                    <button
+                      type="submit"
+                      disabled={!backupRestoreInput.trim()}
+                      className={`w-full font-button font-bold text-xs py-3 px-4 rounded-xl uppercase tracking-wider transition-all duration-300 ${
+                        backupRestoreInput.trim()
+                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98]'
+                          : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                      }`}
+                    >
+                      Restore Local Data
+                    </button>
+                  </form>
                 </div>
+
               </div>
             </div>
           )}

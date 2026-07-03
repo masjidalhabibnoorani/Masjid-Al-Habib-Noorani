@@ -12,7 +12,7 @@ import {
   ReligiousStaff
 } from './types';
 import { PortalDatabase, INITIAL_PASSWORDS } from './data';
-import { restoreAllFromCloud } from './firebase';
+import { restoreAllFromCloud, saveToCloud } from './firebase';
 import { gsap } from 'gsap';
 
 import { ToastProvider } from './components/Toast';
@@ -502,28 +502,54 @@ export default function App() {
       try {
         const cloudData = await restoreAllFromCloud();
         if (cloudData && Object.keys(cloudData).length > 0) {
-          // Write all to local storage
-          Object.entries(cloudData).forEach(([key, value]) => {
-            localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(value));
+          
+          // Conflict resolution using timestamps
+          Object.entries(cloudData).forEach(([key, cloudItem]) => {
+            const localTimeStr = localStorage.getItem(`masjid_habib_time_${key}`);
+            const localTime = localTimeStr ? parseInt(localTimeStr, 10) : 0;
+            const cloudTime = cloudItem.updatedAt || 0;
+
+            // Only overwrite local storage if cloud version is strictly newer
+            if (cloudTime > localTime) {
+              localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(cloudItem.data));
+              localStorage.setItem(`masjid_habib_time_${key}`, cloudTime.toString());
+            }
           });
           
-          // Hydrate react states
-          if (cloudData.passwords) setPasswords(cloudData.passwords);
-          if (cloudData.prayer_timings) setPrayerTimings(cloudData.prayer_timings);
-          if (cloudData.history_sections) setHistorySections(cloudData.history_sections);
-          if (cloudData.activities) setActivities(cloudData.activities);
-          if (cloudData.map_settings) setMapSettings(cloudData.map_settings);
-          if (cloudData.announcements) setAnnouncements(cloudData.announcements);
-          if (cloudData.funds) setFunds(cloudData.funds);
-          if (cloudData.members) setMembers(cloudData.members);
-          if (cloudData.transactions) setTransactions(cloudData.transactions);
-          if (cloudData.other_fund_entries) setOthers(cloudData.other_fund_entries);
-          if (cloudData.expenses) setExpenses(cloudData.expenses);
-          if (cloudData.projects) setProjects(cloudData.projects);
-          if (cloudData.commitments) setCommitments(cloudData.commitments);
-          if (cloudData.religious_staff) setReligiousStaff(cloudData.religious_staff);
-          if (cloudData.administrators) setAdministrators(cloudData.administrators);
-          if (cloudData.audit_logs) setAuditLogs(cloudData.audit_logs);
+          // Hydrate React states from the resolved local database (which is guaranteed to have the newest values)
+          const resolvedPasswords = PortalDatabase.get('passwords', []);
+          const resolvedPrayerTimings = PortalDatabase.get('prayer_timings', []);
+          const resolvedHistorySections = PortalDatabase.get('history_sections', []);
+          const resolvedActivities = PortalDatabase.get('activities', []);
+          const resolvedMapSettings = PortalDatabase.get('map_settings', []);
+          const resolvedAnnouncements = PortalDatabase.get('announcements', []);
+          const resolvedFunds = PortalDatabase.get('funds', []);
+          const resolvedMembers = PortalDatabase.get('members', []);
+          const resolvedTransactions = PortalDatabase.get('transactions', []);
+          const resolvedOthers = PortalDatabase.get('other_fund_entries', []);
+          const resolvedExpenses = PortalDatabase.get('expenses', []);
+          const resolvedProjects = PortalDatabase.get('projects', []);
+          const resolvedCommitments = PortalDatabase.get('commitments', []);
+          const resolvedStaff = PortalDatabase.get('religious_staff', []);
+          const resolvedAdmins = PortalDatabase.get('administrators', []);
+          const resolvedAuditLogs = PortalDatabase.get('audit_logs', []);
+
+          setPasswords(resolvedPasswords);
+          setPrayerTimings(resolvedPrayerTimings);
+          setHistorySections(resolvedHistorySections);
+          setActivities(resolvedActivities);
+          setMapSettings(resolvedMapSettings);
+          setAnnouncements(resolvedAnnouncements);
+          setFunds(resolvedFunds);
+          setMembers(resolvedMembers);
+          setTransactions(resolvedTransactions);
+          setOthers(resolvedOthers);
+          setExpenses(resolvedExpenses);
+          setProjects(resolvedProjects);
+          setCommitments(resolvedCommitments);
+          setReligiousStaff(resolvedStaff);
+          setAdministrators(resolvedAdmins);
+          setAuditLogs(resolvedAuditLogs);
           
           setCloudSyncState('synced');
         } else {
