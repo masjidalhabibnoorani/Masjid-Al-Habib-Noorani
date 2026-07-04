@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Admin, Announcement, PrayerTiming, HistorySection, Activity, MapSettings, 
   Administrator, FundModule, FundMember, FundMemberTransaction, OtherFundEntry, 
@@ -148,6 +148,27 @@ export default function AdminPortal({
   const [aiExtraInfo, setAiExtraInfo] = useState(() => {
     return PortalDatabase.get<string>('ai_extra_info', '');
   });
+
+  // AI accountant states
+  const [aiSubTab, setAiSubTab] = useState<'chat' | 'knowledge'>('chat');
+  const [adminChatMessages, setAdminChatMessages] = useState<{id: string; role: 'user' | 'model'; text: string; timestamp: Date}[]>([
+    {
+      id: 'welcome-admin',
+      role: 'model',
+      text: "Assalam-o-Alaikum Wa Rahmatullah Wa Barakatuh! Main aap ka Admin AI Accountant (Munshi Al-Habib) hoon.\n\nMere paas is waqt Masjid ke tamam financial records, registers, active projects, expenditures (kharchat), outstanding commitments aur logs ki live maloomat mojood hain.\n\nAap mujh se koi bhi sawal pooch sakte hain. Jaise ke:\n- *'Total inflow aur expenses ki summary batayein.'*\n- *'Konse members ke balances outstanding hain?'*\n- *'Bazm-e-Raza Fund mein pichle mahine kya kharche hue?'*\n- *'Tariq Mahmood ka monthly donation record batayein.'*\n- *'Commitments register mein kitne waade pending hain?'*",
+      timestamp: new Date()
+    }
+  ]);
+  const [adminChatInput, setAdminChatInput] = useState('');
+  const [isAdminChatLoading, setIsAdminChatLoading] = useState(false);
+  const [adminChatError, setAdminChatError] = useState<string | null>(null);
+
+  const adminChatEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (activeTab === 'ai' && aiSubTab === 'chat') {
+      adminChatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [adminChatMessages, activeTab, aiSubTab]);
 
   // Custom Theme & Landscape Wallpaper states initialized from database storage
   const [customColors, setCustomColors] = useState(() => {
@@ -1132,6 +1153,73 @@ export default function AdminPortal({
   // Math calculated counts for Admin Header index
   const getCombinedInflow = () => members.reduce((sum, m) => sum + m.paidPrevious, 0) + transactions.reduce((sum, t) => sum + t.amount, 0);
 
+  const handleSendAdminMessage = async (textToSend: string) => {
+    if (!textToSend.trim() || isAdminChatLoading) return;
+
+    setAdminChatError(null);
+    const userMsg = {
+      id: Math.random().toString(),
+      role: 'user' as const,
+      text: textToSend,
+      timestamp: new Date()
+    };
+
+    setAdminChatMessages(prev => [...prev, userMsg]);
+    setAdminChatInput('');
+    setIsAdminChatLoading(true);
+
+    try {
+      const contextData = {
+        funds,
+        members,
+        transactions,
+        others,
+        expenses,
+        commitments,
+        auditLogs: auditLogs.slice(0, 30)
+      };
+
+      const chatHistory = adminChatMessages
+        .filter(m => m.id !== 'welcome-admin')
+        .map(m => ({
+          role: m.role,
+          text: m.text
+        }));
+
+      const response = await fetch('/api/ai/admin-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: textToSend,
+          history: chatHistory,
+          contextData
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      const assistantMsg = {
+        id: Math.random().toString(),
+        role: 'model' as const,
+        text: data.reply || "Maazrat, main is sawal ka jawab abhi nahi de saka. Baraye mehrbani dobara koshish karen.",
+        timestamp: new Date()
+      };
+
+      setAdminChatMessages(prev => [...prev, assistantMsg]);
+    } catch (err: any) {
+      console.error(err);
+      setAdminChatError("Munshi AI se rabta nahi ho saka. Baraye mehrbani internet connection check karein ya dobara koshish karein.");
+    } finally {
+      setIsAdminChatLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-pine-bg text-pine-text-body flex flex-col z-10 relative font-sans">
       
@@ -1288,112 +1376,302 @@ export default function AdminPortal({
           {/* TAB: AI Knowledge Settings */}
           {activeTab === 'ai' && (
             <div className="space-y-6 animate-fade-in font-sans">
-              <div>
-                <h2 className="text-xl font-heading font-extrabold text-white border-b border-pine-border pb-4 uppercase tracking-wider flex items-center gap-2">
-                  <Bot className="w-6 h-6 text-teal-400" /> AI Assistant Knowledge Base
-                </h2>
-                <p className="text-xs text-pine-text-muted mt-1">
-                  Yahan aap aesi extra maloomat (extra information) ya hidayat likh sakte hain jo aap chahte hain ke AI Chatbot ko pata ho. AI inhi hidayat ko use kar ke public visitors ke sawalat ke jawab dega.
-                </p>
+              <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-pine-border pb-4 gap-4">
+                <div>
+                  <h2 className="text-xl font-heading font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+                    <Bot className="w-6 h-6 text-teal-400" /> AI Assistant Room
+                  </h2>
+                  <p className="text-xs text-pine-text-muted mt-1">
+                    Manage public AI knowledge, or interact with "Munshi Al-Habib" (AI accountant) to query your live financial records.
+                  </p>
+                </div>
+                
+                {/* Sub Tab Switcher */}
+                <div className="flex items-center bg-pine-bar/60 p-1 rounded-xl border border-pine-border self-start">
+                  <button
+                    onClick={() => setAiSubTab('chat')}
+                    className={`py-1.5 px-4 rounded-lg text-xs font-button uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                      aiSubTab === 'chat'
+                        ? 'bg-pine-btn text-white shadow-md font-bold'
+                        : 'text-pine-text-muted hover:text-white'
+                    }`}
+                  >
+                    <Bot className="w-3.5 h-3.5" /> Munshi AI Chat
+                  </button>
+                  <button
+                    onClick={() => setAiSubTab('knowledge')}
+                    className={`py-1.5 px-4 rounded-lg text-xs font-button uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                      aiSubTab === 'knowledge'
+                        ? 'bg-pine-btn text-white shadow-md font-bold'
+                        : 'text-pine-text-muted hover:text-white'
+                    }`}
+                  >
+                    <Sliders className="w-3.5 h-3.5" /> Public AI Context
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Knowledge Form */}
-                <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-pine-border bg-pine-bar/40 space-y-4">
-                  <h3 className="text-sm font-button uppercase tracking-wider text-teal-400 font-bold flex items-center gap-2">
-                    <Bot className="w-4 h-4" /> Custom Knowledge Context
-                  </h3>
-                  
-                  <div>
-                    <label className="block text-xs uppercase text-pine-text-body font-bold mb-2">Extra Information (Urdu, English, or Roman Urdu)</label>
-                    <textarea
-                      value={aiExtraInfo}
-                      onChange={(e) => setAiExtraInfo(e.target.value)}
-                      rows={12}
-                      placeholder="e.g. 
+              {aiSubTab === 'chat' ? (
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  {/* Chat interface panel */}
+                  <div className="lg:col-span-3 flex flex-col h-[650px] bg-pine-bar/35 border border-pine-border rounded-2xl overflow-hidden shadow-2xl">
+                    {/* Chat Header */}
+                    <div className="bg-pine-bar/80 p-4 border-b border-pine-border/60 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center border border-teal-500/30">
+                          <Bot className="w-4 h-4 text-teal-400" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold font-button uppercase text-white tracking-widest flex items-center gap-1.5">
+                            Munshi Al-Habib
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          </h3>
+                          <p className="text-[10px] text-teal-400/85">Mosque AI Accountant & Ledger Auditor</p>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-mono text-zinc-400 bg-pine-bar p-1.5 rounded border border-pine-border uppercase">Live Context Enabled</span>
+                    </div>
+
+                    {/* Messages Body */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {adminChatMessages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed shadow-lg ${
+                              msg.role === 'user'
+                                ? 'bg-pine-card border border-teal-500/20 text-white rounded-tr-none'
+                                : 'bg-pine-bar/70 border border-pine-border/50 text-zinc-100 rounded-tl-none whitespace-pre-line'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between border-b border-white/5 pb-1 mb-2">
+                              <span className="text-[9px] uppercase font-bold tracking-widest text-teal-400/80">
+                                {msg.role === 'user' ? 'Administrator' : 'Munshi Al-Habib'}
+                              </span>
+                              <span className="text-[8px] font-mono text-zinc-500">
+                                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            <div className="font-sans font-medium text-slate-100">
+                              {msg.text}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {isAdminChatLoading && (
+                        <div className="flex justify-start">
+                          <div className="bg-pine-bar/60 border border-pine-border/40 rounded-2xl rounded-tl-none p-4 text-xs max-w-[85%] space-y-2">
+                            <span className="text-[9px] uppercase font-bold tracking-widest text-teal-400">Munshi Al-Habib</span>
+                            <div className="flex items-center gap-2 text-zinc-400 font-sans text-xs">
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin text-teal-400" />
+                              <span>Calculations barabar kar raha hoon, baraye meharbani intezar farmayein...</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {adminChatError && (
+                        <div className="bg-rose-950/20 border border-rose-500/20 p-3.5 rounded-xl text-rose-450 text-xs flex items-center gap-2 font-sans">
+                          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                          <span>{adminChatError}</span>
+                        </div>
+                      )}
+
+                      <div ref={adminChatEndRef} />
+                    </div>
+
+                    {/* Quick Suggestions Chips */}
+                    <div className="p-3 bg-pine-bar/45 border-t border-pine-border/30 flex flex-wrap gap-1.5 justify-center items-center">
+                      <span className="text-[9px] text-pine-text-muted uppercase font-bold tracking-wider mr-1 select-none">Sawal Poochein:</span>
+                      {[
+                        "Total inflow aur expenses ki summary batayein",
+                        "Konse donors ke balances outstanding hain?",
+                        "Pichle mahine kya kharche hue?",
+                        "Solar Project ki financial report dein"
+                      ].map((q) => (
+                        <button
+                          key={q}
+                          onClick={() => handleSendAdminMessage(q)}
+                          disabled={isAdminChatLoading}
+                          className="py-1 px-2.5 rounded-lg bg-pine-bar border border-pine-border/60 hover:border-teal-500 hover:bg-teal-950/20 transition-all text-[10px] text-teal-300 font-sans disabled:opacity-50"
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Chat Input Area */}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSendAdminMessage(adminChatInput);
+                      }}
+                      className="p-3 bg-pine-bar border-t border-pine-border flex gap-2"
+                    >
+                      <input
+                        type="text"
+                        value={adminChatInput}
+                        onChange={(e) => setAdminChatInput(e.target.value)}
+                        placeholder="Type financial question (Roman Urdu / English)..."
+                        className="flex-1 bg-pine-bg/85 border border-pine-border px-4 py-2.5 rounded-xl text-xs text-white focus:outline-none focus:border-pine-btn font-sans"
+                        disabled={isAdminChatLoading}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!adminChatInput.trim() || isAdminChatLoading}
+                        className="py-2.5 px-4 bg-pine-btn hover:bg-pine-btn-hover text-white rounded-xl flex items-center justify-center transition-all disabled:opacity-40"
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Sidebar stats context for AI */}
+                  <div className="glass-panel p-5 rounded-2xl border border-pine-border bg-pine-bar/30 space-y-4">
+                    <h3 className="text-xs font-button uppercase tracking-wider text-pink-300 font-extrabold flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-pink-300" /> Auditor Scope
+                    </h3>
+                    <p className="text-[11px] text-zinc-300 leading-relaxed font-sans">
+                      Munshi AI ke paas aap ke pure system ka access hai. Woh andha-dhund andazay nahi lagata balke live data parse karta hai:
+                    </p>
+
+                    <div className="space-y-3 font-mono text-[10px] pt-2 border-t border-pine-border/40">
+                      <div className="flex justify-between">
+                        <span className="text-pine-text-muted">Ledgers Loaded:</span>
+                        <span className="text-white font-bold">{funds.length} Funds</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-pine-text-muted">Contributors count:</span>
+                        <span className="text-white font-bold">{members.length} Members</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-pine-text-muted">Total Receipts logs:</span>
+                        <span className="text-white font-bold">{transactions.length} receipts</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-pine-text-muted">General donations:</span>
+                        <span className="text-white font-bold">{others.length} entries</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-pine-text-muted">Expenditures:</span>
+                        <span className="text-white font-bold">{expenses.length} logs</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-pine-text-muted">Commitments:</span>
+                        <span className="text-white font-bold">{commitments.length} files</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-teal-950/15 border border-teal-900/30 p-3 rounded-xl mt-4">
+                      <span className="text-[9px] font-bold text-teal-400 uppercase tracking-widest block mb-1">💡 Pro Tip</span>
+                      <p className="text-[11px] text-teal-200/90 leading-relaxed font-sans">
+                        Aap pooch sakte hain: *"MashaAllah, kis donor ne is saal sab se zyada contributions jama karwaye hain?"* ya *"Pichle 3 mahine ke kharchon ka mوازنہ (comparison) pesh karein"*.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Main Knowledge Form */}
+                  <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-pine-border bg-pine-bar/40 space-y-4">
+                    <h3 className="text-sm font-button uppercase tracking-wider text-teal-400 font-bold flex items-center gap-2">
+                      <Bot className="w-4 h-4" /> Custom Knowledge Context
+                    </h3>
+                    
+                    <div>
+                      <label className="block text-xs uppercase text-pine-text-body font-bold mb-2">Extra Information (Urdu, English, or Roman Urdu)</label>
+                      <textarea
+                        value={aiExtraInfo}
+                        onChange={(e) => setAiExtraInfo(e.target.value)}
+                        rows={12}
+                        placeholder="e.g. 
 - Madrassa-e-Habibia ki classes subah 8 se dopahar 1 baje tak hoti hain. Free Quran sabaq classes hain.
 - Masjid ke 2 main gates hain. Gate A G.T Road par khulta hai aur Gate B Saddar bazaar ki taraf.
 - Solar panel installation phase 2 ka target Rs. 350,000 hai jo ke humne jald poora karna hai.
 - Masjid ke aas pass parking strictly prohibited hai line lagaye baghair."
-                      className="w-full bg-pine-bar/90 border border-pine-border p-4 text-xs text-white rounded-xl focus:outline-none focus:border-pine-btn font-sans leading-relaxed shadow-inner"
-                    />
+                        className="w-full bg-pine-bar/90 border border-pine-border p-4 text-xs text-white rounded-xl focus:outline-none focus:border-pine-btn font-sans leading-relaxed shadow-inner"
+                      />
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2">
+                      <p className="text-[10px] text-pine-text-muted italic">
+                        Characters: {aiExtraInfo.length} (Unlimited)
+                      </p>
+                      <button
+                        onClick={() => {
+                          const originalValue = PortalDatabase.get<string>('ai_extra_info', '');
+                          PortalDatabase.set('ai_extra_info', aiExtraInfo);
+                          logAudit('EDIT', 'AI Custom Knowledge Base Updated', 'ai_extra_info', originalValue.substring(0, 100), aiExtraInfo.substring(0, 100));
+                          
+                          // Show visual success feedback
+                          const btn = document.getElementById('ai-save-btn');
+                          if (btn) {
+                            const origText = btn.innerText;
+                            btn.innerText = "✓ Settings Saved!";
+                            btn.classList.remove('bg-pine-btn');
+                            btn.classList.add('bg-emerald-600');
+                            setTimeout(() => {
+                              btn.innerText = origText;
+                              btn.classList.remove('bg-emerald-600');
+                              btn.classList.add('bg-pine-btn');
+                            }, 2500);
+                          }
+                        }}
+                        id="ai-save-btn"
+                        className="py-2.5 px-6 bg-pine-btn hover:bg-pine-btn-hover text-white font-button text-xs uppercase tracking-wider rounded-xl transition-all shadow-md font-bold"
+                      >
+                        Save AI Context
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="flex justify-between items-center pt-2">
-                    <p className="text-[10px] text-pine-text-muted italic">
-                      Characters: {aiExtraInfo.length} (Unlimited)
+                  {/* Sidebar tips & quick templates */}
+                  <div className="glass-panel p-6 rounded-2xl border border-pine-border bg-pine-bar/30 space-y-4">
+                    <h3 className="text-sm font-button uppercase tracking-wider text-pink-300 font-bold">💡 Tips & Quick Templates</h3>
+                    <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                      Aap niche diye gaye templates par click kar ke unhe fauran apne knowledge base mein add kar sakte hain:
                     </p>
-                    <button
-                      onClick={() => {
-                        const originalValue = PortalDatabase.get<string>('ai_extra_info', '');
-                        PortalDatabase.set('ai_extra_info', aiExtraInfo);
-                        logAudit('EDIT', 'AI Custom Knowledge Base Updated', 'ai_extra_info', originalValue.substring(0, 100), aiExtraInfo.substring(0, 100));
-                        
-                        // Show visual success feedback
-                        const btn = document.getElementById('ai-save-btn');
-                        if (btn) {
-                          const origText = btn.innerText;
-                          btn.innerText = "✓ Settings Saved!";
-                          btn.classList.remove('bg-pine-btn');
-                          btn.classList.add('bg-emerald-600');
-                          setTimeout(() => {
-                            btn.innerText = origText;
-                            btn.classList.remove('bg-emerald-600');
-                            btn.classList.add('bg-pine-btn');
-                          }, 2500);
-                        }
-                      }}
-                      id="ai-save-btn"
-                      className="py-2.5 px-6 bg-pine-btn hover:bg-pine-btn-hover text-white font-button text-xs uppercase tracking-wider rounded-xl transition-all shadow-md font-bold"
-                    >
-                      Save AI Context
-                    </button>
+
+                    <div className="space-y-3 pt-2">
+                      <button
+                        onClick={() => {
+                          const template = "\n- Madrassa-e-Habibia hifz program subah 8 se dopahar 1 baje tak chalta hai. Is mein bacho ko muft dars aur hifz karwaya jata hai. Quran dars har asar ke baad hota hai.";
+                          setAiExtraInfo(prev => prev + template);
+                        }}
+                        className="w-full text-left p-3 rounded-xl bg-pine-bar/60 border border-pine-border/50 hover:border-teal-500 transition-all text-[11px] text-teal-200"
+                      >
+                        <span className="font-bold block text-teal-400 mb-1">+ Madrassa & Programs Template</span>
+                        Madrassa timing, muft dars schedules, and educational programs context.
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const template = "\n- Solar Grid Project ke liye donations online check ya direct committee member Haji Muhammad Anwar ko diye ja sakte hain. Bank accounts ki tafseelat committee room se mil sakti hain.";
+                          setAiExtraInfo(prev => prev + template);
+                        }}
+                        className="w-full text-left p-3 rounded-xl bg-pine-bar/60 border border-pine-border/50 hover:border-teal-500 transition-all text-[11px] text-teal-200"
+                      >
+                        <span className="font-bold block text-pink-300 mb-1">+ Donations & Bank Info Template</span>
+                        Donation guidelines, committee contact protocols, and support lines.
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const template = "\n- Masjid gate par jootey rakhne ka khas intizaam hai. Parking strictly bypass line se aage prohibited hai taake traffic flow kharab na ho. Security ke liye CCTV cameras 24/7 online hain.";
+                          setAiExtraInfo(prev => prev + template);
+                        }}
+                        className="w-full text-left p-3 rounded-xl bg-pine-bar/60 border border-pine-border/50 hover:border-teal-500 transition-all text-[11px] text-teal-200"
+                      >
+                        <span className="font-bold block text-amber-200 mb-1">+ Discipline & Security Template</span>
+                        Parking rules, shoe counters details, and active CCTV security safety.
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                {/* Sidebar tips & quick templates */}
-                <div className="glass-panel p-6 rounded-2xl border border-pine-border bg-pine-bar/30 space-y-4">
-                  <h3 className="text-sm font-button uppercase tracking-wider text-pink-300 font-bold">💡 Tips & Quick Templates</h3>
-                  <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-                    Aap niche diye gaye templates par click kar ke unhe fauran apne knowledge base mein add kar sakte hain:
-                  </p>
-
-                  <div className="space-y-3 pt-2">
-                    <button
-                      onClick={() => {
-                        const template = "\n- Madrassa-e-Habibia hifz program subah 8 se dopahar 1 baje tak chalta hai. Is mein bacho ko muft dars aur hifz karwaya jata hai. Quran dars har asar ke baad hota hai.";
-                        setAiExtraInfo(prev => prev + template);
-                      }}
-                      className="w-full text-left p-3 rounded-xl bg-pine-bar/60 border border-pine-border/50 hover:border-teal-500 transition-all text-[11px] text-teal-200"
-                    >
-                      <span className="font-bold block text-teal-400 mb-1">+ Madrassa & Programs Template</span>
-                      Madrassa timing, muft dars schedules, and educational programs context.
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        const template = "\n- Solar Grid Project ke liye donations online check ya direct committee member Haji Muhammad Anwar ko diye ja sakte hain. Bank accounts ki tafseelat committee room se mil sakti hain.";
-                        setAiExtraInfo(prev => prev + template);
-                      }}
-                      className="w-full text-left p-3 rounded-xl bg-pine-bar/60 border border-pine-border/50 hover:border-teal-500 transition-all text-[11px] text-teal-200"
-                    >
-                      <span className="font-bold block text-pink-300 mb-1">+ Donations & Bank Info Template</span>
-                      Donation guidelines, committee contact protocols, and support lines.
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        const template = "\n- Masjid gate par jootey rakhne ka khas intizaam hai. Parking strictly bypass line se aage prohibited hai taake traffic flow kharab na ho. Security ke liye CCTV cameras 24/7 online hain.";
-                        setAiExtraInfo(prev => prev + template);
-                      }}
-                      className="w-full text-left p-3 rounded-xl bg-pine-bar/60 border border-pine-border/50 hover:border-teal-500 transition-all text-[11px] text-teal-200"
-                    >
-                      <span className="font-bold block text-amber-200 mb-1">+ Discipline & Security Template</span>
-                      Parking rules, shoe counters details, and active CCTV security safety.
-                    </button>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           )}
 

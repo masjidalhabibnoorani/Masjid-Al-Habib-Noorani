@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, writeBatch, onSnapshot } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase
@@ -38,7 +38,8 @@ export const SYNC_KEYS = [
   'custom_bg_image',
   'custom_bg_opacity',
   'section_bg_settings',
-  'section_custom_colors'
+  'section_custom_colors',
+  'current_theme_id'
 ];
 
 export enum OperationType {
@@ -327,3 +328,48 @@ export async function fetchFromCloud(key: string): Promise<any | null> {
   }
   return null;
 }
+
+/**
+ * Subscribes to real-time changes from Cloud Firestore
+ */
+export function subscribeToCloudChanges(
+  onUpdate: (key: string, data: any, updatedAt: number) => void,
+  onError: (error: any) => void
+): () => void {
+  if (isCloudBypassed()) {
+    return () => {};
+  }
+  
+  const colRef = collection(db, 'portal_data');
+  return onSnapshot(
+    colRef,
+    (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        // We only care about added or modified documents
+        if (change.type === 'added' || change.type === 'modified') {
+          const key = change.doc.id;
+          if (SYNC_KEYS.includes(key)) {
+            const docData = change.doc.data();
+            onUpdate(key, docData.data, docData.updatedAt || 0);
+          }
+        }
+      });
+    },
+    (error) => {
+      const errMessage = error instanceof Error ? error.message : String(error);
+      const isQuotaError = 
+        errMessage.includes('resource-exhausted') || 
+        errMessage.includes('quota') || 
+        errMessage.includes('Quota limit exceeded') ||
+        errMessage.includes('Limit exceeded');
+
+      if (isQuotaError) {
+        console.warn(`[Firestore Quota Protection] Real-time listener reached quota limit.`);
+        setCloudBypass();
+      } else {
+        onError(error);
+      }
+    }
+  );
+}
+

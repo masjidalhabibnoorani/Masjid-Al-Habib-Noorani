@@ -12,7 +12,7 @@ import {
   ReligiousStaff
 } from './types';
 import { PortalDatabase, INITIAL_PASSWORDS } from './data';
-import { restoreAllFromCloud, saveToCloud, clearCloudBypass, isCloudBypassed } from './firebase';
+import { restoreAllFromCloud, saveToCloud, clearCloudBypass, isCloudBypassed, subscribeToCloudChanges } from './firebase';
 import { gsap } from 'gsap';
 
 import { ToastProvider } from './components/Toast';
@@ -495,74 +495,187 @@ export default function App() {
     PortalDatabase.get('religious_staff', [])
   );
 
-  // Load and sync from Google Cloud Firestore on startup
+  // Load and sync from Google Cloud Firestore on startup, and set up real-time listener
   useEffect(() => {
+    let unsubscribe: (() => void) | null = null;
+
     async function loadCloudData() {
       setCloudSyncState('syncing');
       try {
         const cloudData = await restoreAllFromCloud();
-        if (cloudData && Object.keys(cloudData).length > 0) {
-          
-          // Conflict resolution using timestamps
-          Object.entries(cloudData).forEach(([key, cloudItem]) => {
-            const localTimeStr = localStorage.getItem(`masjid_habib_time_${key}`);
-            const localTime = localTimeStr ? parseInt(localTimeStr, 10) : 0;
-            const cloudTime = cloudItem.updatedAt || 0;
+        
+        const SYNC_KEYS = [
+          'passwords', 'prayer_timings', 'history_sections', 'activities', 
+          'map_settings', 'announcements', 'funds', 'members', 'transactions', 
+          'other_fund_entries', 'expenses', 'projects', 'audit_logs', 'commitments',
+          'religious_staff', 'administrators', 'notice_template', 'ai_extra_info',
+          'custom_theme_colors', 'custom_bg_image', 'custom_bg_opacity',
+          'section_bg_settings', 'section_custom_colors', 'current_theme_id'
+        ];
 
-            // Only overwrite local storage if cloud version is strictly newer
-            if (cloudTime > localTime) {
-              localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(cloudItem.data));
-              localStorage.setItem(`masjid_habib_time_${key}`, cloudTime.toString());
+        // Bi-directional synchronization on startup
+        for (const key of SYNC_KEYS) {
+          const localTimeStr = localStorage.getItem(`masjid_habib_time_${key}`);
+          const localTime = localTimeStr ? parseInt(localTimeStr, 10) : 0;
+          const cloudItem = cloudData[key];
+          const cloudTime = cloudItem ? (cloudItem.updatedAt || 0) : 0;
+
+          if (cloudTime > localTime && cloudItem) {
+            // Cloud is newer -> Update local
+            localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(cloudItem.data));
+            localStorage.setItem(`masjid_habib_time_${key}`, cloudTime.toString());
+          } else if (localTime > cloudTime || !cloudItem) {
+            // Local is newer or not present on cloud -> Push to cloud
+            const localValStr = localStorage.getItem(`masjid_habib_${key}`);
+            if (localValStr !== null) {
+              try {
+                const parsed = JSON.parse(localValStr);
+                await saveToCloud(key, parsed);
+              } catch (e) {
+                console.error(`Failed to sync key "${key}" to cloud:`, e);
+              }
             }
-          });
-          
-          // Hydrate React states from the resolved local database (which is guaranteed to have the newest values)
-          const resolvedPasswords = PortalDatabase.get('passwords', []);
-          const resolvedPrayerTimings = PortalDatabase.get('prayer_timings', []);
-          const resolvedHistorySections = PortalDatabase.get('history_sections', []);
-          const resolvedActivities = PortalDatabase.get('activities', []);
-          const resolvedMapSettings = PortalDatabase.get('map_settings', []);
-          const resolvedAnnouncements = PortalDatabase.get('announcements', []);
-          const resolvedFunds = PortalDatabase.get('funds', []);
-          const resolvedMembers = PortalDatabase.get('members', []);
-          const resolvedTransactions = PortalDatabase.get('transactions', []);
-          const resolvedOthers = PortalDatabase.get('other_fund_entries', []);
-          const resolvedExpenses = PortalDatabase.get('expenses', []);
-          const resolvedProjects = PortalDatabase.get('projects', []);
-          const resolvedCommitments = PortalDatabase.get('commitments', []);
-          const resolvedStaff = PortalDatabase.get('religious_staff', []);
-          const resolvedAdmins = PortalDatabase.get('administrators', []);
-          const resolvedAuditLogs = PortalDatabase.get('audit_logs', []);
-
-          setPasswords(resolvedPasswords);
-          setPrayerTimings(resolvedPrayerTimings);
-          setHistorySections(resolvedHistorySections);
-          setActivities(resolvedActivities);
-          setMapSettings(resolvedMapSettings);
-          setAnnouncements(resolvedAnnouncements);
-          setFunds(resolvedFunds);
-          setMembers(resolvedMembers);
-          setTransactions(resolvedTransactions);
-          setOthers(resolvedOthers);
-          setExpenses(resolvedExpenses);
-          setProjects(resolvedProjects);
-          setCommitments(resolvedCommitments);
-          setReligiousStaff(resolvedStaff);
-          setAdministrators(resolvedAdmins);
-          setAuditLogs(resolvedAuditLogs);
-          
-          setCloudSyncState('synced');
-        } else {
-          setCloudSyncState('idle');
+          }
         }
+        
+        // Hydrate React states from the resolved local database (which is guaranteed to have the newest values)
+        const resolvedPasswords = PortalDatabase.get('passwords', []);
+        const resolvedPrayerTimings = PortalDatabase.get('prayer_timings', []);
+        const resolvedHistorySections = PortalDatabase.get('history_sections', []);
+        const resolvedActivities = PortalDatabase.get('activities', []);
+        const resolvedMapSettings = PortalDatabase.get('map_settings', { id: '1', iframeUrl: '', address: '' });
+        const resolvedAnnouncements = PortalDatabase.get('announcements', []);
+        const resolvedFunds = PortalDatabase.get('funds', []);
+        const resolvedMembers = PortalDatabase.get('members', []);
+        const resolvedTransactions = PortalDatabase.get('transactions', []);
+        const resolvedOthers = PortalDatabase.get('other_fund_entries', []);
+        const resolvedExpenses = PortalDatabase.get('expenses', []);
+        const resolvedProjects = PortalDatabase.get('projects', []);
+        const resolvedCommitments = PortalDatabase.get('commitments', []);
+        const resolvedStaff = PortalDatabase.get('religious_staff', []);
+        const resolvedAdmins = PortalDatabase.get('administrators', []);
+        const resolvedAuditLogs = PortalDatabase.get('audit_logs', []);
+        const resolvedThemeId = PortalDatabase.get('current_theme_id', 'custom');
+
+        setPasswords(resolvedPasswords);
+        setPrayerTimings(resolvedPrayerTimings);
+        setHistorySections(resolvedHistorySections);
+        setActivities(resolvedActivities);
+        setMapSettings(resolvedMapSettings);
+        setAnnouncements(resolvedAnnouncements);
+        setFunds(resolvedFunds);
+        setMembers(resolvedMembers);
+        setTransactions(resolvedTransactions);
+        setOthers(resolvedOthers);
+        setExpenses(resolvedExpenses);
+        setProjects(resolvedProjects);
+        setCommitments(resolvedCommitments);
+        setReligiousStaff(resolvedStaff);
+        setAdministrators(resolvedAdmins);
+        setAuditLogs(resolvedAuditLogs);
+        setCurrentThemeId(resolvedThemeId);
+        setThemeTrigger(prev => prev + 1);
+        
+        setCloudSyncState('synced');
       } catch (error) {
         console.error('Firebase cloud sync on startup failed:', error);
         setCloudSyncState('error');
       } finally {
         setHasLoadedFromCloud(true);
       }
+
+      // Now subscribe to real-time updates for any changes made on other devices/accounts
+      unsubscribe = subscribeToCloudChanges(
+        (key, data, updatedAt) => {
+          const localTimeStr = localStorage.getItem(`masjid_habib_time_${key}`);
+          const localTime = localTimeStr ? parseInt(localTimeStr, 10) : 0;
+          
+          if (updatedAt > localTime) {
+            localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(data));
+            localStorage.setItem(`masjid_habib_time_${key}`, updatedAt.toString());
+            
+            switch (key) {
+              case 'passwords':
+                setPasswords(data);
+                break;
+              case 'prayer_timings':
+                setPrayerTimings(data);
+                break;
+              case 'history_sections':
+                setHistorySections(data);
+                break;
+              case 'activities':
+                setActivities(data);
+                break;
+              case 'map_settings':
+                setMapSettings(data);
+                break;
+              case 'announcements':
+                setAnnouncements(data);
+                break;
+              case 'funds':
+                setFunds(data);
+                break;
+              case 'members':
+                setMembers(data);
+                break;
+              case 'transactions':
+                setTransactions(data);
+                break;
+              case 'other_fund_entries':
+                setOthers(data);
+                break;
+              case 'expenses':
+                setExpenses(data);
+                break;
+              case 'projects':
+                setProjects(data);
+                break;
+              case 'commitments':
+                setCommitments(data);
+                break;
+              case 'religious_staff':
+                setReligiousStaff(data);
+                break;
+              case 'administrators':
+                setAdministrators(data);
+                break;
+              case 'audit_logs':
+                setAuditLogs(data);
+                break;
+              case 'current_theme_id':
+                setCurrentThemeId(data);
+                setThemeTrigger(prev => prev + 1);
+                break;
+              case 'custom_theme_colors':
+              case 'custom_bg_image':
+              case 'custom_bg_opacity':
+                setThemeTrigger(prev => prev + 1);
+                break;
+              case 'section_bg_settings':
+                setSectionBgSettings(data);
+                break;
+              case 'section_custom_colors':
+                setSectionColors(data);
+                break;
+              default:
+                break;
+            }
+          }
+        },
+        (error) => {
+          console.error('Real-time sync subscription error:', error);
+        }
+      );
     }
+
     loadCloudData();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   // Listen for background auto-save sync state updates

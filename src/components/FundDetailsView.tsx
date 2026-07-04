@@ -15,7 +15,7 @@ import MagneticButton from './MagneticButton';
 import { useToast } from './Toast';
 // Removed ShopRentsLedger, ZakatLedger, and BazmCustomEventRegistry
 import { 
-  Lock, Calendar, Users, DollarSign, ArrowLeft, Download, Printer, 
+  Lock, Calendar, Users, DollarSign, ArrowLeft, Download, Printer, Sliders,
   Search, ShieldAlert, Plus, Edit, Trash, ChevronRight, User, Phone, CheckCircle, Info,
   Check, PlusCircle, Trash2, Edit2, Save, UserPlus, X, Building2, HeartHandshake, Award
 } from 'lucide-react';
@@ -3967,322 +3967,142 @@ function FixedFundRegister({
 
 
       {/* Control panel: Sorting & Comprehensive Filter Buttons */}
-      <div className="bg-pine-card border border-pine-border/80 p-5 rounded-2xl space-y-4 shadow-xl font-sans">
-        
-        {/* Row 1: Term searching and S# / Name Sorting controls */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-pine-text-muted" />
+      <div className="bg-pine-card border border-pine-border/80 p-3 rounded-xl shadow-md font-sans">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-center">
+          
+          {/* Column 1: Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-pine-text-muted" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search donor name or phone number..."
-              className="w-full bg-pine-bar/60 border border-pine-border pl-9 pr-4 py-2 text-xs rounded-lg text-white font-sans focus:outline-none focus:border-pine-btn"
+              placeholder="Search donor or phone..."
+              className="w-full bg-pine-bar/60 border border-pine-border pl-8 pr-3 py-1.5 text-xs rounded-lg text-white font-sans focus:outline-none focus:border-pine-btn"
             />
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-pine-text-body font-sans">
-            <span className="font-semibold text-pine-text-muted">Display Sorting:</span>
-            <div className="inline-flex rounded-md shadow-sm">
+          {/* Column 2: Status Audit Filters */}
+          <div className="relative">
+            <select
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value)}
+              className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
+            >
+              <option value="all" className="bg-zinc-900">All Members ({currentFundMembers.length})</option>
+              <option value="track" className="bg-zinc-900">On Track</option>
+              <option value="behind" className="bg-zinc-900">Behind Schedule</option>
+              <option value="partial-payers" className="bg-zinc-900">Partial Payers</option>
+              <option value="monthly-defaulters" className="bg-zinc-900">
+                {fund.type === 'project' ? 'Phase Defaulters' : 'Monthly Defaulters'}
+              </option>
+              <option value="no-activity" className="bg-zinc-900">
+                {fund.type === 'project' ? 'No Activity (Zero Paid)' : 'No Payment This Year'}
+              </option>
+              {fund.type === 'masjid' && (
+                <>
+                  <option value="no-khatm" className="bg-zinc-900">Khatm-ul-Quran Unpaid</option>
+                  <option value="with-khatm" className="bg-zinc-900">Khatm-ul-Quran Paid</option>
+                </>
+              )}
+              <option value="all-cleared" className="bg-zinc-900">Fully Cleared Dues</option>
+              <option value="prev-cleared" className="bg-zinc-900">Prev-Year Cleared</option>
+              <option value="high-contributors" className="bg-zinc-900">Top Contributors ↑</option>
+              <option value="low-contributors" className="bg-zinc-900">Low Contributors ↓</option>
+              <option value="ff-fully-paid" className="bg-zinc-900">Fully Paid (100% or More) ({countFFFullyPaid})</option>
+              <option value="ff-75-plus" className="bg-zinc-900">75% or More Paid ({countFF75Plus})</option>
+              <option value="ff-50-plus" className="bg-zinc-900">50% or More Paid ({countFF50Plus})</option>
+              <option value="ff-25-plus" className="bg-zinc-900">25% or More Paid ({countFF25Plus})</option>
+              <option value="ff-zero-paid" className="bg-zinc-900">Zero Paid (under 25%) ({countFFZeroPaid})</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-pine-text-muted">
+              <Sliders className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          {/* Column 3: Month/Phase Filter */}
+          <div className="relative">
+            <select
+              value={activeMonthFilter || ''}
+              onChange={(e) => setActiveMonthFilter(e.target.value || null)}
+              className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
+            >
+              <option value="" className="bg-zinc-900">All {fund.type === 'project' ? 'Phases' : 'Months'}</option>
+              {monthsList.map((mKey) => (
+                <option key={mKey} value={mKey} className="bg-zinc-900">{mKey}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-pine-text-muted">
+              <Calendar className="w-3.5 h-3.5" />
+            </div>
+          </div>
+
+          {/* Column 4: Sorting controls */}
+          <div className="flex items-center gap-1.5 justify-between">
+            <span className="text-[10px] text-pine-text-muted font-bold whitespace-nowrap uppercase">Sort:</span>
+            <div className="inline-flex rounded-md shadow-sm w-full">
               <button
                 type="button"
                 onClick={() => setSortBy('sr')}
-                className={`px-3 py-1.5 text-[11px] font-button rounded-l-md border ${
+                className={`flex-1 py-1.5 px-2.5 text-[10px] font-button rounded-l-md border ${
                   sortBy === 'sr' 
-                    ? 'bg-pine-btn border-pine-btn text-white' 
+                    ? 'bg-pine-btn border-pine-btn text-white font-bold' 
                     : 'bg-pine-bar/40 border-pine-border text-pine-text-muted hover:bg-pine-hover/10'
                 }`}
               >
-                Default (S# Number)
+                S# Default
               </button>
               <button
                 type="button"
                 onClick={() => setSortBy('name')}
-                className={`px-3 py-1.5 text-[11px] font-button rounded-r-md border-t border-b border-r ${
+                className={`flex-1 py-1.5 px-2.5 text-[10px] font-button rounded-r-md border-t border-b border-r ${
                   sortBy === 'name' 
-                    ? 'bg-pine-btn border-pine-btn text-white' 
+                    ? 'bg-pine-btn border-pine-btn text-white font-bold' 
                     : 'bg-pine-bar/40 border-pine-border text-pine-text-muted hover:bg-pine-hover/10'
                 }`}
               >
-                Alphabetical (Name A-Z)
+                Name A-Z
               </button>
             </div>
           </div>
+
         </div>
-
-        {/* Row 2: Comprehensive Categorized Filter Buttons */}
-        <div>
-          <span className="block text-[11px] uppercase tracking-wider font-extrabold text-pine-btn-hover mb-2.5">
-            {fund.type === 'project' ? 'Project Phase Audit Filters:' : 'Audit Ledger Filters & Action Lists:'}
-          </span>
-          <div className="flex flex-wrap gap-2.5 font-sans">
-            <button
-              onClick={() => setActiveFilter('all')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'all' 
-                  ? 'bg-pine-btn border-pine-btn text-white shadow-md' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-            >
-              All Members ({currentFundMembers.length})
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('track')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'track' 
-                  ? 'bg-emerald-650 border-emerald-500 text-white shadow-md' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-              title="Current total paid >= required target rate"
-            >
-              On Track
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('behind')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'behind' 
-                  ? 'bg-amber-650 border-amber-500 text-zinc-900 shadow-md' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-              title="Current total paid is less than annual expectation"
-            >
-              Behind Schedule
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('partial-payers')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'partial-payers' 
-                  ? 'bg-sky-700 border-sky-500 text-white shadow-md' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-              title="Paid something this year, but not completed yet"
-            >
-              Partial Payers
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('monthly-defaulters')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'monthly-defaulters' 
-                  ? 'bg-rose-900/60 border-rose-500 text-rose-300 shadow-md' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-              title={fund.type === 'project' ? "No payment recorded for the current active phase" : "No payment recorded for the current active month"}
-            >
-              {fund.type === 'project' ? 'Phase Defaulters' : 'Monthly Defaulters'}
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('no-activity')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'no-activity' 
-                  ? 'bg-zinc-800 border-zinc-650 text-white shadow-md' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-              title={fund.type === 'project' ? "Paid exactly 0 Rs for this project" : "Paid exactly 0 Rs this year"}
-            >
-              {fund.type === 'project' ? 'No Activity (Zero Paid)' : 'No Payment This Year (Zero Paid)'}
-            </button>
-
-            {fund.type === 'masjid' && (
-              <>
-                <button
-                  onClick={() => setActiveFilter('no-khatm')}
-                  className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                    activeFilter === 'no-khatm' 
-                      ? 'bg-blue-900/60 border-blue-500 text-blue-300 shadow-md' 
-                      : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-                  }`}
-                >
-                  Khatm-ul-Quran Unpaid
-                </button>
-                <button
-                  onClick={() => setActiveFilter('with-khatm')}
-                  className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                    activeFilter === 'with-khatm' 
-                      ? 'bg-emerald-800 border-emerald-500 text-white shadow-md' 
-                      : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-                  }`}
-                >
-                  Khatm-ul-Quran Paid
-                </button>
-              </>
-            )}
-
-            <button
-              onClick={() => setActiveFilter('all-cleared')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'all-cleared' 
-                  ? 'bg-teal-750 border-teal-500 text-white shadow-md' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-              title="Total remaining is 0 Rs and Khatm payment done"
-            >
-              Fully Cleared Dues
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('prev-cleared')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'prev-cleared' 
-                  ? 'bg-fuchsia-900/60 border-fuchsia-500 text-fuchsia-250 shadow-md' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-              title="Remaining dues from previous year is zero"
-            >
-              Prev-Year Cleared
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('high-contributors')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'high-contributors' 
-                  ? 'bg-violet-900/65 border-violet-500 text-violet-200 shadow-md' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-            >
-              Top Contributors ↑
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('low-contributors')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'low-contributors' 
-                  ? 'bg-indigo-950/65 border-indigo-700/60 text-indigo-300 shadow-md' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-            >
-              Low Contributors ↓
-            </button>
-
-            {/* Performance filters */}
-            <button
-              onClick={() => setActiveFilter('ff-fully-paid')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'ff-fully-paid' 
-                  ? 'bg-emerald-600 border-emerald-500 text-white shadow-md ring-1 ring-emerald-500' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-            >
-              {"Fully Paid (>= 100%)"} ({countFFFullyPaid})
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('ff-75-plus')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'ff-75-plus' 
-                  ? 'bg-indigo-600 border-indigo-500 text-white shadow-md ring-1 ring-indigo-500' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-            >
-              75% or More Paid ({countFF75Plus})
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('ff-50-plus')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'ff-50-plus' 
-                  ? 'bg-blue-650 border-blue-500 text-white shadow-md ring-1 ring-blue-500' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-            >
-              50% or More Paid ({countFF50Plus})
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('ff-25-plus')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'ff-25-plus' 
-                  ? 'bg-amber-600 border-amber-500 text-zinc-900 shadow-md ring-1 ring-amber-500' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-            >
-              25% or More Paid ({countFF25Plus})
-            </button>
-
-            <button
-              onClick={() => setActiveFilter('ff-zero-paid')}
-              className={`py-1.5 px-3 rounded-lg text-[10.5px] uppercase font-bold border transition-all ${
-                activeFilter === 'ff-zero-paid' 
-                  ? 'bg-rose-950 border-rose-550 text-rose-400 shadow-md ring-1 ring-rose-500' 
-                  : 'bg-pine-bar/30 border-pine-border/60 text-pine-text-muted hover:bg-pine-hover hover:text-white'
-              }`}
-            >
-              Zero Paid (under 25%) ({countFFZeroPaid})
-            </button>
-          </div>
-        </div>
-
-        {/* Dynamic Month/Phase Filters */}
-        <div className="pt-2 border-t border-pine-border/30">
-          <span className="block text-[10px] uppercase tracking-[0.2em] font-black text-pine-text-muted mb-3 italic">
-            Quick Filter by {fund.type === 'project' ? 'Phase' : 'Month'}:
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {monthsList.map((mKey) => (
-              <button
-                key={mKey}
-                onClick={() => setActiveMonthFilter(mKey === activeMonthFilter ? null : mKey)}
-                className={`py-1.5 px-3 rounded-lg text-[10px] uppercase font-black tracking-tight border transition-all ${
-                  activeMonthFilter === mKey 
-                    ? 'bg-white border-white text-black shadow-lg scale-105' 
-                    : 'bg-pine-bar/40 border-pine-border/40 text-pine-text-muted hover:bg-white hover:text-black hover:border-white'
-                }`}
-              >
-                {mKey}
-              </button>
-            ))}
-            {activeMonthFilter && (
-              <button 
-                onClick={() => setActiveMonthFilter(null)}
-                className="px-2 text-[10px] uppercase font-black text-rose-400 hover:text-rose-300"
-              >
-                ✕ Clear
-              </button>
-            )}
-          </div>
-        </div>
-
       </div>
 
       {/* Massive Pivot table container with solid scroll locks */}
       <div className="overflow-x-auto overflow-y-auto rounded-xl border border-pine-border bg-[var(--color-pine-bar)] max-h-[65vh] shadow-2xl relative">
         <div className="min-w-max">
-          <table className="w-full text-left font-mono text-xs border-collapse">
+          <table className="w-full text-left font-mono text-[9px] xs:text-[10px] sm:text-xs border-collapse">
             <thead>
-              <tr className="bg-[var(--color-pine-bar)] sticky top-0 z-30 text-pine-text-heading font-button text-[10px] uppercase tracking-wider border-b border-pine-border select-none">
-                <th className="py-3 px-3.5 sticky left-0 bg-[var(--color-pine-bar)] z-40 border-r border-pine-border text-center w-12">Sr</th>
-                <th className="py-3 px-5 sticky left-12 bg-[var(--color-pine-bar)] z-40 text-left border-r border-pine-border w-52">Donor Name</th>
+              <tr className="bg-[var(--color-pine-bar)] sticky top-0 z-30 text-pine-text-heading font-button text-[8px] xs:text-[9px] sm:text-[10px] uppercase tracking-tight border-b border-pine-border select-none">
+                <th className="py-1 px-1 sm:py-2.5 sm:px-3 sticky left-0 bg-[var(--color-pine-bar)] z-40 border-r border-pine-border text-center w-8 sm:w-12">Sr</th>
+                <th className="py-1 px-1.5 sm:py-2.5 sm:px-4 sticky left-10 sm:left-12 bg-[var(--color-pine-bar)] z-40 text-left border-r border-pine-border w-28 sm:w-52">Donor Name / نام</th>
                 {fund.type !== 'project' && (
                   <>
-                    <th className="py-3 px-4 text-center">Prev Remaining</th>
-                    <th className="py-3 px-4 text-center">Prev Paid</th>
-                    <th className="py-3 px-4 text-center border-r border-pine-border">Prev Pay Date</th>
+                    <th className="py-1 px-1 sm:py-2.5 sm:px-3 text-center">Prev Remaining</th>
+                    <th className="py-1 px-1 sm:py-2.5 sm:px-3 text-center">Prev Paid</th>
+                    <th className="py-1 px-1 sm:py-2.5 sm:px-3 text-center border-r border-pine-border">Prev Pay Date</th>
                   </>
                 )}
                 {fund.type === 'masjid' && (
                   <>
-                    <th className="py-3 px-4 text-center bg-emerald-950/40 text-emerald-400">Khatm Quran</th>
-                    <th className="py-3 px-4 text-center bg-emerald-950/40 text-emerald-400 border-r border-pine-border">Khatm Date</th>
+                    <th className="py-1 px-1 sm:py-2.5 sm:px-3 text-center bg-emerald-950/40 text-emerald-400 font-semibold">Khatm Quran</th>
+                    <th className="py-1 px-1 sm:py-2.5 sm:px-3 text-center bg-emerald-950/40 text-emerald-400 border-r border-pine-border">Khatm Date</th>
                   </>
                 )}
                 
                 {/* Scrollable Month pivots headers */}
                 {monthsList.map((m) => (
                   <React.Fragment key={m}>
-                    <th className="py-3 px-4 text-center border-l border-pine-border/30 bg-pine-hover/5">{m} Amount</th>
-                    <th className="py-3 px-4 text-center bg-pine-hover/5 border-r border-pine-border">Pay Date</th>
+                    <th className="py-1 px-1 sm:py-2.5 sm:px-3 text-center border-l border-pine-border/30 bg-pine-hover/5">{m} Amount</th>
+                    <th className="py-1 px-1 sm:py-2.5 sm:px-3 text-center bg-pine-hover/5 border-r border-pine-border">Pay Date</th>
                   </React.Fragment>
                 ))}
                 
-                <th className="py-3 px-5 text-center border-l border-pine-border bg-emerald-950/15">Required</th>
-                <th className="py-3 px-5 text-center bg-emerald-950/15">Paid Total</th>
-                <th className="py-3 px-5 text-center bg-emerald-950/15">Balance Due</th>
-                <th className="py-3 px-5 text-right border-l border-pine-border">Phone Number</th>
+                <th className="py-1 px-1.5 sm:py-2.5 sm:px-4 text-center border-l border-pine-border bg-emerald-950/15">Required</th>
+                <th className="py-1 px-1.5 sm:py-2.5 sm:px-4 text-center bg-emerald-950/15">Paid Total</th>
+                <th className="py-1 px-1.5 sm:py-2.5 sm:px-4 text-center bg-emerald-950/15">Balance Due</th>
+                <th className="py-1 px-1.5 sm:py-2.5 sm:px-4 text-right border-l border-pine-border">Phone Number</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-pine-border/45 bg-pine-bg">
@@ -4301,24 +4121,24 @@ function FixedFundRegister({
                 return (
                   <tr key={m.id} className="hover:bg-pine-hover/10 transition-colors group">
                     {/* Sticky S# Column with Admin delete option */}
-                    <td className="py-3 px-3.5 text-center font-mono text-pine-text-muted sticky left-0 bg-[var(--color-pine-bar)] z-20 border-r border-pine-border">
+                    <td className="py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-mono text-pine-text-muted sticky left-0 bg-[var(--color-pine-bar)] z-20 border-r border-pine-border w-8 sm:w-12 text-[8.5px] xs:text-[9.5px] sm:text-xs">
                       {isFundAdminUnlocked ? (
                         <button 
                           onClick={() => handleDeleteMember(m.id)}
-                          className="text-rose-450 hover:text-rose-300 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="text-rose-450 hover:text-rose-300 p-0.5 sm:p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Purge contributor record"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
                         </button>
                       ) : null}
                       <span className={isFundAdminUnlocked ? "group-hover:hidden" : ""}>{naturalSNo}</span>
                     </td>
 
                     {/* Sticky Contributor Name with double control option */}
-                    <td className="py-3 px-5 font-sans font-semibold sticky left-12 bg-[var(--color-pine-bar)] z-20 border-r border-pine-border text-white flex items-center justify-between gap-1">
+                    <td className="py-0.5 px-1 sm:py-2 sm:px-3.5 font-sans font-semibold sticky left-10 sm:left-12 bg-[var(--color-pine-bar)] z-20 border-r border-pine-border text-white flex items-center justify-between gap-1 w-28 sm:w-52 text-[8.5px] xs:text-[9.5px] sm:text-xs">
                       <span 
                         onClick={() => setSelectedProfileId(m.id)}
-                        className="hover:underline cursor-pointer hover:text-pine-btn-hover truncate"
+                        className="hover:underline cursor-pointer hover:text-pine-btn-hover truncate max-w-[80px] sm:max-w-none block"
                         title="Click to view Statement receipts logs"
                       >
                         {m.name}
@@ -4334,10 +4154,10 @@ function FixedFundRegister({
                             paidPrevious: m.paidPrevious,
                             paidPreviousDate: m.paidPreviousDate || ''
                           })}
-                          className="p-1 text-pine-btn hover:text-white rounded transition-colors"
+                          className="p-0.5 sm:p-1 text-pine-btn hover:text-white rounded transition-colors shrink-0"
                           title="Edit member settings"
                         >
-                          <Edit2 className="w-3 h-3" />
+                          <Edit2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                         </button>
                       )}
                     </td>
@@ -4347,7 +4167,7 @@ function FixedFundRegister({
                         {/* Prev Year Remaining Dues */}
                         <td 
                           onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'prev' }) : null}
-                          className={`py-3 px-4 text-center font-bold text-rose-350 ${
+                          className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-bold text-rose-350 text-[8.5px] xs:text-[9.5px] sm:text-xs ${
                             isFundAdminUnlocked ? 'hover:bg-pine-btn/25 hover:text-white cursor-pointer' : ''
                           }`}
                         >
@@ -4357,7 +4177,7 @@ function FixedFundRegister({
                         {/* Prev Year Paid Amount */}
                         <td 
                           onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'prev' }) : null}
-                          className={`py-3 px-4 text-center font-bold text-emerald-455 ${
+                          className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-bold text-emerald-455 text-[8.5px] xs:text-[9.5px] sm:text-xs ${
                             isFundAdminUnlocked ? 'hover:bg-pine-btn/25 hover:text-white cursor-pointer' : ''
                           }`}
                         >
@@ -4367,7 +4187,7 @@ function FixedFundRegister({
                         {/* Prev Year Payment date */}
                         <td 
                           onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'prev' }) : null}
-                          className={`py-3 px-4 text-center font-mono text-[10px] text-zinc-400 border-r border-pine-border ${
+                          className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-mono text-[8px] sm:text-[10px] text-zinc-400 border-r border-pine-border text-[8.5px] xs:text-[9.5px] sm:text-xs ${
                             isFundAdminUnlocked ? 'hover:bg-pine-btn/25 hover:text-white cursor-pointer' : ''
                           }`}
                         >
@@ -4381,7 +4201,7 @@ function FixedFundRegister({
                       <>
                         <td 
                           onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'khatm' }) : null}
-                          className={`py-3 px-4 text-center font-bold font-sans bg-emerald-950/10 text-emerald-400 ${
+                          className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-bold font-sans bg-emerald-950/10 text-emerald-400 text-[8.5px] xs:text-[9.5px] sm:text-xs ${
                             isFundAdminUnlocked ? 'hover:bg-emerald-800/40 cursor-pointer' : ''
                           }`}
                         >
@@ -4389,7 +4209,7 @@ function FixedFundRegister({
                         </td>
                         <td 
                           onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'khatm' }) : null}
-                          className={`py-3 px-4 text-center font-mono text-[10px] text-zinc-400 bg-emerald-950/10 border-r border-pine-border ${
+                          className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-mono text-[8px] sm:text-[10px] text-zinc-400 bg-emerald-950/10 border-r border-pine-border text-[8.5px] xs:text-[9.5px] sm:text-xs ${
                             isFundAdminUnlocked ? 'hover:bg-emerald-800/40 cursor-pointer' : ''
                           }`}
                         >
@@ -4406,7 +4226,7 @@ function FixedFundRegister({
                         <React.Fragment key={month}>
                           <td 
                             onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'month', monthKey: month }) : null}
-                            className={`py-3 px-4 text-center font-bold border-l border-zinc-700/40 text-white ${
+                            className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-bold border-l border-zinc-700/40 text-white text-[8.5px] xs:text-[9.5px] sm:text-xs ${
                               isFundAdminUnlocked ? 'hover:bg-pine-btn/30 cursor-pointer' : ''
                             }`}
                           >
@@ -4414,7 +4234,7 @@ function FixedFundRegister({
                           </td>
                           <td 
                             onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'month', monthKey: month }) : null}
-                            className={`py-3 px-4 text-center font-mono text-zinc-450 text-[10px] border-r border-zinc-700/40 ${
+                            className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-mono text-zinc-450 text-[8px] sm:text-[10px] border-r border-zinc-700/40 text-[8.5px] xs:text-[9.5px] sm:text-xs ${
                               isFundAdminUnlocked ? 'hover:bg-pine-btn/30 cursor-pointer' : ''
                             }`}
                           >
@@ -4425,18 +4245,18 @@ function FixedFundRegister({
                     })}
 
                     {/* Balance and Target values */}
-                    <td className="py-3 px-5 text-center font-extrabold text-white border-l border-pine-border bg-emerald-950/5">
+                    <td className="py-0.5 px-1 sm:py-2 sm:px-3.5 text-center font-extrabold text-white border-l border-pine-border bg-emerald-950/5 text-[8.5px] xs:text-[9.5px] sm:text-xs">
                       {m.requiredAmount.toLocaleString()} Rs
                     </td>
-                    <td className="py-3 px-5 text-center font-extrabold text-emerald-450 bg-emerald-950/5">
+                    <td className="py-0.5 px-1 sm:py-2 sm:px-3.5 text-center font-extrabold text-emerald-450 bg-emerald-950/5 text-[8.5px] xs:text-[9.5px] sm:text-xs">
                       {paidSum.toLocaleString()} Rs
                     </td>
-                    <td className={`py-3 px-5 text-center font-extrabold bg-emerald-950/5 ${balance <= 0 ? 'text-blue-400' : 'text-rose-450'}`}>
+                    <td className={`py-0.5 px-1 sm:py-2 sm:px-3.5 text-center font-extrabold bg-emerald-950/5 text-[8.5px] xs:text-[9.5px] sm:text-xs ${balance <= 0 ? 'text-blue-400' : 'text-rose-450'}`}>
                       {balance <= 0 ? 'CLEARED' : `${balance.toLocaleString()} Rs`}
                     </td>
                     
                     {/* Contributor Mobile */}
-                    <td className="py-3 px-5 text-right font-mono text-zinc-400 border-l border-pine-border">
+                    <td className="py-0.5 px-1 sm:py-2 sm:px-3.5 text-right font-mono text-zinc-400 border-l border-pine-border text-[8.5px] xs:text-[9.5px] sm:text-xs">
                       {m.phone}
                     </td>
                   </tr>
@@ -4447,58 +4267,58 @@ function FixedFundRegister({
             {/* Sum Calculations Row */}
             {orderedMembers.length > 0 && (
               <tfoot>
-                <tr className="bg-[var(--color-pine-bar)] text-white border-t border-pine-border font-sans font-bold text-xs sticky bottom-0 z-30 select-none uppercase divide-y-0">
-                  <td className="py-3 px-3.5 sticky left-0 bg-[var(--color-pine-bar)] z-40 border-r border-pine-border text-center">
+                <tr className="bg-[var(--color-pine-bar)] text-white border-t border-pine-border font-sans font-bold text-[8.5px] xs:text-[9.5px] sm:text-xs sticky bottom-0 z-30 select-none uppercase divide-y-0">
+                  <td className="py-1 px-1 sm:py-2.5 sm:px-3 sticky left-0 bg-[var(--color-pine-bar)] z-40 border-r border-pine-border text-center w-8 sm:w-12 text-[8.5px] xs:text-[9.5px] sm:text-xs">
                     SUM
                   </td>
-                  <td className="py-3 px-5 sticky left-12 bg-[var(--color-pine-bar)] z-40 border-r border-pine-border text-left truncate font-medium text-[10.5px]">
+                  <td className="py-1 px-1.5 sm:py-2.5 sm:px-3.5 sticky left-10 sm:left-12 bg-[var(--color-pine-bar)] z-40 border-r border-pine-border text-left truncate font-medium text-[8.5px] xs:text-[9px] sm:text-[10.5px] w-28 sm:w-52">
                     {orderedMembers.length} contributors
                   </td>
                   
                   {/* Prev dues sums */}
                   {fund.type !== 'project' && (
                     <>
-                      <td className="py-3 px-4 text-center text-rose-350">
+                      <td className="py-1 px-1 sm:py-2.5 sm:px-3 text-center text-rose-350 text-[8.5px] xs:text-[9.5px] sm:text-xs">
                         {getPrevRemainingTotal().toLocaleString()} Rs
                       </td>
-                      <td className="py-3 px-4 text-center text-emerald-450">
+                      <td className="py-1 px-1 sm:py-2.5 sm:px-3 text-center text-emerald-450 text-[8.5px] xs:text-[9.5px] sm:text-xs">
                         {getPrevPaidTotal().toLocaleString()} Rs
                       </td>
-                      <td className="py-3 px-4 border-r border-pine-border"></td>
+                      <td className="py-1 px-1 sm:py-2.5 sm:px-3 border-r border-pine-border"></td>
                     </>
                   )}
 
                   {/* Khatm sums */}
                   {fund.type === 'masjid' && (
                     <>
-                      <td className="py-3 px-4 text-center text-emerald-400 bg-emerald-950/30">
+                      <td className="py-1 px-1 sm:py-2.5 sm:px-3 text-center text-emerald-400 bg-emerald-950/30 text-[8.5px] xs:text-[9.5px] sm:text-xs">
                         {getKhatmTotal().toLocaleString()} Rs
                       </td>
-                      <td className="py-3 px-4 bg-emerald-950/30 border-r border-pine-border"></td>
+                      <td className="py-1 px-1 sm:py-2.5 sm:px-3 bg-emerald-950/30 border-r border-pine-border"></td>
                     </>
                   )}
 
                   {/* Month loops totals */}
                   {monthsList.map((month) => (
                     <React.Fragment key={month}>
-                      <td className="py-3 px-4 text-center border-l border-pine-border/30 bg-pine-hover/10 text-pine-btn-hover font-bold font-mono text-[11px]">
+                      <td className="py-1 px-1 sm:py-2.5 sm:px-3 text-center border-l border-pine-border/30 bg-pine-hover/10 text-pine-btn-hover font-bold font-mono text-[8.5px] xs:text-[9px] sm:text-[11px]">
                         {getMonthTotalAmount(month).toLocaleString()} Rs
                       </td>
-                      <td className="py-3 px-4 hover:bg-transparent border-r border-pine-border/40 bg-pine-hover/10"></td>
+                      <td className="py-1 px-1 sm:py-2.5 sm:px-3 hover:bg-transparent border-r border-pine-border/40 bg-pine-hover/10"></td>
                     </React.Fragment>
                   ))}
 
                   {/* Cumulative targets totals */}
-                  <td className="py-3 px-5 text-center text-white border-l border-pine-border bg-emerald-950/15">
+                  <td className="py-1 px-1.5 sm:py-2.5 sm:px-3.5 text-center text-white border-l border-pine-border bg-emerald-950/15 text-[8.5px] xs:text-[9.5px] sm:text-xs">
                     {getRequiredTotalSum().toLocaleString()} Rs
                   </td>
-                  <td className="py-3 px-5 text-center text-emerald-450 bg-emerald-950/15">
+                  <td className="py-1 px-1.5 sm:py-2.5 sm:px-3.5 text-center text-emerald-450 bg-emerald-950/15 text-[8.5px] xs:text-[9.5px] sm:text-xs">
                     {getPaidTotalSum().toLocaleString()} Rs
                   </td>
-                  <td className={`py-3 px-5 text-center bg-emerald-950/15 ${getBalanceTotalSum() <= 0 ? 'text-blue-400' : 'text-rose-450'}`}>
+                  <td className={`py-1 px-1.5 sm:py-2.5 sm:px-3.5 text-center bg-emerald-950/15 text-[8.5px] xs:text-[9.5px] sm:text-xs ${getBalanceTotalSum() <= 0 ? 'text-blue-400' : 'text-rose-450'}`}>
                     {getBalanceTotalSum().toLocaleString()} Rs
                   </td>
-                  <td className="py-3 px-5 text-right font-mono text-zinc-400 border-l border-pine-border"></td>
+                  <td className="py-1 px-1.5 sm:py-2.5 sm:px-3.5 text-right font-mono text-zinc-400 border-l border-pine-border"></td>
                 </tr>
               </tfoot>
             )}
@@ -5300,64 +5120,63 @@ function OtherFundRegister(props: any) {
 
 
 
-      {/* Monthly buttons bar */}
-      <div className="flex flex-wrap gap-2 items-center justify-center p-3 bg-pine-bar/40 rounded-xl border border-pine-border">
-        <button
-          onClick={() => setSelectedMonthIdx(null)}
-          className={`py-1.5 px-3 rounded text-[10px] font-button uppercase tracking-wider ${
-            selectedMonthIdx === null ? 'bg-pine-btn text-white' : 'hover:bg-pine-hover/10 text-pine-text-muted'
-          }`}
-        >
-          All Months
-        </button>
-        {monthsList.map((m, idx) => (
-          <button
-            key={m}
-            onClick={() => setSelectedMonthIdx(idx)}
-            className={`py-1.5 px-3 rounded text-[10px] font-button uppercase tracking-wider ${
-              selectedMonthIdx === idx ? 'bg-pine-btn text-white' : 'hover:bg-pine-hover/10 text-pine-text-muted'
-            }`}
-          >
-            {m}
-          </button>
-        ))}
-      </div>
+      {/* Advanced compact search & filter bar */}
+      <div className="bg-pine-card border border-pine-border/80 p-3 rounded-xl shadow-md font-sans">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+          {/* Column 1: Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-pine-text-muted" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search other payments sources..."
+              className="w-full bg-pine-bar/60 border border-pine-border pl-8 pr-3 py-1.5 text-xs rounded-lg text-white font-sans focus:outline-none focus:border-pine-btn"
+            />
+          </div>
 
-      {/* Advanced search toolbar */}
-      <div className="relative w-full md:w-80">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pine-text-muted" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search other payments sources..."
-          className="w-full bg-pine-bar/60 border border-pine-border pl-10 pr-4 py-2 rounded-lg text-xs font-sans text-white focus:outline-none focus:border-pine-btn"
-        />
+          {/* Column 2: Month Filter Dropdown */}
+          <div className="relative">
+            <select
+              value={selectedMonthIdx !== null ? selectedMonthIdx : ''}
+              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? Number(e.target.value) : null)}
+              className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
+            >
+              <option value="" className="bg-zinc-900">All Months (Direct Inflow)</option>
+              {monthsList.map((m, idx) => (
+                <option key={m} value={idx} className="bg-zinc-900">{m}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-pine-text-muted">
+              <Calendar className="w-3.5 h-3.5" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Spreadsheet List */}
       <div className="overflow-x-auto rounded-xl border border-pine-border bg-pine-bar/25">
-        <table className="w-full text-left font-sans text-[10px] sm:text-xs border-collapse">
+        <table className="w-full text-left font-sans text-[9px] xs:text-[10px] sm:text-xs border-collapse">
           <thead>
-            <tr className="bg-pine-bar text-pine-text-heading font-button text-[9px] sm:text-[10px] uppercase tracking-wider border-b border-pine-border">
-              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Receipt Date</th>
-              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Source / Contributor Name</th>
-              <th className="py-2 px-2 sm:py-3.5 sm:px-5 text-right font-semibold">Registered Amount</th>
-              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Reference Details</th>
+            <tr className="bg-pine-bar text-pine-text-heading font-button text-[8px] xs:text-[9px] sm:text-[10px] uppercase tracking-tight border-b border-pine-border">
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Receipt Date</th>
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Source / Contributor Name</th>
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-right font-semibold">Registered Amount</th>
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Reference Details</th>
               {isFundAdminUnlocked && (
-                <th className="py-2 px-2 sm:py-3.5 sm:px-5 text-center w-28">Actions</th>
+                <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-center w-20">Actions</th>
               )}
             </tr>
           </thead>
           <tbody className="divide-y divide-pine-border/40 font-mono">
             {filteredOthers.map((o) => (
-              <tr key={o.id} className="hover:bg-pine-hover/5">
-                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-pine-text-muted">{o.date}</td>
-                <td className="py-2 px-2 sm:py-3.5 sm:px-5 font-sans font-semibold text-white">{o.source}</td>
-                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-right font-bold text-pine-success">{o.amount.toLocaleString()} Rs</td>
-                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-pine-text-body font-sans text-xs max-w-sm truncate">{o.details}</td>
+              <tr key={o.id} className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs">
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{o.date}</td>
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">{o.source}</td>
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-right font-bold text-pine-success">{o.amount.toLocaleString()} Rs</td>
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs max-w-[120px] sm:max-w-sm truncate">{o.details}</td>
                 {isFundAdminUnlocked && (
-                  <td className="py-1.5 px-2 sm:py-2.5 sm:px-5 text-center">
+                  <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
                     <div className="inline-flex items-center gap-1">
                       <button
                         type="button"
@@ -5385,10 +5204,10 @@ function OtherFundRegister(props: any) {
                 <td colSpan={isFundAdminUnlocked ? 5 : 4} className="py-8 text-center text-xs text-pine-text-muted font-sans font-medium">No donation records found.</td>
               </tr>
             )}
-            <tr className="bg-pine-bar/30 font-bold border-t border-pine-border">
-              <td colSpan={2} className="py-4 px-5 font-button text-right text-pine-text-heading text-[10px] uppercase">Combined Total:</td>
-              <td className="py-4 px-5 text-right text-pine-success text-sm">{getSumOfSelectedList().toLocaleString()} Rs</td>
-              <td colSpan={isFundAdminUnlocked ? 2 : 1} className="py-4 px-5" />
+            <tr className="bg-pine-bar/30 font-bold border-t border-pine-border text-[9px] xs:text-[10px] sm:text-xs">
+              <td colSpan={2} className="py-2 px-4 font-button text-right text-pine-text-heading text-[9px] sm:text-[10px] uppercase">Combined Total:</td>
+              <td className="py-2 px-4 text-right text-pine-success font-bold">{getSumOfSelectedList().toLocaleString()} Rs</td>
+              <td colSpan={isFundAdminUnlocked ? 2 : 1} className="py-2 px-4" />
             </tr>
           </tbody>
         </table>
@@ -5679,64 +5498,63 @@ function ExpensesRegister({
 
 
 
-      {/* Monthly buttons bar */}
-      <div className="flex flex-wrap gap-2 items-center justify-center p-3 bg-pine-bar/40 rounded-xl border border-pine-border">
-        <button
-          onClick={() => setSelectedMonthIdx(null)}
-          className={`py-1.5 px-3 rounded text-[10px] font-button uppercase tracking-wider ${
-            selectedMonthIdx === null ? 'bg-pine-btn text-white' : 'hover:bg-pine-hover/10 text-pine-text-muted'
-          }`}
-        >
-          All Months
-        </button>
-        {monthsList.map((m, idx) => (
-          <button
-            key={m}
-            onClick={() => setSelectedMonthIdx(idx)}
-            className={`py-1.5 px-3 rounded text-[10px] font-button uppercase tracking-wider ${
-              selectedMonthIdx === idx ? 'bg-pine-btn text-white' : 'hover:bg-pine-hover/10 text-pine-text-muted'
-            }`}
-          >
-            {m}
-          </button>
-        ))}
-      </div>
+      {/* Advanced compact search & filter bar */}
+      <div className="bg-pine-card border border-pine-border/80 p-3 rounded-xl shadow-md font-sans">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+          {/* Column 1: Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-pine-text-muted" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search logged expense items..."
+              className="w-full bg-pine-bar/60 border border-pine-border pl-8 pr-3 py-1.5 text-xs rounded-lg text-white font-sans focus:outline-none focus:border-pine-btn"
+            />
+          </div>
 
-      {/* Advanced search selector */}
-      <div className="relative w-full md:w-80">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-pine-text-muted" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search logged expense items..."
-          className="w-full bg-pine-bar/60 border border-pine-border pl-10 pr-4 py-2 rounded-lg text-xs font-sans text-white focus:outline-none focus:border-pine-btn"
-        />
+          {/* Column 2: Month Filter Dropdown */}
+          <div className="relative">
+            <select
+              value={selectedMonthIdx !== null ? selectedMonthIdx : ''}
+              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? Number(e.target.value) : null)}
+              className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
+            >
+              <option value="" className="bg-zinc-900">All Months (Debit/Expenses)</option>
+              {monthsList.map((m, idx) => (
+                <option key={m} value={idx} className="bg-zinc-900">{m}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-pine-text-muted">
+              <Calendar className="w-3.5 h-3.5" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Expense ledger layout spreadsheet */}
       <div className="overflow-x-auto rounded-xl border border-pine-border bg-pine-bar/25">
-        <table className="w-full text-left font-sans text-[10px] sm:text-xs border-collapse">
+        <table className="w-full text-left font-sans text-[9px] xs:text-[10px] sm:text-xs border-collapse">
           <thead>
-            <tr className="bg-pine-bar text-pine-text-heading font-button text-[9px] sm:text-[10px] uppercase tracking-wider border-b border-pine-border">
-              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Debit Date</th>
-              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Expenditure Name</th>
-              <th className="py-2 px-2 sm:py-3.5 sm:px-5 text-right font-semibold">Debit Amount</th>
-              <th className="py-2 px-2 sm:py-3.5 sm:px-5">Reference/Voucher Details</th>
+            <tr className="bg-pine-bar text-pine-text-heading font-button text-[8px] xs:text-[9px] sm:text-[10px] uppercase tracking-tight border-b border-pine-border">
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Debit Date</th>
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Expenditure Name</th>
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-right font-semibold">Debit Amount</th>
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Reference/Voucher Details</th>
               {isFundAdminUnlocked && (
-                <th className="py-2 px-2 sm:py-3.5 sm:px-5 text-center w-28">Actions</th>
+                <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-center w-20">Actions</th>
               )}
             </tr>
           </thead>
           <tbody className="divide-y divide-pine-border/40 font-mono">
             {filteredExpenses.map((e) => (
-              <tr key={e.id} className="hover:bg-pine-hover/5">
-                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-pine-text-muted">{e.date}</td>
-                <td className="py-2 px-2 sm:py-3.5 sm:px-5 font-sans font-semibold text-white">{e.name}</td>
-                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-right font-bold text-rose-450">{e.amount.toLocaleString()} Rs</td>
-                <td className="py-2 px-2 sm:py-3.5 sm:px-5 text-pine-text-body font-sans text-xs max-w-sm truncate">{e.details}</td>
+              <tr key={e.id} className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs">
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{e.date}</td>
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">{e.name}</td>
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-right font-bold text-rose-450">{e.amount.toLocaleString()} Rs</td>
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs max-w-[120px] sm:max-w-sm truncate">{e.details}</td>
                 {isFundAdminUnlocked && (
-                  <td className="py-1.5 px-2 sm:py-2.5 sm:px-5 text-center">
+                  <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
                     <div className="inline-flex items-center gap-1">
                       <button
                         type="button"
@@ -5764,10 +5582,10 @@ function ExpensesRegister({
                 <td colSpan={isFundAdminUnlocked ? 5 : 4} className="py-8 text-center text-xs text-pine-text-muted font-sans font-medium">No recorded expense items found.</td>
               </tr>
             )}
-            <tr className="bg-pine-bar/30 font-bold border-t border-pine-border">
-              <td colSpan={2} className="py-4 px-5 font-button text-right text-pine-text-heading text-[10px] uppercase">Combined Expenditure Total:</td>
-              <td className="py-4 px-5 text-right text-rose-455 text-sm">{getSumOfSelectedExpenses().toLocaleString()} Rs</td>
-              <td colSpan={isFundAdminUnlocked ? 2 : 1} className="py-4 px-5" />
+            <tr className="bg-pine-bar/30 font-bold border-t border-pine-border text-[9px] xs:text-[10px] sm:text-xs">
+              <td colSpan={2} className="py-2 px-4 font-button text-right text-pine-text-heading text-[9px] sm:text-[10px] uppercase">Combined Expenditure Total:</td>
+              <td className="py-2 px-4 text-right text-rose-455 font-bold">{getSumOfSelectedExpenses().toLocaleString()} Rs</td>
+              <td colSpan={isFundAdminUnlocked ? 2 : 1} className="py-2 px-4" />
             </tr>
           </tbody>
         </table>
@@ -5971,38 +5789,38 @@ function CommitmentsRegister({
 
       <div className="glass-panel rounded-2xl border border-pine-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left font-sans text-xs sm:text-sm">
+          <table className="w-full text-left font-sans text-[9px] xs:text-[10px] sm:text-xs">
             <thead>
-              <tr className="bg-black/40 border-b border-pine-border text-pine-text-body">
-                <th className="py-2 px-3 sm:py-4 sm:px-6 font-semibold w-12">#</th>
-                <th className="py-2 px-3 sm:py-4 sm:px-6 font-semibold">Name & Contact</th>
-                <th className="py-2 px-3 sm:py-4 sm:px-6 font-semibold text-right">Amount Due</th>
-                <th className="py-2 px-3 sm:py-4 sm:px-6 font-semibold">Details (Note)</th>
+              <tr className="bg-black/40 border-b border-pine-border text-pine-text-body text-[8px] xs:text-[9px] sm:text-[10px] uppercase tracking-tight">
+                <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 font-semibold w-10">#</th>
+                <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 font-semibold">Name & Contact</th>
+                <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 font-semibold text-right">Amount Due</th>
+                <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 font-semibold">Details (Note)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {commitments.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-8 sm:py-12 text-center text-pine-text-muted text-xs sm:text-sm italic">
+                  <td colSpan={4} className="py-6 sm:py-10 text-center text-pine-text-muted text-[9px] sm:text-xs italic">
                     No active commitments found for this fund.
                   </td>
                 </tr>
               ) : (
                 commitments.map((c, i) => (
-                  <tr key={c.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="py-2 px-3 sm:py-4 sm:px-6 font-mono text-zinc-500">{i + 1}</td>
-                    <td className="py-2 px-3 sm:py-4 sm:px-6">
+                  <tr key={c.id} className="hover:bg-white/5 transition-colors group text-[9px] xs:text-[10px] sm:text-xs">
+                    <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-mono text-zinc-500">{i + 1}</td>
+                    <td className="py-1 px-1.5 sm:py-2 sm:px-4">
                       <div 
-                        className="font-bold text-white mb-0.5 cursor-pointer hover:text-pine-btn-hover transition-colors underline decoration-dotted text-xs sm:text-sm"
+                        className="font-bold text-white mb-0.5 cursor-pointer hover:text-pine-btn-hover transition-colors underline decoration-dotted text-[9.5px] xs:text-[10.5px] sm:text-xs"
                         onClick={() => handlePrintNotice(c)}
                         title="Click to print notice"
                       >
                         {c.name}
                       </div>
-                      <div className="text-[10px] sm:text-xs font-mono text-zinc-400">{c.phone || 'No phone provided'}</div>
+                      <div className="text-[8px] sm:text-[10px] font-mono text-zinc-400">{c.phone || 'No phone provided'}</div>
                     </td>
-                    <td className="py-2 px-3 sm:py-4 sm:px-6 text-right font-mono font-bold text-rose-400 text-xs sm:text-sm">{c.amountDue.toLocaleString()} Rs</td>
-                    <td className="py-2 px-3 sm:py-4 sm:px-6 text-zinc-400 text-[10px] sm:text-xs max-w-[120px] sm:max-w-none truncate" title={c.notes}>{c.notes || '-'}</td>
+                    <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-right font-mono font-bold text-rose-400 text-[9px] sm:text-xs">{c.amountDue.toLocaleString()} Rs</td>
+                    <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-zinc-400 text-[8.5px] sm:text-[10px] max-w-[100px] sm:max-w-none truncate" title={c.notes}>{c.notes || '-'}</td>
                   </tr>
                 ))
               )}
