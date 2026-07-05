@@ -98,6 +98,7 @@ export interface OtherFundEntry {
   source: string;
   amount: number;
   details: string;
+  monthKey?: string;
 }
 
 export interface Expense {
@@ -107,6 +108,7 @@ export interface Expense {
   amount: number;
   date: string;
   details: string;
+  monthKey?: string;
 }
 
 export interface ProtectedPagePassword {

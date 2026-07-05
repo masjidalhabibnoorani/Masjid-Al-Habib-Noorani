@@ -945,6 +945,23 @@ export default function App() {
           >
             <div className="text-center max-w-xl w-full">
               
+              {/* Official Mosque Logo on Landing page */}
+              <div className="flex justify-center mb-6">
+                <motion.div 
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+                  className="w-24 h-24 rounded-full bg-pine-bar/60 border-2 border-pine-btn flex items-center justify-center overflow-hidden shadow-2xl p-1"
+                >
+                  <img 
+                    src="https://i.postimg.cc/52Yfptkk/Masjid-Logo.png" 
+                    alt="Masjid Al-Habib Noorani Logo" 
+                    className="w-full h-full rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </motion.div>
+              </div>
+
               {/* Dedicated Title Reveal (Staggered Animation 4) */}
               <div className="mb-4">
                 <span className="text-[11px] font-button text-pine-btn-hover uppercase tracking-widest font-extrabold block">
@@ -1018,6 +1035,12 @@ export default function App() {
               <header className="bg-pine-bar border-b border-pine-border shadow-md select-none">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                   <div onClick={() => { setViewState('gateway'); setMobileMenuOpen(false); }} className="flex items-center gap-3 cursor-pointer">
+                    <img 
+                      src="https://i.postimg.cc/52Yfptkk/Masjid-Logo.png" 
+                      alt="Logo" 
+                      className="w-10 h-10 rounded-full border border-teal-500/30 object-cover"
+                      referrerPolicy="no-referrer"
+                    />
                     <div>
                       <h1 className="text-white font-heading font-extrabold text-sm uppercase tracking-wider">Masjid Al-Habib Noorani</h1>
                       <span className="text-[10px] text-pine-btn-hover font-mono uppercase block leading-none">Wah Cantt</span>
@@ -1487,6 +1510,12 @@ export default function App() {
             <footer className="bg-pine-bar border-t border-pine-border py-12 px-6 shadow-2xl relative select-none">
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-pine-text-muted">
                 <div className="flex items-center gap-3">
+                  <img 
+                    src="https://i.postimg.cc/52Yfptkk/Masjid-Logo.png" 
+                    alt="Logo" 
+                    className="w-10 h-10 rounded-full border border-teal-500/20 object-cover"
+                    referrerPolicy="no-referrer"
+                  />
                   <div>
                     <span className="font-heading font-bold text-white uppercase block">Masjid Al-Habib Noorani</span>
                     <span className="text-[10px] block">Bahtar Morr • Wah Cantt • Punjab • Pakistan</span>

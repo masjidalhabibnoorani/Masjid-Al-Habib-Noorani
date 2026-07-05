@@ -265,7 +265,8 @@ export default function AdminPortal({
     source: '',
     amount: 5000,
     date: new Date().toISOString().split('T')[0],
-    details: ''
+    details: '',
+    monthKey: 'January'
   });
 
   const [newExpenseForm, setNewExpenseForm] = useState({
@@ -273,7 +274,8 @@ export default function AdminPortal({
     name: '',
     amount: 5000,
     date: new Date().toISOString().split('T')[0],
-    details: ''
+    details: '',
+    monthKey: 'January'
   });
 
   // Project Creation forms
@@ -658,7 +660,7 @@ export default function AdminPortal({
       memberId: newTransactionForm.memberId,
       monthKey: newTransactionForm.monthKey,
       amount: Number(newTransactionForm.amount),
-      paymentDate: newTransactionForm.paymentDate
+      paymentDate: newTransactionForm.paymentDate || new Date().toISOString().split('T')[0]
     };
 
     const updated = [...transactions, t];
@@ -670,7 +672,8 @@ export default function AdminPortal({
     setNewTransactionForm(prev => ({
       ...prev,
       memberId: '',
-      amount: 1000
+      amount: 1000,
+      paymentDate: new Date().toISOString().split('T')[0]
     }));
     setDonorSearchQuery('');
   };
@@ -826,13 +829,26 @@ export default function AdminPortal({
     e.preventDefault();
     if (!newOtherForm.source || !newOtherForm.amount) return;
 
+    // Resolve a default monthKey if not set
+    const matchedFund = funds.find(f => f.id === newOtherForm.fundId);
+    let finalMonthKey = newOtherForm.monthKey;
+    if (!finalMonthKey) {
+      if (matchedFund?.type === 'masjid') finalMonthKey = 'January';
+      else if (matchedFund?.type === 'bazm') finalMonthKey = 'Rabi-ul-Awwal';
+      else {
+        const pObj = projects.find(p => p.id === newOtherForm.fundId || p.fundModuleId === newOtherForm.fundId);
+        finalMonthKey = pObj?.dynamicMonths?.[0] || 'Phase 1 Setup';
+      }
+    }
+
     const o: OtherFundEntry = {
       id: `mo-${Date.now()}`,
       fundId: newOtherForm.fundId,
       source: newOtherForm.source,
       amount: Number(newOtherForm.amount),
-      date: newOtherForm.date,
-      details: newOtherForm.details
+      date: newOtherForm.date || new Date().toISOString().split('T')[0],
+      details: newOtherForm.details,
+      monthKey: finalMonthKey
     };
 
     const updated = [...others, o];
@@ -845,7 +861,8 @@ export default function AdminPortal({
       source: '',
       amount: 5000,
       date: new Date().toISOString().split('T')[0],
-      details: ''
+      details: '',
+      monthKey: finalMonthKey
     });
   };
 
@@ -869,13 +886,26 @@ export default function AdminPortal({
     e.preventDefault();
     if (!newExpenseForm.name || !newExpenseForm.amount) return;
 
+    // Resolve a default monthKey if not set
+    const matchedFund = funds.find(f => f.id === newExpenseForm.fundId);
+    let finalMonthKey = newExpenseForm.monthKey;
+    if (!finalMonthKey) {
+      if (matchedFund?.type === 'masjid') finalMonthKey = 'January';
+      else if (matchedFund?.type === 'bazm') finalMonthKey = 'Rabi-ul-Awwal';
+      else {
+        const pObj = projects.find(p => p.id === newExpenseForm.fundId || p.fundModuleId === newExpenseForm.fundId);
+        finalMonthKey = pObj?.dynamicMonths?.[0] || 'Phase 1 Setup';
+      }
+    }
+
     const exp: Expense = {
       id: `me-${Date.now()}`,
       fundId: newExpenseForm.fundId,
       name: newExpenseForm.name,
       amount: Number(newExpenseForm.amount),
-      date: newExpenseForm.date,
-      details: newExpenseForm.details
+      date: newExpenseForm.date || new Date().toISOString().split('T')[0],
+      details: newExpenseForm.details,
+      monthKey: finalMonthKey
     };
 
     const updated = [...expenses, exp];
@@ -888,7 +918,8 @@ export default function AdminPortal({
       name: '',
       amount: 5000,
       date: new Date().toISOString().split('T')[0],
-      details: ''
+      details: '',
+      monthKey: finalMonthKey
     });
   };
 
@@ -1138,7 +1169,12 @@ export default function AdminPortal({
       {/* Top action navbar */}
       <header className="bg-pine-bar border-b border-pine-border py-4 px-6 md:px-8 flex items-center justify-between select-none shadow-md">
         <div className="flex items-center gap-3">
-          <Shield className="w-6 h-6 text-pine-btn-hover" />
+          <img 
+            src="https://i.postimg.cc/52Yfptkk/Masjid-Logo.png" 
+            alt="Logo" 
+            className="w-8 h-8 rounded-full border border-teal-500/30 object-cover"
+            referrerPolicy="no-referrer"
+          />
           <h1 className="text-base font-heading font-extrabold tracking-wider text-white uppercase">Masjid Al-Habib Noorani Admin Console</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -2410,6 +2446,16 @@ export default function AdminPortal({
                                   <span className="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">Sr No {sNo} • Contributor Info</span>
                                   <h4 className="text-sm font-extrabold text-white mt-0.5">{selectedMember.name}</h4>
                                   <p className="text-xs text-pine-text-muted mt-0.5">{selectedMember.phone} • Target: {selectedMember.requiredAmount.toLocaleString()} Rs</p>
+                                  <div className="flex gap-4 mt-2">
+                                    <div className="text-[10px]">
+                                      <span className="text-pine-text-body block">Previous Balance</span>
+                                      <span className="font-mono text-amber-400 font-bold">{(selectedMember.remainingPrevious || 0).toLocaleString()} Rs</span>
+                                    </div>
+                                    <div className="text-[10px]">
+                                      <span className="text-pine-text-body block">Previous Paid</span>
+                                      <span className="font-mono text-emerald-400 font-bold">{(selectedMember.paidPrevious || 0).toLocaleString()} Rs</span>
+                                    </div>
+                                  </div>
                                 </div>
                                 <button
                                   type="button"
@@ -2563,10 +2609,9 @@ export default function AdminPortal({
                           />
                         </div>
                         <div>
-                          <label className="block text-xs uppercase text-pine-text-body mb-1">Payment Date</label>
+                          <label className="block text-xs uppercase text-pine-text-body mb-1">Payment Date (Optional)</label>
                           <input
                             type="date"
-                            required
                             value={newTransactionForm.paymentDate}
                             onChange={(e) => setNewTransactionForm({ ...newTransactionForm, paymentDate: e.target.value })}
                             className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg font-mono focus:outline-none"
@@ -2633,10 +2678,38 @@ export default function AdminPortal({
                           />
                         </div>
                         <div>
-                          <label className="block text-xs uppercase text-pine-text-body mb-1">Receipt Date</label>
+                          <label className="block text-xs uppercase text-pine-text-body mb-1">
+                            {(() => {
+                              const matchedFund = funds.find(f => f.id === newOtherForm.fundId);
+                              return matchedFund?.type === 'project' ? 'Project Phase' : 'Month / Phase';
+                            })()}
+                          </label>
+                          <select
+                            value={newOtherForm.monthKey}
+                            onChange={(e) => setNewOtherForm({ ...newOtherForm, monthKey: e.target.value })}
+                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
+                          >
+                            {(() => {
+                              const matchedFund = funds.find(f => f.id === newOtherForm.fundId);
+                              if (matchedFund?.type === 'masjid') {
+                                return GREGORIAN_MONTHS.map(g => <option key={g} value={g} className="bg-pine-bar text-white">{g}</option>);
+                              } else if (matchedFund?.type === 'bazm') {
+                                return ISLAMIC_MONTHS.map(i => <option key={i} value={i} className="bg-pine-bar text-white">{i}</option>);
+                              } else {
+                                const pObj = projects.find(p => p.id === newOtherForm.fundId || p.fundModuleId === newOtherForm.fundId);
+                                const dynamicMonths = pObj ? pObj.dynamicMonths : ['Phase 1 Setup'];
+                                return dynamicMonths.map(pm => <option key={pm} value={pm} className="bg-pine-bar text-white">{pm}</option>);
+                              }
+                            })()}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <label className="block text-xs uppercase text-pine-text-body mb-1">Receipt Date (Optional)</label>
                           <input
                             type="date"
-                            required
                             value={newOtherForm.date}
                             onChange={(e) => setNewOtherForm({ ...newOtherForm, date: e.target.value })}
                             className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg font-mono focus:outline-none"
@@ -2705,10 +2778,38 @@ export default function AdminPortal({
                           />
                         </div>
                         <div>
-                          <label className="block text-xs uppercase text-pine-text-body mb-1">Expense Date</label>
+                          <label className="block text-xs uppercase text-pine-text-body mb-1">
+                            {(() => {
+                              const matchedFund = funds.find(f => f.id === newExpenseForm.fundId);
+                              return matchedFund?.type === 'project' ? 'Project Phase' : 'Month / Phase';
+                            })()}
+                          </label>
+                          <select
+                            value={newExpenseForm.monthKey}
+                            onChange={(e) => setNewExpenseForm({ ...newExpenseForm, monthKey: e.target.value })}
+                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
+                          >
+                            {(() => {
+                              const matchedFund = funds.find(f => f.id === newExpenseForm.fundId);
+                              if (matchedFund?.type === 'masjid') {
+                                return GREGORIAN_MONTHS.map(g => <option key={g} value={g} className="bg-pine-bar text-white">{g}</option>);
+                              } else if (matchedFund?.type === 'bazm') {
+                                return ISLAMIC_MONTHS.map(i => <option key={i} value={i} className="bg-pine-bar text-white">{i}</option>);
+                              } else {
+                                const pObj = projects.find(p => p.id === newExpenseForm.fundId || p.fundModuleId === newExpenseForm.fundId);
+                                const dynamicMonths = pObj ? pObj.dynamicMonths : ['Phase 1 Setup'];
+                                return dynamicMonths.map(pm => <option key={pm} value={pm} className="bg-pine-bar text-white">{pm}</option>);
+                              }
+                            })()}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <label className="block text-xs uppercase text-pine-text-body mb-1">Expense Date (Optional)</label>
                           <input
                             type="date"
-                            required
                             value={newExpenseForm.date}
                             onChange={(e) => setNewExpenseForm({ ...newExpenseForm, date: e.target.value })}
                             className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg font-mono focus:outline-none"

@@ -4945,7 +4945,15 @@ function OtherFundRegister(props: any) {
   const [newAmount, setNewAmount] = useState('');
   const [newDate, setNewDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [newDetails, setNewDetails] = useState('');
+  const [newMonthKey, setNewMonthKey] = useState(() => monthsList[0] || 'January');
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // Sync state if monthsList changes
+  useEffect(() => {
+    if (monthsList && monthsList.length > 0) {
+      setNewMonthKey(monthsList[0]);
+    }
+  }, [monthsList]);
 
   const handleAddNewOtherEntry = (e: React.FormEvent) => {
     e.preventDefault();
@@ -4953,10 +4961,11 @@ function OtherFundRegister(props: any) {
     const entry: OtherFundEntry = {
       id: 'other_' + Date.now(),
       fundId: fund.id,
-      date: newDate,
+      date: newDate || new Date().toISOString().split('T')[0],
       source: newSource,
       amount: Number(newAmount),
-      details: newDetails
+      details: newDetails,
+      monthKey: newMonthKey
     };
     setOthers(prevOthers => {
       const updated = [...prevOthers, entry];
@@ -4969,6 +4978,10 @@ function OtherFundRegister(props: any) {
     setNewSource('');
     setNewAmount('');
     setNewDetails('');
+    setNewDate(new Date().toISOString().split('T')[0]);
+    if (monthsList && monthsList.length > 0) {
+      setNewMonthKey(monthsList[0]);
+    }
     setShowAddForm(false);
   };
 
@@ -5055,7 +5068,7 @@ function OtherFundRegister(props: any) {
             <PlusCircle className="w-4 h-4 text-emerald-400" /> Log Direct Non-Donor Inflow Receipt
           </h3>
           <form onSubmit={handleAddNewOtherEntry} className="space-y-4 font-sans text-xs">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Inflow Source / Sender</label>
                 <input
@@ -5079,10 +5092,23 @@ function OtherFundRegister(props: any) {
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Receipt Date</label>
+                <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">
+                  {fund.type === 'project' ? 'Project Phase' : 'Month / Phase'}
+                </label>
+                <select
+                  value={newMonthKey}
+                  onChange={(e) => setNewMonthKey(e.target.value)}
+                  className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn font-semibold cursor-pointer"
+                >
+                  {monthsList.map(m => (
+                    <option key={m} value={m} className="bg-zinc-900 text-white">{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Receipt Date (Optional)</label>
                 <input
                   type="date"
-                  required
                   value={newDate}
                   onChange={(e) => setNewDate(e.target.value)}
                   className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn font-mono font-semibold"
@@ -5172,7 +5198,14 @@ function OtherFundRegister(props: any) {
             {filteredOthers.map((o) => (
               <tr key={o.id} className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs">
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{o.date}</td>
-                <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">{o.source}</td>
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
+                  <span>{o.source}</span>
+                  {o.monthKey && (
+                    <span className="ml-2 bg-emerald-950/60 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block">
+                      {o.monthKey}
+                    </span>
+                  )}
+                </td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-right font-bold text-pine-success">{o.amount.toLocaleString()} Rs</td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs max-w-[120px] sm:max-w-sm truncate">{o.details}</td>
                 {isFundAdminUnlocked && (
@@ -5226,17 +5259,35 @@ function OtherFundRegister(props: any) {
 
             <form onSubmit={(e) => {
               e.preventDefault();
-              handleSaveEdit(editingEntry);
+              handleSaveEdit({
+                ...editingEntry,
+                date: editingEntry.date || new Date().toISOString().split('T')[0]
+              });
             }} className="space-y-3.5">
               <div>
-                <label className="block text-[10px] uppercase text-zinc-400 mb-1">Receipt Date</label>
+                <label className="block text-[10px] uppercase text-zinc-400 mb-1">Receipt Date (Optional)</label>
                 <input 
                   type="date"
-                  required
                   value={editingEntry.date}
                   onChange={(e) => setEditingEntry({ ...editingEntry, date: e.target.value })}
                   className="w-full bg-pine-bar border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none focus:border-pine-btn"
                 />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase text-zinc-400 mb-1">
+                  {fund.type === 'project' ? 'Project Phase' : 'Month / Phase'}
+                </label>
+                <select
+                  value={editingEntry.monthKey || ''}
+                  onChange={(e) => setEditingEntry({ ...editingEntry, monthKey: e.target.value })}
+                  className="w-full bg-pine-bar border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none focus:border-pine-btn cursor-pointer"
+                >
+                  <option value="" className="bg-zinc-900 text-white">None / General</option>
+                  {monthsList.map(m => (
+                    <option key={m} value={m} className="bg-zinc-900 text-white">{m}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -5326,7 +5377,15 @@ function ExpensesRegister({
   const [newExpAmount, setNewExpAmount] = useState('');
   const [newExpDate, setNewExpDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [newExpDetails, setNewExpDetails] = useState('');
+  const [newExpMonthKey, setNewExpMonthKey] = useState(() => monthsList[0] || 'January');
   const [showAddExpForm, setShowAddExpForm] = useState(false);
+
+  // Sync state if monthsList changes
+  useEffect(() => {
+    if (monthsList && monthsList.length > 0) {
+      setNewExpMonthKey(monthsList[0]);
+    }
+  }, [monthsList]);
 
   const handleAddNewExpense = (e: React.FormEvent) => {
     e.preventDefault();
@@ -5336,8 +5395,9 @@ function ExpensesRegister({
       fundId: fund.id,
       name: newExpName,
       amount: Number(newExpAmount),
-      date: newExpDate,
-      details: newExpDetails
+      date: newExpDate || new Date().toISOString().split('T')[0],
+      details: newExpDetails,
+      monthKey: newExpMonthKey
     };
     setExpenses(prevExpenses => {
       const updated = [...prevExpenses, exp];
@@ -5350,6 +5410,10 @@ function ExpensesRegister({
     setNewExpName('');
     setNewExpAmount('');
     setNewExpDetails('');
+    setNewExpDate(new Date().toISOString().split('T')[0]);
+    if (monthsList && monthsList.length > 0) {
+      setNewExpMonthKey(monthsList[0]);
+    }
     setShowAddExpForm(false);
   };
 
@@ -5433,7 +5497,7 @@ function ExpensesRegister({
             <PlusCircle className="w-4 h-4 text-rose-455" /> Log Direct Operational Spending / Outflow Expense
           </h3>
           <form onSubmit={handleAddNewExpense} className="space-y-4 font-sans text-xs">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Expenditure Name</label>
                 <input
@@ -5457,10 +5521,23 @@ function ExpensesRegister({
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Debit Date</label>
+                <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">
+                  {fund.type === 'project' ? 'Project Phase' : 'Month / Phase'}
+                </label>
+                <select
+                  value={newExpMonthKey}
+                  onChange={(e) => setNewExpMonthKey(e.target.value)}
+                  className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn font-semibold cursor-pointer"
+                >
+                  {monthsList.map(m => (
+                    <option key={m} value={m} className="bg-zinc-900 text-white">{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Debit Date (Optional)</label>
                 <input
                   type="date"
-                  required
                   value={newExpDate}
                   onChange={(e) => setNewExpDate(e.target.value)}
                   className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn font-mono font-semibold"
@@ -5550,7 +5627,14 @@ function ExpensesRegister({
             {filteredExpenses.map((e) => (
               <tr key={e.id} className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs">
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{e.date}</td>
-                <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">{e.name}</td>
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
+                  <span>{e.name}</span>
+                  {e.monthKey && (
+                    <span className="ml-2 bg-rose-950/60 text-rose-400 border border-rose-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block">
+                      {e.monthKey}
+                    </span>
+                  )}
+                </td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-right font-bold text-rose-450">{e.amount.toLocaleString()} Rs</td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs max-w-[120px] sm:max-w-sm truncate">{e.details}</td>
                 {isFundAdminUnlocked && (
@@ -5604,17 +5688,35 @@ function ExpensesRegister({
 
             <form onSubmit={(e) => {
               e.preventDefault();
-              handleSaveEditExpense(editingExpense);
+              handleSaveEditExpense({
+                ...editingExpense,
+                date: editingExpense.date || new Date().toISOString().split('T')[0]
+              });
             }} className="space-y-3.5">
               <div>
-                <label className="block text-[10px] uppercase text-zinc-400 mb-1">Debit Date</label>
+                <label className="block text-[10px] uppercase text-zinc-400 mb-1">Debit Date (Optional)</label>
                 <input 
                   type="date"
-                  required
                   value={editingExpense.date}
                   onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
                   className="w-full bg-pine-bar border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none focus:border-rose-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase text-zinc-400 mb-1">
+                  {fund.type === 'project' ? 'Project Phase' : 'Month / Phase'}
+                </label>
+                <select
+                  value={editingExpense.monthKey || ''}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, monthKey: e.target.value })}
+                  className="w-full bg-pine-bar border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none focus:border-rose-500 cursor-pointer"
+                >
+                  <option value="" className="bg-zinc-900 text-white">None / General</option>
+                  {monthsList.map(m => (
+                    <option key={m} value={m} className="bg-zinc-900 text-white">{m}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
