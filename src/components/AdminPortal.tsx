@@ -995,7 +995,7 @@ export default function AdminPortal({
     const userPass = newProjectForm.password.trim() || '786';
     const newProjectPasswords: ProtectedPagePassword[] = [
       { id: `project_${prj.id}_portfolio`, pageName: `Project [${prj.name}] Portfolio`, passwordValue: userPass },
-      { id: `project_${prj.id}_fixed`, pageName: `Project [${prj.name}] Monthly Fixed`, passwordValue: userPass },
+      { id: `project_${prj.id}_fixed`, pageName: `Project [${prj.name}] Monthly Fund`, passwordValue: userPass },
       { id: `project_${prj.id}_other`, pageName: `Project [${prj.name}] Other Contrib`, passwordValue: userPass },
       { id: `project_${prj.id}_expenses`, pageName: `Project [${prj.name}] Expenditures`, passwordValue: userPass },
       { id: `project_${prj.id}_commitments`, pageName: `Project [${prj.name}] Commitments`, passwordValue: userPass },
@@ -2243,7 +2243,7 @@ export default function AdminPortal({
               {/* SECTION: Regular Donors */}
               <div className="space-y-4 pt-4 border-t border-pine-border/40">
                 <h3 className="text-xs font-bold text-pine-btn-hover uppercase tracking-widest flex items-center gap-2">
-                  <span>👥</span> Contributor Profiles & Regular Inflow Payments
+                  <span>👥</span> Contributor Profiles & Regular Payments
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Form: Add a fixed donor member */}
@@ -2293,7 +2293,7 @@ export default function AdminPortal({
                             type="number"
                             required
                             value={newMemberForm.requiredAmount}
-                            onChange={(e) => setNewMemberForm({ ...newMemberForm, requiredAmount: Number(e.target.value) })}
+                            onChange={(e) => setNewMemberForm({ ...newMemberForm, requiredAmount: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                             className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg"
                           />
                         </div>
@@ -2311,7 +2311,7 @@ export default function AdminPortal({
                           min="1"
                           placeholder="e.g. 76 (Khali chorne par aakhir me add ho ga)"
                           value={newMemberForm.targetSNo || ''}
-                          onChange={(e) => setNewMemberForm({ ...newMemberForm, targetSNo: e.target.value ? Number(e.target.value) : '' })}
+                          onChange={(e) => setNewMemberForm({ ...newMemberForm, targetSNo: e.target.value ? (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any : '' })}
                           className="w-full bg-pine-bar/60 border border-amber-500/20 py-2 px-3 text-xs text-amber-200 rounded-lg focus:outline-none focus:border-amber-500/50 font-mono"
                         />
                       </div>
@@ -2324,7 +2324,7 @@ export default function AdminPortal({
                             <input
                               type="number"
                               value={newMemberForm.remainingPrevious}
-                              onChange={(e) => setNewMemberForm({ ...newMemberForm, remainingPrevious: Number(e.target.value) })}
+                              onChange={(e) => setNewMemberForm({ ...newMemberForm, remainingPrevious: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                               className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:border-pine-btn outline-none font-mono"
                             />
                           </div>
@@ -2333,7 +2333,7 @@ export default function AdminPortal({
                             <input
                               type="number"
                               value={newMemberForm.paidPrevious}
-                              onChange={(e) => setNewMemberForm({ ...newMemberForm, paidPrevious: Number(e.target.value) })}
+                              onChange={(e) => setNewMemberForm({ ...newMemberForm, paidPrevious: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                               className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:border-pine-btn outline-none font-mono"
                             />
                           </div>
@@ -2348,7 +2348,7 @@ export default function AdminPortal({
 
                   {/* Form: Add a transaction ledger */}
                   <div className="glass-panel p-6 rounded-2xl border border-pine-border shadow-md">
-                    <h3 className="text-sm font-button uppercase tracking-wider text-white mb-4 flex items-center gap-1.5"><Plus className="w-4 h-4 text-pine-btn-hover" /> Add Inflow Payment</h3>
+                    <h3 className="text-sm font-button uppercase tracking-wider text-white mb-4 flex items-center gap-1.5"><Plus className="w-4 h-4 text-pine-btn-hover" /> Add Payment</h3>
                     
                     {/* Category Filter buttons: Mosque, Bazm, Projects */}
                     <div className="mb-4">
@@ -2604,7 +2604,7 @@ export default function AdminPortal({
                             type="number"
                             required
                             value={newTransactionForm.amount}
-                            onChange={(e) => setNewTransactionForm({ ...newTransactionForm, amount: Number(e.target.value) })}
+                            onChange={(e) => setNewTransactionForm({ ...newTransactionForm, amount: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                             className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg"
                           />
                         </div>
@@ -2620,7 +2620,7 @@ export default function AdminPortal({
                       </div>
 
                       <button type="submit" className="w-full py-2 bg-pine-btn hover:bg-pine-btn-hover text-xs font-button uppercase text-white rounded-lg transition-colors font-bold">
-                        Log ledger transaction
+                        Save Transaction
                       </button>
                     </form>
                   </div>
@@ -2630,14 +2630,14 @@ export default function AdminPortal({
               {/* SECTION: Direct Receipts & Expenses */}
               <div className="space-y-4 pt-8 border-t border-pine-border/45">
                 <h3 className="text-xs font-bold text-amber-400 uppercase tracking-widest flex items-center gap-2">
-                  <span>💰</span> Direct Non-Donor Receipts & Outflow Expenses
+                  <span>💰</span> Other Donations & Expenses
                 </h3>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   
                   {/* Form: Add direct receipts (others) */}
                   <div className="glass-panel p-6 rounded-2xl border border-pine-border shadow-md">
                     <h3 className="text-sm font-button uppercase tracking-wider text-white mb-4 flex items-center gap-1.5">
-                      <Send className="w-4 h-4 text-emerald-400" /> Log Other Inflow Receipt
+                      <Send className="w-4 h-4 text-emerald-400" /> Add Other Donation
                     </h3>
                     <form onSubmit={handleAddOther} className="space-y-4 font-sans">
                       <div className="grid grid-cols-2 gap-4">
@@ -2654,7 +2654,7 @@ export default function AdminPortal({
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs uppercase text-pine-text-body mb-1">Inflow Source / Sender</label>
+                          <label className="block text-xs uppercase text-pine-text-body mb-1">Donation Source / Sender</label>
                           <input
                             type="text"
                             required
@@ -2673,7 +2673,7 @@ export default function AdminPortal({
                             type="number"
                             required
                             value={newOtherForm.amount}
-                            onChange={(e) => setNewOtherForm({ ...newOtherForm, amount: Number(e.target.value) })}
+                            onChange={(e) => setNewOtherForm({ ...newOtherForm, amount: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                             className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg"
                           />
                         </div>
@@ -2729,15 +2729,15 @@ export default function AdminPortal({
                       </div>
 
                       <button type="submit" className="w-full py-2 bg-emerald-700 hover:bg-emerald-600 text-xs font-button uppercase text-white rounded-lg transition-colors font-bold shadow-lg shadow-emerald-950/20">
-                        Log Direct Receipt Entry
+                        Save Donation
                       </button>
                     </form>
                   </div>
 
-                  {/* Form: Add Cash Outflow Expense */}
+                  {/* Form: Add Expense */}
                   <div className="glass-panel p-6 rounded-2xl border border-pine-border shadow-md">
                     <h3 className="text-sm font-button uppercase tracking-wider text-white mb-4 flex items-center gap-1.5">
-                      <Plus className="w-4 h-4 text-rose-450" /> Log Cash Outflow Expense
+                      <Plus className="w-4 h-4 text-rose-450" /> Add Expenses
                     </h3>
                     <form onSubmit={handleAddExpense} className="space-y-4 font-sans">
                       <div className="grid grid-cols-2 gap-4">
@@ -2768,12 +2768,12 @@ export default function AdminPortal({
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs uppercase text-pine-text-body mb-1">Outflow Amount Rs</label>
+                          <label className="block text-xs uppercase text-pine-text-body mb-1">Expense Amount Rs</label>
                           <input
                             type="number"
                             required
                             value={newExpenseForm.amount}
-                            onChange={(e) => setNewExpenseForm({ ...newExpenseForm, amount: Number(e.target.value) })}
+                            onChange={(e) => setNewExpenseForm({ ...newExpenseForm, amount: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                             className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg font-mono focus:outline-none"
                           />
                         </div>
@@ -2829,7 +2829,7 @@ export default function AdminPortal({
                       </div>
 
                       <button type="submit" className="w-full py-2 bg-rose-800 hover:bg-rose-700 text-xs font-button uppercase text-white rounded-lg transition-colors font-bold shadow-lg shadow-rose-950/20">
-                        Log Outflow Expense Entry
+                        Save Expense
                       </button>
                     </form>
                   </div>
@@ -2896,7 +2896,7 @@ export default function AdminPortal({
                           type="number"
                           required
                           value={newProjectForm.targetAmount}
-                          onChange={(e) => setNewProjectForm({ ...newProjectForm, targetAmount: Number(e.target.value) })}
+                          onChange={(e) => setNewProjectForm({ ...newProjectForm, targetAmount: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                           className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 rounded-lg text-xs text-white"
                         />
                       </div>
@@ -2919,7 +2919,7 @@ export default function AdminPortal({
                           <label className="block text-xs uppercase text-pine-btn-hover font-bold mb-1">Project Duration (Months/Phases)</label>
                           <select
                             value={projectMonthsCount}
-                            onChange={(e) => handleMonthsCountChange(Number(e.target.value))}
+                            onChange={(e) => handleMonthsCountChange((e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any)}
                             className="w-full bg-pine-bar border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none"
                           >
                             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 24].map((c) => (
@@ -3129,7 +3129,7 @@ export default function AdminPortal({
                             type="number"
                             required
                             value={editingProject.targetAmount}
-                            onChange={(e) => setEditingProject({ ...editingProject, targetAmount: Number(e.target.value) })}
+                            onChange={(e) => setEditingProject({ ...editingProject, targetAmount: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                             className="w-full bg-pine-bar border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none focus:border-pine-btn font-mono"
                           />
                         </div>
@@ -3344,7 +3344,7 @@ export default function AdminPortal({
                     {masjidPasswords.length > 0 && (
                       <div className="space-y-3">
                         <h3 className="text-xs font-bold text-sky-400 uppercase tracking-widest flex items-center gap-1.5 bg-sky-950/20 p-2 px-3 rounded-lg border border-sky-500/20">
-                          🕌 Masjid-e-Noorani Fixed-Fund Ledgers Keys
+                          🕌 Masjid-e-Noorani Monthly-Fund Ledgers Keys
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {masjidPasswords.map(renderPasswordItem)}
@@ -4746,7 +4746,7 @@ export default function AdminPortal({
                       type="number"
                       required
                       value={editingMember.requiredAmount}
-                      onChange={(e) => setEditingMember({ ...editingMember, requiredAmount: Number(e.target.value) })}
+                      onChange={(e) => setEditingMember({ ...editingMember, requiredAmount: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                       className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
                     />
                   </div>
@@ -4756,7 +4756,7 @@ export default function AdminPortal({
                       <input
                         type="number"
                         value={editingMember.remainingPrevious}
-                        onChange={(e) => setEditingMember({ ...editingMember, remainingPrevious: Number(e.target.value) })}
+                        onChange={(e) => setEditingMember({ ...editingMember, remainingPrevious: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                         className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
                       />
                     </div>
@@ -4765,7 +4765,7 @@ export default function AdminPortal({
                       <input
                         type="number"
                         value={editingMember.paidPrevious}
-                        onChange={(e) => setEditingMember({ ...editingMember, paidPrevious: Number(e.target.value) })}
+                        onChange={(e) => setEditingMember({ ...editingMember, paidPrevious: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                         className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
                       />
                     </div>
@@ -4795,7 +4795,7 @@ export default function AdminPortal({
           {editingOther && (
             <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 font-sans">
               <div className="w-full max-w-md bg-pine-bar/95 border border-pine-border p-6 rounded-2xl shadow-2xl animate-fade-in font-sans font-sans">
-                <h3 className="font-heading font-extrabold text-white text-base mb-4 uppercase tracking-wider font-bold">Edit Loose Inflow receipt</h3>
+                <h3 className="font-heading font-extrabold text-white text-base mb-4 uppercase tracking-wider font-bold">Edit Other Donation</h3>
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   handleSaveOther(editingOther);
@@ -4838,7 +4838,7 @@ export default function AdminPortal({
                       type="number"
                       required
                       value={editingOther.amount}
-                      onChange={(e) => setEditingOther({ ...editingOther, amount: Number(e.target.value) })}
+                      onChange={(e) => setEditingOther({ ...editingOther, amount: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                       className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
                     />
                   </div>
@@ -4872,11 +4872,11 @@ export default function AdminPortal({
             </div>
           )}
 
-          {/* MODAL: Edit Capital/Operating Outflow Expense */}
+          {/* MODAL: Edit Expense */}
           {editingExpense && (
             <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
               <div className="w-full max-w-md bg-pine-bar/95 border border-pine-border p-6 rounded-2xl shadow-2xl animate-fade-in font-sans">
-                <h3 className="font-heading font-extrabold text-white text-base mb-4 uppercase tracking-wider font-bold">Edit Operating Outflow Expense</h3>
+                <h3 className="font-heading font-extrabold text-white text-base mb-4 uppercase tracking-wider font-bold">Edit Expense</h3>
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   handleSaveExpense(editingExpense);
@@ -4919,7 +4919,7 @@ export default function AdminPortal({
                       type="number"
                       required
                       value={editingExpense.amount}
-                      onChange={(e) => setEditingExpense({ ...editingExpense, amount: Number(e.target.value) })}
+                      onChange={(e) => setEditingExpense({ ...editingExpense, amount: (e.target.value === '' ? '' : (e.target.value === '' ? '' : Number(e.target.value)) as any) as any })}
                       className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
                     />
                   </div>

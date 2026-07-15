@@ -459,7 +459,7 @@ export default function App() {
     projects.forEach(proj => {
       const keys = [
         { suffix: 'portfolio', name: 'Portfolio' },
-        { suffix: 'fixed', name: 'Monthly Fixed' },
+        { suffix: 'fixed', name: 'Monthly Fund' },
         { suffix: 'other', name: 'Other Contrib' },
         { suffix: 'expenses', name: 'Expenditures' },
         { suffix: 'commitments', name: 'Commitments' }

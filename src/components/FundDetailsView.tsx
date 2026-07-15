@@ -318,7 +318,7 @@ export default function FundDetailsView({
         <div class="title-area">
           <h2>Masjid Al-Habib Noorani Community Trust</h2>
           <p>Wah Cantt, Punjab, Pakistan</p>
-          <div class="sub">Official Audited Inflow Receipt • Tasdeeq Shuda Raseed</div>
+          <div class="sub">Official Receipt • Tasdeeq Shuda Raseed</div>
         </div>
       </div>
       <div class="ref-box">
@@ -678,7 +678,7 @@ export default function FundDetailsView({
         <div class="title-area">
           <h2>Masjid Al-Habib Noorani Community Trust</h2>
           <p>Wah Cantt, Punjab, Pakistan</p>
-          <div class="sub">Official Audited Inflow Receipt • Tasdeeq Shuda Raseed</div>
+          <div class="sub">Official Receipt • Tasdeeq Shuda Raseed</div>
         </div>
       </div>
       <div class="ref-box">
@@ -1160,7 +1160,7 @@ export default function FundDetailsView({
                     )}
                   </div>
                   <div>
-                    <h4 className="font-heading font-extrabold text-white text-xs tracking-wide">3. 📅 Monthly Fixed Register</h4>
+                    <h4 className="font-heading font-extrabold text-white text-xs tracking-wide">3. 📅 Monthly Register</h4>
                     <p className="text-[10px] text-pine-text-muted mt-1 leading-relaxed">Real-time spreadsheets and monthly member statements.</p>
                   </div>
                 </button>
@@ -1200,7 +1200,7 @@ export default function FundDetailsView({
                     )}
                   </div>
                   <div>
-                    <h4 className="font-heading font-extrabold text-white text-xs tracking-wide">5. 📉 Expense Outflows</h4>
+                    <h4 className="font-heading font-extrabold text-white text-xs tracking-wide">5. 📉 Expenses</h4>
                     <p className="text-[10px] text-pine-text-muted mt-1 leading-relaxed">Verified spending journals and invoices itemizations.</p>
                   </div>
                 </button>
@@ -1334,7 +1334,7 @@ export default function FundDetailsView({
               <div className="flex items-center gap-3">
                 <select
                   value={portfolioMonthFilter === null ? 'all' : portfolioMonthFilter}
-                  onChange={(e) => setPortfolioMonthFilter(e.target.value === 'all' ? null : Number(e.target.value))}
+                  onChange={(e) => setPortfolioMonthFilter(e.target.value === 'all' ? null : (e.target.value === '' ? '' : Number(e.target.value)) as any)}
                   className="bg-pine-bar border border-pine-border text-white text-xs px-3 py-1.5 rounded-lg focus:outline-none focus:border-pine-btn"
                 >
                   <option value="all">All Months</option>
@@ -1391,7 +1391,7 @@ export default function FundDetailsView({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <TiltCard glow={false} className="bg-pine-bar/40 text-center py-6">
-                <span className="text-xs text-pine-text-muted uppercase font-button tracking-wider block mb-1">Fixed Achieved</span>
+                <span className="text-xs text-pine-text-muted uppercase font-button tracking-wider block mb-1">Monthly Achieved</span>
                 <span className="text-2xl font-mono text-emerald-400 block font-semibold"><Counter value={getPortfolioFixedSum()} /> Rs</span>
               </TiltCard>
               <TiltCard glow={false} className="bg-pine-bar/40 text-center py-6">
@@ -1524,7 +1524,7 @@ export default function FundDetailsView({
                         <div className="flex justify-between items-center mb-4 border-b border-pine-border/40 pb-3">
                           <h4 className="text-xs font-button uppercase tracking-wider text-white flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                            Financial Inflow Sources / آمدنی کے ذرائع
+                            Financial Sources / آمدنی کے ذرائع
                           </h4>
                           <span className="text-[10px] bg-pine-bar border border-pine-border text-pine-text-muted font-mono px-2 py-0.5 rounded">
                             {portfolioMonthFilter !== null ? `Month: ${monthsList[portfolioMonthFilter]}` : 'Lifetime Metrics'}
@@ -1535,7 +1535,7 @@ export default function FundDetailsView({
                           {/* Fixed Fund bar */}
                           <div>
                             <div className="flex justify-between text-xs font-sans mb-1">
-                              <span className="text-pine-text-body font-medium">Fixed Monthly Fund / فکسڈ ماہانہ فنڈ</span>
+                              <span className="text-pine-text-body font-medium">Monthly Fund / ماہانہ فنڈ</span>
                               <span className="text-white font-semibold font-mono">
                                 {fixedFundAchieved.toLocaleString()} Rs ({fixedPercentOfInflow}%)
                               </span>
@@ -1847,8 +1847,8 @@ export default function FundDetailsView({
                     <thead>
                       <tr className="border-b border-pine-border text-pine-text-muted pb-2">
                         <th className="pb-2 px-1 sm:px-2">Chronology</th>
-                        <th className="pb-2 px-1 sm:px-2">Inflow (Achieved)</th>
-                        <th className="pb-2 px-1 sm:px-2">Outflow (Expenses)</th>
+                        <th className="pb-2 px-1 sm:px-2">Income</th>
+                        <th className="pb-2 px-1 sm:px-2">Expenses</th>
                         <th className="pb-2 px-1 sm:px-2">Net Status</th>
                       </tr>
                     </thead>
@@ -2025,7 +2025,7 @@ export default function FundDetailsView({
                       Wah Cantt, Punjab, Pakistan • Registered Trust
                     </p>
                     <p className="text-[10px] text-zinc-400 mt-0.5 font-sans print:text-gray-600 font-medium">
-                      Official Audited Cash Inflow Receipt Slip • Sarkari Tasdeeq Shuda Raseed
+                      Official Cash Receipt Slip • Sarkari Tasdeeq Shuda Raseed
                     </p>
                   </div>
                 </div>
@@ -2763,7 +2763,7 @@ export const printExpensesStatement = (
 <body>
   <div class="print-header">
     <h1>MASJID AL-HABIB NOORANI</h1>
-    <h2>MOSQUE EXPENDITURES & OUTFLOWS REPORT</h2>
+    <h2>MOSQUE EXPENDITURES REPORT</h2>
     <div class="print-meta">
       Report Generated: ${generatedDate}
       ${filterLabel ? `<div style="background-color: #ffffff; border: 2px solid #000000; padding: 6px 12px; border-radius: 4px; font-size: 14px; color: #000000; font-weight: 800; margin-top: 10px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">Month Filtered: ${filterLabel.toUpperCase()}</div>` : ''}
@@ -2772,7 +2772,7 @@ export const printExpensesStatement = (
 
   <div class="summary-card">
     <div class="stat-box">
-      <span>Total Printed Outflows</span>
+      <span>Total Printed Expenses</span>
       <strong>${totalAmount.toLocaleString()} Rs</strong>
     </div>
     <div class="stat-box">
@@ -2791,7 +2791,7 @@ export const printExpensesStatement = (
         <th style="width: 5%;">Sr</th>
         <th>Expense Head / تفصیلِ اخراجات</th>
         <th style="text-align: center; width: 15%;">Date</th>
-        <th style="text-align: right; width: 20%;">Price Outflow (Rs)</th>
+        <th style="text-align: right; width: 20%;">Price (Rs)</th>
         <th>In-depth Description / Details</th>
       </tr>
     </thead>
@@ -2992,7 +2992,7 @@ export const printOtherDonationsStatement = (
         </tr>
       `).join('')}
       <tr class="highlight-row">
-        <td colspan="3" style="font-weight: 800;">GRAND TOTAL DIRECT INFLOWS</td>
+        <td colspan="3" style="font-weight: 800;">GRAND TOTAL DONATIONS</td>
         <td style="text-align: right; font-weight: 900; font-family: monospace; color: #000000; font-size: 12px;">
           ${totalAmount.toLocaleString()} Rs
         </td>
@@ -3288,7 +3288,7 @@ export const printAnalyticalPortfolioStatement = (
 
   <div class="summary-card">
     <div class="stat-box">
-      <span>Fixed Registry</span>
+      <span>Monthly Registry</span>
       <strong>${totalFixed.toLocaleString()} Rs</strong>
     </div>
     <div class="stat-box">
@@ -3300,7 +3300,7 @@ export const printAnalyticalPortfolioStatement = (
       <strong>${combinedIncome.toLocaleString()} Rs</strong>
     </div>
     <div class="stat-box">
-      <span> Mosq Outflows</span>
+      <span> Mosq Expenses</span>
       <strong>${totalExpenses.toLocaleString()} Rs</strong>
     </div>
     <div class="stat-box">
@@ -3314,7 +3314,7 @@ export const printAnalyticalPortfolioStatement = (
   <div class="charts-row">
     <!-- Trend Analysis Bar Chart -->
     <div class="chart-box">
-      <h3 class="chart-title">Inflow vs Outflow Trend</h3>
+      <h3 class="chart-title">Income vs Expense Trend</h3>
       <svg width="100%" height="150" viewBox="0 0 570 170" style="background-color: #f9fafb;">
         <!-- Grid horizontal lines -->
         <line x1="30" y1="30" x2="550" y2="30" stroke="#cccccc" stroke-width="0.5" stroke-dasharray="2,2" />
@@ -3342,13 +3342,13 @@ export const printAnalyticalPortfolioStatement = (
       <h3 class="chart-title">Grand Budget Allocation / میزانیہ خاکہ</h3>
       <div style="padding: 2px; text-align: center;">
         <svg width="100%" height="150" viewBox="0 0 180 150">
-          <text x="45" y="15" font-family="sans-serif" font-size="8px" font-weight="bold" text-anchor="middle" fill="#111827">INFLOWS / کل آمدن</text>
+          <text x="45" y="15" font-family="sans-serif" font-size="8px" font-weight="bold" text-anchor="middle" fill="#111827">INCOME / کل آمدن</text>
           
           <rect x="30" y="25" width="30" height="100" fill="#e5e7eb" rx="2" stroke="#000000" stroke-width="0.5" />
           <rect x="30" y="${25 + (100 - (totalFixed / (combinedIncome || 1)) * 100)}" width="30" height="${(totalFixed / (combinedIncome || 1)) * 100}" fill="#10b981" rx="1" />
           <rect x="30" y="25" width="30" height="${(totalOthers / (combinedIncome || 1)) * 100}" fill="#38bdf8" rx="1" />
           
-          <text x="45" y="136" font-family="sans-serif" font-size="7px" text-anchor="middle" fill="#111827">Fixed: ${Math.round((totalFixed / (combinedIncome || 1)) * 100)}%</text>
+          <text x="45" y="136" font-family="sans-serif" font-size="7px" text-anchor="middle" fill="#111827">Monthly: ${Math.round((totalFixed / (combinedIncome || 1)) * 100)}%</text>
           <text x="45" y="145" font-family="sans-serif" font-size="7px" text-anchor="middle" fill="#4b5563">Other: ${Math.round((totalOthers / (combinedIncome || 1)) * 100)}%</text>
 
           <text x="135" y="15" font-family="sans-serif" font-size="8px" font-weight="bold" text-anchor="middle" fill="#111827">ALLOCATION / تقسیم</text>
@@ -3442,9 +3442,9 @@ export const printAnalyticalPortfolioStatement = (
       <tr>
         <th style="width: 5%;">Sr</th>
         <th>Month / Phase Details</th>
-        <th style="text-align: right; width: 22%;">Fixed Registry Inflow (Rs)</th>
-        <th style="text-align: right; width: 22%;">Other Donations Inflow (Rs)</th>
-        <th style="text-align: right; width: 22%;">Mosque Outflow / Expenses (Rs)</th>
+        <th style="text-align: right; width: 22%;">Monthly Registry Income (Rs)</th>
+        <th style="text-align: right; width: 22%;">Other Donations Income (Rs)</th>
+        <th style="text-align: right; width: 22%;">Mosque Expenses (Rs)</th>
         <th style="text-align: right; width: 22%;">Net Monthly Balance (Rs)</th>
       </tr>
     </thead>
@@ -3603,7 +3603,7 @@ function FixedFundRegister({
         setCellEditAmount(totalAmount);
         setCellEditDate(existingList[0].paymentDate || new Date().toISOString().split('T')[0]);
       } else {
-        setCellEditAmount(type === 'khatm' ? 3000 : 1000);
+        setCellEditAmount(type === 'khatm' ? 3000 : (fund.type === 'bazm' ? 100 : fund.type === 'masjid' ? 500 : 1000));
         setCellEditDate(new Date().toISOString().split('T')[0]);
       }
     }
@@ -4356,7 +4356,7 @@ function FixedFundRegister({
                     type="number"
                     required
                     value={cellEditPrevRemaining}
-                    onChange={(e) => setCellEditPrevRemaining(Number(e.target.value))}
+                    onChange={(e) => setCellEditPrevRemaining((e.target.value === '' ? '' : Number(e.target.value)) as any)}
                     className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
                   />
                 </div>
@@ -4367,7 +4367,7 @@ function FixedFundRegister({
                     type="number"
                     required
                     value={cellEditPrevPaid}
-                    onChange={(e) => setCellEditPrevPaid(Number(e.target.value))}
+                    onChange={(e) => setCellEditPrevPaid((e.target.value === '' ? '' : Number(e.target.value)) as any)}
                     className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
                   />
                 </div>
@@ -4406,13 +4406,13 @@ function FixedFundRegister({
                   <input
                     type="number"
                     value={cellEditAmount}
-                    onChange={(e) => setCellEditAmount(Number(e.target.value))}
+                    onChange={(e) => setCellEditAmount((e.target.value === '' ? '' : Number(e.target.value)) as any)}
                     className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg font-mono focus:outline-none"
                   />
                   
                   {/* Preset Tags */}
                   <div className="flex gap-2.5 mt-2">
-                    {[1000, 2000, 3000, 5000].map((tVal) => (
+                    { (fund.type === 'bazm' ? [100, 200, 300, 400] : fund.type === 'masjid' ? [400, 500, 1000, 2000] : [1000, 2000, 3000, 5000]).map((tVal) => (
                       <button
                         key={tVal}
                         type="button"
@@ -4518,7 +4518,7 @@ function FixedFundRegister({
                     type="number"
                     required
                     value={activeMemberEdit.requiredAmount}
-                    onChange={(e) => setActiveMemberEdit({ ...activeMemberEdit, requiredAmount: Number(e.target.value) })}
+                    onChange={(e) => setActiveMemberEdit({ ...activeMemberEdit, requiredAmount: (e.target.value === '' ? '' : Number(e.target.value)) as any })}
                     className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none font-mono"
                   />
                 </div>
@@ -4537,7 +4537,7 @@ function FixedFundRegister({
                     min="1"
                     placeholder="e.g. 76 (Khali chorne par aakhir me add ho ga)"
                     value={activeMemberEdit.targetSNo || ''}
-                    onChange={(e) => setActiveMemberEdit({ ...activeMemberEdit, targetSNo: e.target.value ? Number(e.target.value) : undefined })}
+                    onChange={(e) => setActiveMemberEdit({ ...activeMemberEdit, targetSNo: e.target.value ? (e.target.value === '' ? '' : Number(e.target.value)) as any : undefined })}
                     className="w-full bg-pine-bar/60 border border-amber-500/20 py-2 px-3 text-xs text-amber-200 rounded-lg focus:outline-none focus:border-amber-500/50 mt-1 font-mono"
                   />
                 </div>
@@ -4554,7 +4554,7 @@ function FixedFundRegister({
                     <input
                       type="number"
                       value={activeMemberEdit.remainingPrevious || 0}
-                      onChange={(e) => setActiveMemberEdit({ ...activeMemberEdit, remainingPrevious: Number(e.target.value) })}
+                      onChange={(e) => setActiveMemberEdit({ ...activeMemberEdit, remainingPrevious: (e.target.value === '' ? '' : Number(e.target.value)) as any })}
                       className="w-full bg-pine-bar/50 border border-pine-border p-1.5 px-2.5 rounded text-white font-mono"
                     />
                   </div>
@@ -4563,7 +4563,7 @@ function FixedFundRegister({
                     <input
                       type="number"
                       value={activeMemberEdit.paidPrevious || 0}
-                      onChange={(e) => setActiveMemberEdit({ ...activeMemberEdit, paidPrevious: Number(e.target.value) })}
+                      onChange={(e) => setActiveMemberEdit({ ...activeMemberEdit, paidPrevious: (e.target.value === '' ? '' : Number(e.target.value)) as any })}
                       className="w-full bg-pine-bar/50 border border-pine-border p-1.5 px-2.5 rounded text-white font-mono"
                     />
                   </div>
@@ -4581,6 +4581,20 @@ function FixedFundRegister({
               )}
 
               <div className="flex gap-3 pt-4 border-t border-pine-border/40">
+                {activeMemberEdit.memberId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (true) {
+                        handleDeleteMember(activeMemberEdit.memberId!);
+                        setActiveMemberEdit(null);
+                      }
+                    }}
+                    className="px-4 py-2.5 bg-rose-950/40 border border-rose-500/40 hover:bg-rose-900/60 font-button uppercase text-xs text-rose-300 rounded-lg font-bold"
+                  >
+                    Delete
+                  </button>
+                )}
                 <button
                   type="submit"
                   className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 font-button uppercase text-xs text-white rounded-lg font-bold shadow-lg shadow-emerald-950/40"
@@ -5047,7 +5061,7 @@ function OtherFundRegister(props: any) {
               className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
             >
               {showAddForm ? <X className="w-4 h-4 text-rose-450" /> : <Plus className="w-4 h-4 text-emerald-400" />} 
-              {showAddForm ? "Close Form" : "Add Direct Inflow"}
+              {showAddForm ? "Close Form" : "Add Other Donation"}
             </button>
           )}
           <button 
@@ -5065,12 +5079,12 @@ function OtherFundRegister(props: any) {
       {isFundAdminUnlocked && showAddForm && (
         <div className="glass-panel p-6 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-pine-bar/95 to-pine-bar shadow-xl animate-fade-in">
           <h3 className="text-sm font-button uppercase tracking-wider text-white mb-4 flex items-center gap-1.5">
-            <PlusCircle className="w-4 h-4 text-emerald-400" /> Log Direct Non-Donor Inflow Receipt
+            <PlusCircle className="w-4 h-4 text-emerald-400" /> Add Other Donation
           </h3>
           <form onSubmit={handleAddNewOtherEntry} className="space-y-4 font-sans text-xs">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Inflow Source / Sender</label>
+                <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Donation Source / Sender</label>
                 <input
                   type="text"
                   required
@@ -5137,7 +5151,7 @@ function OtherFundRegister(props: any) {
                 type="submit"
                 className="py-2.5 px-5 bg-pine-btn hover:bg-pine-btn-hover text-white text-xs uppercase rounded-lg font-bold tracking-wider shadow-lg shadow-emerald-950/20"
               >
-                Submit Inflow Log
+                Save Donation
               </button>
             </div>
           </form>
@@ -5165,10 +5179,10 @@ function OtherFundRegister(props: any) {
           <div className="relative">
             <select
               value={selectedMonthIdx !== null ? selectedMonthIdx : ''}
-              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? Number(e.target.value) : null)}
+              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? (e.target.value === '' ? '' : Number(e.target.value)) as any : null)}
               className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
             >
-              <option value="" className="bg-zinc-900">All Months (Direct Inflow)</option>
+              <option value="" className="bg-zinc-900">All Months</option>
               {monthsList.map((m, idx) => (
                 <option key={m} value={idx} className="bg-zinc-900">{m}</option>
               ))}
@@ -5308,7 +5322,7 @@ function OtherFundRegister(props: any) {
                   type="number"
                   required
                   value={editingEntry.amount}
-                  onChange={(e) => setEditingEntry({ ...editingEntry, amount: Number(e.target.value) })}
+                  onChange={(e) => setEditingEntry({ ...editingEntry, amount: (e.target.value === '' ? '' : Number(e.target.value)) as any })}
                   className="w-full bg-pine-bar border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none focus:border-pine-btn"
                 />
               </div>
@@ -5469,7 +5483,7 @@ function ExpensesRegister({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">Mosque Bill Expenditures Logs</h3>
-          <p className="text-xs text-pine-text-muted font-sans mt-0.5">Capital outflows including generator fuel, repairs, cleaner wages, imam salaries, utility and electric expenses.</p>
+          <p className="text-xs text-pine-text-muted font-sans mt-0.5">Expenses including generator fuel, repairs, cleaner wages, imam salaries, utility and electric expenses.</p>
         </div>
         <div className="flex items-center gap-2">
           {isFundAdminUnlocked && (
@@ -5478,7 +5492,7 @@ function ExpensesRegister({
               className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
             >
               {showAddExpForm ? <X className="w-4 h-4 text-rose-450" /> : <Plus className="w-4 h-4 text-emerald-400" />} 
-              {showAddExpForm ? "Close Form" : "Add Direct Expense"}
+              {showAddExpForm ? "Close Form" : "Add Expense"}
             </button>
           )}
           <button 
@@ -5494,7 +5508,7 @@ function ExpensesRegister({
       {isFundAdminUnlocked && showAddExpForm && (
         <div className="glass-panel p-6 rounded-2xl border border-rose-500/30 bg-gradient-to-r from-pine-bar/95 to-pine-bar shadow-xl animate-fade-in">
           <h3 className="text-sm font-button uppercase tracking-wider text-white mb-4 flex items-center gap-1.5">
-            <PlusCircle className="w-4 h-4 text-rose-455" /> Log Direct Operational Spending / Outflow Expense
+            <PlusCircle className="w-4 h-4 text-rose-455" /> Add Expenses
           </h3>
           <form onSubmit={handleAddNewExpense} className="space-y-4 font-sans text-xs">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -5566,7 +5580,7 @@ function ExpensesRegister({
                 type="submit"
                 className="py-2.5 px-5 bg-pine-btn hover:bg-pine-btn-hover text-white text-xs uppercase rounded-lg font-bold tracking-wider shadow-lg shadow-rose-955/20"
               >
-                Submit Expense Log
+                Save Expense
               </button>
             </div>
           </form>
@@ -5594,7 +5608,7 @@ function ExpensesRegister({
           <div className="relative">
             <select
               value={selectedMonthIdx !== null ? selectedMonthIdx : ''}
-              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? Number(e.target.value) : null)}
+              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? (e.target.value === '' ? '' : Number(e.target.value)) as any : null)}
               className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
             >
               <option value="" className="bg-zinc-900">All Months (Debit/Expenses)</option>
@@ -5737,7 +5751,7 @@ function ExpensesRegister({
                   type="number"
                   required
                   value={editingExpense.amount}
-                  onChange={(e) => setEditingExpense({ ...editingExpense, amount: Number(e.target.value) })}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, amount: (e.target.value === '' ? '' : Number(e.target.value)) as any })}
                   className="w-full bg-pine-bar border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none focus:border-rose-500"
                 />
               </div>
@@ -5933,3 +5947,4 @@ function CommitmentsRegister({
     </div>
   );
 }
+
