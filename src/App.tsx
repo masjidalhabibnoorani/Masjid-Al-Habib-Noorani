@@ -17,6 +17,19 @@ import { gsap } from 'gsap';
 
 import { ToastProvider } from './components/Toast';
 
+function isDeepEqual(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) return false;
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  for (const key of keysA) {
+    if (!keysB.includes(key)) return false;
+    if (!isDeepEqual(a[key], b[key])) return false;
+  }
+  return true;
+}
+
 // Component Imports
 import Particles from './components/Particles';
 
@@ -515,6 +528,7 @@ export default function App() {
         ];
 
         // Bi-directional synchronization on startup (Cloud is the master source of truth to ensure all devices match)
+        const startupPromises = [];
         for (const key of SYNC_KEYS) {
           const cloudItem = cloudData[key];
           const cloudTime = cloudItem ? (cloudItem.updatedAt || 0) : 0;
@@ -529,12 +543,15 @@ export default function App() {
             if (localValStr !== null) {
               try {
                 const parsed = JSON.parse(localValStr);
-                await saveToCloud(key, parsed);
+                startupPromises.push(saveToCloud(key, parsed, true));
               } catch (e) {
                 console.error(`Failed to sync key "${key}" to cloud:`, e);
               }
             }
           }
+        }
+        if (startupPromises.length > 0) {
+          await Promise.all(startupPromises);
         }
         
         // Hydrate React states from the resolved local database (which is guaranteed to have the newest values)
@@ -586,13 +603,18 @@ export default function App() {
       // Now subscribe to real-time updates for any changes made on other devices/accounts
       unsubscribe = subscribeToCloudChanges(
         (key, data, updatedAt) => {
-          const localTimeStr = localStorage.getItem(`masjid_habib_time_${key}`);
-          const localTime = localTimeStr ? parseInt(localTimeStr, 10) : 0;
           const localValStr = localStorage.getItem(`masjid_habib_${key}`);
+          let isDifferent = true;
+          if (localValStr !== null) {
+            try {
+              const localVal = JSON.parse(localValStr);
+              if (isDeepEqual(localVal, data)) {
+                isDifferent = false;
+              }
+            } catch (e) {}
+          }
           
-          const isDifferent = localValStr === null || JSON.stringify(data) !== localValStr;
-          
-          if (updatedAt !== localTime && isDifferent) {
+          if (isDifferent) {
             localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(data));
             localStorage.setItem(`masjid_habib_time_${key}`, updatedAt.toString());
             
@@ -729,6 +751,7 @@ export default function App() {
         'religious_staff', 'administrators'
       ];
 
+      const forcePromises = [];
       for (const key of SYNC_KEYS) {
         const cloudItem = cloudData[key];
         const cloudTime = cloudItem?.updatedAt || 0;
@@ -741,12 +764,15 @@ export default function App() {
           if (localValStr) {
             try {
               const parsed = JSON.parse(localValStr);
-              await saveToCloud(key, parsed);
+              forcePromises.push(saveToCloud(key, parsed, true));
             } catch (e) {
               console.error(`Failed to push key ${key} to cloud during force sync:`, e);
             }
           }
         }
+      }
+      if (forcePromises.length > 0) {
+        await Promise.all(forcePromises);
       }
 
       // Re-hydrate React states

@@ -91,19 +91,6 @@ const debounceTimers = new Map<string, any>();
 const activeSaves = { count: 0 };
 
 export function isCloudBypassed(): boolean {
-  try {
-    const bypassUntil = localStorage.getItem('masjid_habib_cloud_bypass_until');
-    if (bypassUntil) {
-      const untilTime = parseInt(bypassUntil, 10);
-      if (Date.now() < untilTime) {
-        return true;
-      } else {
-        localStorage.removeItem('masjid_habib_cloud_bypass_until');
-      }
-    }
-  } catch (e) {
-    // ignore
-  }
   return false;
 }
 
@@ -117,7 +104,6 @@ export function clearCloudBypass(): void {
 
 function setCloudBypass() {
   try {
-    // Bypass cloud calls for 12 hours when quota is exhausted
     const bypassTime = Date.now() + 12 * 60 * 60 * 1000; 
     localStorage.setItem('masjid_habib_cloud_bypass_until', bypassTime.toString());
   } catch (e) {
@@ -132,75 +118,80 @@ function emitSyncStatus(status: 'synced' | 'syncing' | 'error' | 'idle') {
 }
 
 /**
- * Saves a single key-value pair to Firestore (Debounced to protect against write quotas)
+ * Saves a single key-value pair to Firestore (Debounced to protect against write quotas unless immediate is true)
  */
-export async function saveToCloud(key: string, data: any): Promise<void> {
+export async function saveToCloud(key: string, data: any, immediate = false): Promise<void> {
   if (isCloudBypassed()) {
     emitSyncStatus('synced');
     return;
   }
   const path = `portal_data/${key}`;
 
-  // Clear existing timer if any
-  if (debounceTimers.has(key)) {
+  const isPending = debounceTimers.has(key);
+
+  if (isPending) {
     clearTimeout(debounceTimers.get(key));
     debounceTimers.delete(key);
-  } else {
-    // Increment active saves to show loading state
+  }
+
+  const performWrite = async () => {
+    try {
+      const docRef = doc(db, 'portal_data', key);
+      const now = Date.now();
+      await setDoc(docRef, {
+        data: data,
+        updatedAt: now
+      });
+
+      // Update local timestamp to be in perfect sync with the cloud
+      try {
+        localStorage.setItem(`masjid_habib_time_${key}`, now.toString());
+      } catch (e) {}
+    } catch (error) {
+      const errMessage = error instanceof Error ? error.message : String(error);
+      const isQuotaError = 
+        errMessage.includes('resource-exhausted') || 
+        errMessage.includes('quota') || 
+        errMessage.includes('Quota limit exceeded') ||
+        errMessage.includes('Limit exceeded');
+
+      if (isQuotaError) {
+        console.warn(`[Firestore Quota Protection] Cloud write limit reached for key "${key}". Saving in browser local storage only.`);
+        setCloudBypass();
+      } else {
+        emitSyncStatus('error');
+        handleFirestoreError(error, OperationType.WRITE, path);
+      }
+    } finally {
+      activeSaves.count = Math.max(0, activeSaves.count - 1);
+      if (activeSaves.count === 0) {
+        emitSyncStatus('synced');
+      }
+    }
+  };
+
+  if (!isPending) {
     activeSaves.count++;
     emitSyncStatus('syncing');
   }
 
-  return new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(async () => {
-      debounceTimers.delete(key);
-      try {
-        const docRef = doc(db, 'portal_data', key);
-        const now = Date.now();
-        await setDoc(docRef, {
-          data: data,
-          updatedAt: now
-        });
-
-        // Update local timestamp to be in perfect sync with the cloud
+  if (immediate) {
+    await performWrite();
+  } else {
+    return new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(async () => {
+        debounceTimers.delete(key);
         try {
-          localStorage.setItem(`masjid_habib_time_${key}`, now.toString());
-        } catch (e) {}
-
-        activeSaves.count = Math.max(0, activeSaves.count - 1);
-        if (activeSaves.count === 0) {
-          emitSyncStatus('synced');
+          await performWrite();
+          resolve();
+        } catch (e) {
+          reject(e);
         }
-        resolve();
-      } catch (error) {
-        activeSaves.count = Math.max(0, activeSaves.count - 1);
+      }, 2000); // 2 seconds debounce groups rapid slider drags, typing keystrokes, or color pickers into single writes
 
-        const errMessage = error instanceof Error ? error.message : String(error);
-        const isQuotaError = 
-          errMessage.includes('resource-exhausted') || 
-          errMessage.includes('quota') || 
-          errMessage.includes('Quota limit exceeded') ||
-          errMessage.includes('Limit exceeded');
-
-        if (isQuotaError) {
-          console.warn(`[Firestore Quota Protection] Cloud write limit reached for key "${key}". Saving in browser local storage only.`);
-          setCloudBypass();
-          emitSyncStatus('synced');
-          resolve(); // Resolve gracefully to allow local operations
-        } else {
-          emitSyncStatus('error');
-          try {
-            handleFirestoreError(error, OperationType.WRITE, path);
-          } catch (e) {
-            reject(e);
-            return;
-          }
-        }
-      }
-    }, 2000); // 2 seconds debounce groups rapid slider drags, typing keystrokes, or color pickers into single writes
-
-    debounceTimers.set(key, timer);
-  });
+      debounceTimers.set(key, timer);
+    });
+  }
 }
 
 /**
