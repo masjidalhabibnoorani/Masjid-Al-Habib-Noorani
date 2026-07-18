@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Admin, Announcement, PrayerTiming, HistorySection, Activity, MapSettings, 
   Administrator, FundModule, FundMember, FundMemberTransaction, OtherFundEntry, 
-  Expense, ProtectedPagePassword, Project, AuditLog, resolveImageUrl, ShopRentRecord, ZakatEntry,
+  Expense, ProtectedPagePassword, Project, AuditLog, resolveImageUrl, formatDateStr, formatDateTimeStr, ShopRentRecord, ZakatEntry,
   ReligiousStaff
 } from '../types';
 import { useToast } from './Toast';
@@ -255,16 +255,16 @@ export default function AdminPortal({
 
   const [newTransactionForm, setNewTransactionForm] = useState({
     memberId: '',
-    monthKey: 'January',
+    monthKey: '',
     amount: 1000,
-    paymentDate: new Date().toISOString().split('T')[0]
+    paymentDate: ''
   });
 
   const [newOtherForm, setNewOtherForm] = useState({
     fundId: 'masjid-fund',
     source: '',
     amount: 5000,
-    date: new Date().toISOString().split('T')[0],
+    date: '',
     details: '',
     monthKey: 'January'
   });
@@ -273,7 +273,7 @@ export default function AdminPortal({
     fundId: 'masjid-fund',
     name: '',
     amount: 5000,
-    date: new Date().toISOString().split('T')[0],
+    date: '',
     details: '',
     monthKey: 'January'
   });
@@ -660,7 +660,7 @@ export default function AdminPortal({
       memberId: newTransactionForm.memberId,
       monthKey: newTransactionForm.monthKey,
       amount: Number(newTransactionForm.amount),
-      paymentDate: newTransactionForm.paymentDate || new Date().toISOString().split('T')[0]
+      paymentDate: newTransactionForm.paymentDate || ''
     };
 
     const updated = [...transactions, t];
@@ -673,7 +673,7 @@ export default function AdminPortal({
       ...prev,
       memberId: '',
       amount: 1000,
-      paymentDate: new Date().toISOString().split('T')[0]
+      paymentDate: ''
     }));
     setDonorSearchQuery('');
   };
@@ -846,7 +846,7 @@ export default function AdminPortal({
       fundId: newOtherForm.fundId,
       source: newOtherForm.source,
       amount: Number(newOtherForm.amount),
-      date: newOtherForm.date || new Date().toISOString().split('T')[0],
+      date: newOtherForm.date || '',
       details: newOtherForm.details,
       monthKey: finalMonthKey
     };
@@ -860,7 +860,7 @@ export default function AdminPortal({
       fundId: newOtherForm.fundId,
       source: '',
       amount: 5000,
-      date: new Date().toISOString().split('T')[0],
+      date: '',
       details: '',
       monthKey: finalMonthKey
     });
@@ -903,7 +903,7 @@ export default function AdminPortal({
       fundId: newExpenseForm.fundId,
       name: newExpenseForm.name,
       amount: Number(newExpenseForm.amount),
-      date: newExpenseForm.date || new Date().toISOString().split('T')[0],
+      date: newExpenseForm.date || '',
       details: newExpenseForm.details,
       monthKey: finalMonthKey
     };
@@ -917,7 +917,7 @@ export default function AdminPortal({
       fundId: newExpenseForm.fundId,
       name: '',
       amount: 5000,
-      date: new Date().toISOString().split('T')[0],
+      date: '',
       details: '',
       monthKey: finalMonthKey
     });
@@ -1734,7 +1734,7 @@ export default function AdminPortal({
                               {ann.showImage && ann.imageUrl && <span className="text-[10px] bg-teal-950/45 text-teal-400 px-1.5 py-0.5 rounded uppercase font-button">🏞️ Pic ON</span>}
                             </div>
                             <p className="text-xs text-pine-text-body mt-1">{ann.content}</p>
-                            <span className="text-[10px] text-pine-text-muted block mt-1">Expiry Date: {ann.expiryDate}</span>
+                            <span className="text-[10px] text-pine-text-muted block mt-1">Expiry Date: {formatDateStr(ann.expiryDate)}</span>
                           </div>
                         </div>
                         <div className="flex gap-2 shrink-0">
@@ -2284,8 +2284,7 @@ export default function AdminPortal({
                             value={newMemberForm.phone}
                             onChange={(e) => setNewMemberForm({ ...newMemberForm, phone: e.target.value })}
                             placeholder="0300-1234567"
-                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
-                          />
+                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none" />
                         </div>
                         <div>
                           <label className="block text-xs uppercase text-pine-text-body mb-1">Yearly Target Rs (Required)</label>
@@ -2557,7 +2556,7 @@ export default function AdminPortal({
                           <label className="block text-xs uppercase text-pine-text-body mb-1">
                             {(() => {
                               const matchedFund = funds.find(f => f.id === inflowFundFilter);
-                              return matchedFund?.type === 'project' ? 'Project Phase / Milestone' : 'Payment Month';
+                              return matchedFund?.type === 'project' ? 'Project Phase (Optional)' : 'Payment Month (Optional)';
                             })()}
                           </label>
                           <select
@@ -2565,6 +2564,7 @@ export default function AdminPortal({
                             onChange={(e) => setNewTransactionForm({ ...newTransactionForm, monthKey: e.target.value })}
                             className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg"
                           >
+                            <option value="">-- Optional --</option>
                             {(() => {
                               const matchedFund = funds.find(f => f.id === inflowFundFilter);
                               if (matchedFund?.type === 'masjid') {
@@ -2646,8 +2646,7 @@ export default function AdminPortal({
                           <select
                             value={newOtherForm.fundId}
                             onChange={(e) => setNewOtherForm({ ...newOtherForm, fundId: e.target.value })}
-                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
-                          >
+                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none">
                             {funds.map((f) => (
                               <option key={f.id} value={f.id} className="bg-pine-bar text-white">{f.name}</option>
                             ))}
@@ -2681,14 +2680,14 @@ export default function AdminPortal({
                           <label className="block text-xs uppercase text-pine-text-body mb-1">
                             {(() => {
                               const matchedFund = funds.find(f => f.id === newOtherForm.fundId);
-                              return matchedFund?.type === 'project' ? 'Project Phase' : 'Month / Phase';
+                              return matchedFund?.type === 'project' ? 'Project Phase (Optional)' : 'Month / Phase (Optional)';
                             })()}
                           </label>
                           <select
                             value={newOtherForm.monthKey}
                             onChange={(e) => setNewOtherForm({ ...newOtherForm, monthKey: e.target.value })}
-                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
-                          >
+                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none">
+                            <option value="">-- Optional --</option>
                             {(() => {
                               const matchedFund = funds.find(f => f.id === newOtherForm.fundId);
                               if (matchedFund?.type === 'masjid') {
@@ -2724,8 +2723,7 @@ export default function AdminPortal({
                           onChange={(e) => setNewOtherForm({ ...newOtherForm, details: e.target.value })}
                           placeholder="Zaruri malomat ya notes darj krein..."
                           rows={2}
-                          className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
-                        />
+                          className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"></textarea>
                       </div>
 
                       <button type="submit" className="w-full py-2 bg-emerald-700 hover:bg-emerald-600 text-xs font-button uppercase text-white rounded-lg transition-colors font-bold shadow-lg shadow-emerald-950/20">
@@ -2746,8 +2744,7 @@ export default function AdminPortal({
                           <select
                             value={newExpenseForm.fundId}
                             onChange={(e) => setNewExpenseForm({ ...newExpenseForm, fundId: e.target.value })}
-                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
-                          >
+                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none">
                             {funds.map((f) => (
                               <option key={f.id} value={f.id} className="bg-pine-bar text-white">{f.name}</option>
                             ))}
@@ -2781,14 +2778,14 @@ export default function AdminPortal({
                           <label className="block text-xs uppercase text-pine-text-body mb-1">
                             {(() => {
                               const matchedFund = funds.find(f => f.id === newExpenseForm.fundId);
-                              return matchedFund?.type === 'project' ? 'Project Phase' : 'Month / Phase';
+                              return matchedFund?.type === 'project' ? 'Project Phase (Optional)' : 'Month / Phase (Optional)';
                             })()}
                           </label>
                           <select
                             value={newExpenseForm.monthKey}
                             onChange={(e) => setNewExpenseForm({ ...newExpenseForm, monthKey: e.target.value })}
-                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
-                          >
+                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none">
+                            <option value="">-- Optional --</option>
                             {(() => {
                               const matchedFund = funds.find(f => f.id === newExpenseForm.fundId);
                               if (matchedFund?.type === 'masjid') {
@@ -2824,8 +2821,7 @@ export default function AdminPortal({
                           onChange={(e) => setNewExpenseForm({ ...newExpenseForm, details: e.target.value })}
                           placeholder="Payment details ya bill reference..."
                           rows={2}
-                          className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
-                        />
+                          className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"></textarea>
                       </div>
 
                       <button type="submit" className="w-full py-2 bg-rose-800 hover:bg-rose-700 text-xs font-button uppercase text-white rounded-lg transition-colors font-bold shadow-lg shadow-rose-950/20">
@@ -3320,7 +3316,7 @@ export default function AdminPortal({
                         type="text"
                         value={pass.passwordValue}
                         onChange={(e) => handleUpdatePassword(pass.id, e.target.value)}
-                        className="bg-pine-bar/60 border border-pine-border py-1 px-3 uppercase font-mono text-center text-xs text-pine-btn-hover rounded focus:outline-none focus:border-pine-btn w-32 focus:ring-1 focus:ring-pine-btn"
+                        className="bg-pine-bar/60 border border-pine-border py-1 px-3 font-mono text-center text-xs text-pine-btn-hover rounded focus:outline-none focus:border-pine-btn w-32 focus:ring-1 focus:ring-pine-btn"
                       />
                     </div>
                   </div>

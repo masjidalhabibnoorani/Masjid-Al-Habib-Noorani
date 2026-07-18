@@ -33,11 +33,15 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
     const container = containerRef.current;
     if (!container) return;
 
+    // Detect mobile device to apply extreme optimization
+    const isMobile = window.innerWidth < 768;
+
     const width = window.innerWidth;
     const height = window.innerHeight;
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2('#020806', 0.015);
+    // Reduce fog calculation on mobile
+    scene.fog = new THREE.FogExp2('#020806', isMobile ? 0.01 : 0.015);
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
@@ -45,9 +49,15 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
     camera.position.y = 5;
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+    // On mobile, disable antialiasing and specify high performance
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: !isMobile, 
+      alpha: true, 
+      powerPreference: "high-performance" 
+    });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Limit pixel ratio on mobile to 1 to save GPU load
+    renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -55,24 +65,28 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
     const ambientLight = new THREE.AmbientLight('#081512', 1.5);
     scene.add(ambientLight);
 
-    const goldLight = new THREE.PointLight('#D4A53A', 4, 100);
+    const goldLight = new THREE.PointLight('#D4A53A', isMobile ? 2 : 4, 100);
     goldLight.position.set(15, 10, 15);
     scene.add(goldLight);
     goldLightRef.current = goldLight;
 
-    const emeraldLight = new THREE.PointLight('#14B8A6', 5, 100);
+    const emeraldLight = new THREE.PointLight('#14B8A6', isMobile ? 2.5 : 5, 100);
     emeraldLight.position.set(-15, -10, 15);
     scene.add(emeraldLight);
     emeraldLightRef.current = emeraldLight;
 
-    const violetLight = new THREE.PointLight('#6366F1', 3, 100);
-    violetLight.position.set(0, 0, -20);
-    scene.add(violetLight);
-    violetLightRef.current = violetLight;
+    // Skip the third light on mobile to save rendering pass complexity
+    let violetLight: THREE.PointLight | null = null;
+    if (!isMobile) {
+      violetLight = new THREE.PointLight('#6366F1', 3, 100);
+      violetLight.position.set(0, 0, -20);
+      scene.add(violetLight);
+      violetLightRef.current = violetLight;
+    }
 
-    // --- 4. 3D Stars Galaxy (1200 glowing points) ---
+    // --- 4. 3D Stars Galaxy (Fewer stars on mobile for butter smooth performance) ---
     const starsGeometry = new THREE.BufferGeometry();
-    const starsCount = 1200;
+    const starsCount = isMobile ? 150 : 1200;
     const starsPositions = new Float32Array(starsCount * 3);
     const starsColors = new Float32Array(starsCount * 3);
 
@@ -84,8 +98,8 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
     ];
 
     for (let i = 0; i < starsCount * 3; i += 3) {
-      starsPositions[i] = (Math.random() - 0.5) * 160;
-      starsPositions[i + 1] = (Math.random() - 0.5) * 120;
+      starsPositions[i] = (Math.random() - 0.5) * (isMobile ? 100 : 160);
+      starsPositions[i + 1] = (Math.random() - 0.5) * (isMobile ? 80 : 120);
       starsPositions[i + 2] = (Math.random() - 0.5) * 100 - 10;
 
       const chosenColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
@@ -97,6 +111,7 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
     starsGeometry.setAttribute('position', new THREE.BufferAttribute(starsPositions, 3));
     starsGeometry.setAttribute('color', new THREE.BufferAttribute(starsColors, 3));
 
+    // Simple texture fallback to avoid canvas draw on low-end
     const createCircleTexture = () => {
       const canvas = document.createElement('canvas');
       canvas.width = 16;
@@ -114,7 +129,7 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
     };
 
     const starsMaterial = new THREE.PointsMaterial({
-      size: 0.45,
+      size: isMobile ? 0.6 : 0.45,
       map: createCircleTexture(),
       vertexColors: true,
       transparent: true,
@@ -128,63 +143,80 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
     scene.add(stars);
     starsRef.current = stars;
 
-    // --- 5. Custom 3D Floating Crystalline Meshes ---
+    // --- 5. Custom 3D Floating Crystalline Meshes (Disabled on Mobile for supreme speed) ---
     const meshes: THREE.Mesh[] = [];
+    let icoGeom: THREE.IcosahedronGeometry | null = null;
+    let icoMat: THREE.MeshPhongMaterial | null = null;
+    let icoMesh: THREE.Mesh | null = null;
 
-    // Mesh 1: Golden wireframe Icosahedron
-    const icoGeom = new THREE.IcosahedronGeometry(6, 1);
-    const icoMat = new THREE.MeshPhongMaterial({
-      color: '#D4A53A',
-      wireframe: true,
-      transparent: true,
-      opacity: 0.45,
-      shininess: 100
-    });
-    const icoMesh = new THREE.Mesh(icoGeom, icoMat);
-    icoMesh.position.set(10, 2, -10);
-    scene.add(icoMesh);
-    meshes.push(icoMesh);
+    let octGeom: THREE.OctahedronGeometry | null = null;
+    let octMat: THREE.MeshPhongMaterial | null = null;
+    let octMesh: THREE.Mesh | null = null;
 
-    // Mesh 2: Inner Emerald Octahedron
-    const octGeom = new THREE.OctahedronGeometry(3.5, 0);
-    const octMat = new THREE.MeshPhongMaterial({
-      color: '#14B8A6',
-      wireframe: true,
-      transparent: true,
-      opacity: 0.55,
-      shininess: 120
-    });
-    const octMesh = new THREE.Mesh(octGeom, octMat);
-    octMesh.position.set(10, 2, -10);
-    scene.add(octMesh);
-    meshes.push(octMesh);
+    let torusGeom: THREE.TorusGeometry | null = null;
+    let torusMat: THREE.MeshPhongMaterial | null = null;
+    let torusMesh: THREE.Mesh | null = null;
 
-    // Mesh 3: Left-Side Floating Ring/Torus
-    const torusGeom = new THREE.TorusGeometry(8, 0.12, 10, 40);
-    const torusMat = new THREE.MeshPhongMaterial({
-      color: '#6366F1',
-      transparent: true,
-      opacity: 0.3,
-      wireframe: true
-    });
-    const torusMesh = new THREE.Mesh(torusGeom, torusMat);
-    torusMesh.position.set(-20, -5, -5);
-    torusMesh.rotation.x = Math.PI / 4;
-    scene.add(torusMesh);
-    meshes.push(torusMesh);
+    let sphereGeom: THREE.SphereGeometry | null = null;
+    let sphereMat: THREE.MeshPhongMaterial | null = null;
+    let sphereMesh: THREE.Mesh | null = null;
 
-    // Mesh 4: Floating Right-Side golden sphere grid
-    const sphereGeom = new THREE.SphereGeometry(3.5, 8, 8);
-    const sphereMat = new THREE.MeshPhongMaterial({
-      color: '#F59E0B',
-      wireframe: true,
-      transparent: true,
-      opacity: 0.35
-    });
-    const sphereMesh = new THREE.Mesh(sphereGeom, sphereMat);
-    sphereMesh.position.set(22, -8, -15);
-    scene.add(sphereMesh);
-    meshes.push(sphereMesh);
+    if (!isMobile) {
+      // Mesh 1: Golden wireframe Icosahedron
+      icoGeom = new THREE.IcosahedronGeometry(6, 1);
+      icoMat = new THREE.MeshPhongMaterial({
+        color: '#D4A53A',
+        wireframe: true,
+        transparent: true,
+        opacity: 0.45,
+        shininess: 100
+      });
+      icoMesh = new THREE.Mesh(icoGeom, icoMat);
+      icoMesh.position.set(10, 2, -10);
+      scene.add(icoMesh);
+      meshes.push(icoMesh);
+
+      // Mesh 2: Inner Emerald Octahedron
+      octGeom = new THREE.OctahedronGeometry(3.5, 0);
+      octMat = new THREE.MeshPhongMaterial({
+        color: '#14B8A6',
+        wireframe: true,
+        transparent: true,
+        opacity: 0.55,
+        shininess: 120
+      });
+      octMesh = new THREE.Mesh(octGeom, octMat);
+      octMesh.position.set(10, 2, -10);
+      scene.add(octMesh);
+      meshes.push(octMesh);
+
+      // Mesh 3: Left-Side Floating Ring/Torus
+      torusGeom = new THREE.TorusGeometry(8, 0.12, 10, 40);
+      torusMat = new THREE.MeshPhongMaterial({
+        color: '#6366F1',
+        transparent: true,
+        opacity: 0.3,
+        wireframe: true
+      });
+      torusMesh = new THREE.Mesh(torusGeom, torusMat);
+      torusMesh.position.set(-20, -5, -5);
+      torusMesh.rotation.x = Math.PI / 4;
+      scene.add(torusMesh);
+      meshes.push(torusMesh);
+
+      // Mesh 4: Floating Right-Side golden sphere grid
+      sphereGeom = new THREE.SphereGeometry(3.5, 8, 8);
+      sphereMat = new THREE.MeshPhongMaterial({
+        color: '#F59E0B',
+        wireframe: true,
+        transparent: true,
+        opacity: 0.35
+      });
+      sphereMesh = new THREE.Mesh(sphereGeom, sphereMat);
+      sphereMesh.position.set(22, -8, -15);
+      scene.add(sphereMesh);
+      meshes.push(sphereMesh);
+    }
 
     meshesRef.current = meshes;
 
@@ -194,7 +226,10 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
       mouse.current.targetY = (e.clientY / window.innerHeight) - 0.5;
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    // Skip mousemove tracking on mobile
+    if (!isMobile) {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
 
     // --- 7. Scroll Tracker ---
     const handleScroll = () => {
@@ -204,7 +239,7 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
       gsap.to(camera.position, {
         z: (dimensionScale === 3 ? 22 : dimensionScale === 1 ? 45 : 35) - scrollPercent * 20,
         y: (dimensionScale === 3 ? 3 : dimensionScale === 1 ? 0 : 5) - scrollPercent * 6,
-        duration: 1.5,
+        duration: isMobile ? 0.8 : 1.5,
         ease: 'power2.out',
         overwrite: 'auto'
       });
@@ -212,19 +247,21 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
       gsap.to(stars.rotation, {
         y: scrollPercent * Math.PI * 0.5,
         z: scrollPercent * Math.PI * 0.2,
-        duration: 2.2,
+        duration: isMobile ? 1.0 : 2.2,
         ease: 'power2.out',
         overwrite: 'auto'
       });
 
-      meshes.forEach((mesh, index) => {
-        gsap.to(mesh.position, {
-          y: (index % 2 === 0 ? 1 : -1) * (2 + scrollPercent * 8),
-          duration: 2.0,
-          ease: 'power1.out',
-          overwrite: 'auto'
+      if (!isMobile) {
+        meshes.forEach((mesh, index) => {
+          gsap.to(mesh.position, {
+            y: (index % 2 === 0 ? 1 : -1) * (2 + scrollPercent * 8),
+            duration: 2.0,
+            ease: 'power1.out',
+            overwrite: 'auto'
+          });
         });
-      });
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -238,7 +275,7 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
       camera.updateProjectionMatrix();
 
       renderer.setSize(w, h);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 2));
     };
 
     window.addEventListener('resize', handleResize);
@@ -250,31 +287,42 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
     const animate = () => {
       const elapsedTime = clock.getElapsedTime();
 
-      // Lerp mouse coordinates
-      mouse.current.x += (mouse.current.targetX - mouse.current.x) * 0.05;
-      mouse.current.y += (mouse.current.targetY - mouse.current.y) * 0.05;
+      if (!isMobile) {
+        // Lerp mouse coordinates
+        mouse.current.x += (mouse.current.targetX - mouse.current.x) * 0.05;
+        mouse.current.y += (mouse.current.targetY - mouse.current.y) * 0.05;
 
-      // Camera parallax tilt
-      camera.position.x += (mouse.current.x * 12 - camera.position.x) * 0.05;
+        // Camera parallax tilt
+        camera.position.x += (mouse.current.x * 12 - camera.position.x) * 0.05;
+      }
       camera.lookAt(new THREE.Vector3(0, 0, -10));
 
       // Continuous mesh rotation
-      icoMesh.rotation.y = elapsedTime * (dimensionScale === 3 ? 0.3 : 0.15);
-      icoMesh.rotation.z = elapsedTime * 0.08;
+      if (icoMesh) {
+        icoMesh.rotation.y = elapsedTime * (dimensionScale === 3 ? 0.3 : 0.15);
+        icoMesh.rotation.z = elapsedTime * 0.08;
+      }
 
-      octMesh.rotation.y = -elapsedTime * (dimensionScale === 3 ? 0.5 : 0.25);
-      octMesh.rotation.x = elapsedTime * 0.12;
+      if (octMesh) {
+        octMesh.rotation.y = -elapsedTime * (dimensionScale === 3 ? 0.5 : 0.25);
+        octMesh.rotation.x = elapsedTime * 0.12;
+      }
 
-      torusMesh.rotation.x = elapsedTime * 0.08;
-      torusMesh.rotation.y = elapsedTime * 0.12;
+      if (torusMesh) {
+        torusMesh.rotation.x = elapsedTime * 0.08;
+        torusMesh.rotation.y = elapsedTime * 0.12;
+      }
 
-      sphereMesh.rotation.y = elapsedTime * 0.1;
+      if (sphereMesh) {
+        sphereMesh.rotation.y = elapsedTime * 0.1;
+      }
 
       // Stars twinkle
       if (stars) {
         stars.rotation.x = Math.sin(elapsedTime * 0.05) * 0.03;
         const baseOpacity = dimensionScale === 3 ? 0.95 : dimensionScale === 1 ? 0.15 : 0.75;
-        starsMaterial.opacity = baseOpacity + Math.sin(elapsedTime * 2.5) * (dimensionScale === 1 ? 0.05 : 0.15);
+        // On mobile, keep twinkle calculation lightweight
+        starsMaterial.opacity = baseOpacity + Math.sin(elapsedTime * (isMobile ? 1.5 : 2.5)) * (dimensionScale === 1 ? 0.05 : 0.15);
       }
 
       renderer.render(scene, camera);
@@ -285,21 +333,24 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
 
     // --- 10. Memory Clean-Up ---
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      if (!isMobile) {
+        window.removeEventListener('mousemove', handleMouseMove);
+      }
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animId);
 
       starsGeometry.dispose();
       starsMaterial.dispose();
-      icoGeom.dispose();
-      icoMat.dispose();
-      octGeom.dispose();
-      octMat.dispose();
-      torusGeom.dispose();
-      torusMat.dispose();
-      sphereGeom.dispose();
-      sphereMat.dispose();
+
+      if (icoGeom) icoGeom.dispose();
+      if (icoMat) icoMat.dispose();
+      if (octGeom) octGeom.dispose();
+      if (octMat) octMat.dispose();
+      if (torusGeom) torusGeom.dispose();
+      if (torusMat) torusMat.dispose();
+      if (sphereGeom) sphereGeom.dispose();
+      if (sphereMat) sphereMat.dispose();
 
       if (rendererRef.current && rendererRef.current.domElement) {
         container.removeChild(rendererRef.current.domElement);
@@ -310,6 +361,7 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
 
   // --- Effect 2: Handle Dimension Scale Changes (GSAP Transition Matrix) ---
   useEffect(() => {
+    const isMobile = window.innerWidth < 768;
     const camera = cameraRef.current;
     const meshes = meshesRef.current;
     const starsMaterial = starMaterialRef.current;
@@ -324,14 +376,16 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
       gsap.to(camera.position, {
         z: 48,
         y: 0,
-        duration: 1.2,
+        duration: isMobile ? 0.6 : 1.2,
         ease: 'power2.inOut'
       });
-      meshes.forEach(m => {
-        gsap.to(m.scale, { x: 0, y: 0, z: 0, duration: 1.0, ease: 'power2.inOut' });
-      });
+      if (!isMobile) {
+        meshes.forEach(m => {
+          gsap.to(m.scale, { x: 0, y: 0, z: 0, duration: 1.0, ease: 'power2.inOut' });
+        });
+      }
       if (starsMaterial) {
-        gsap.to(starsMaterial, { opacity: 0.15, size: 0.3, duration: 1.0 });
+        gsap.to(starsMaterial, { opacity: 0.15, size: isMobile ? 0.4 : 0.3, duration: 1.0 });
       }
       if (goldLight) gsap.to(goldLight, { intensity: 0.5, duration: 1.0 });
       if (emeraldLight) gsap.to(emeraldLight, { intensity: 0.5, duration: 1.0 });
@@ -342,17 +396,19 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
       gsap.to(camera.position, {
         z: 35,
         y: 5,
-        duration: 1.5,
+        duration: isMobile ? 0.8 : 1.5,
         ease: 'power2.out'
       });
-      meshes.forEach(m => {
-        gsap.to(m.scale, { x: 1, y: 1, z: 1, duration: 1.2, ease: 'back.out(1.2)' });
-      });
-      if (starsMaterial) {
-        gsap.to(starsMaterial, { opacity: 0.85, size: 0.45, duration: 1.2 });
+      if (!isMobile) {
+        meshes.forEach(m => {
+          gsap.to(m.scale, { x: 1, y: 1, z: 1, duration: 1.2, ease: 'back.out(1.2)' });
+        });
       }
-      if (goldLight) gsap.to(goldLight, { intensity: 4, duration: 1.2 });
-      if (emeraldLight) gsap.to(emeraldLight, { intensity: 5, duration: 1.2 });
+      if (starsMaterial) {
+        gsap.to(starsMaterial, { opacity: 0.85, size: isMobile ? 0.6 : 0.45, duration: 1.2 });
+      }
+      if (goldLight) gsap.to(goldLight, { intensity: isMobile ? 2 : 4, duration: 1.2 });
+      if (emeraldLight) gsap.to(emeraldLight, { intensity: isMobile ? 2.5 : 5, duration: 1.2 });
       if (violetLight) gsap.to(violetLight, { intensity: 3, duration: 1.2 });
 
     } else if (dimensionScale === 3) {
@@ -360,18 +416,20 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
       gsap.to(camera.position, {
         z: 22,
         y: 3,
-        duration: 1.8,
+        duration: isMobile ? 1.0 : 1.8,
         ease: 'power3.out'
       });
-      meshes.forEach((m, idx) => {
-        const scaleMult = idx === 0 ? 1.7 : idx === 1 ? 1.6 : idx === 2 ? 1.4 : 1.35;
-        gsap.to(m.scale, { x: scaleMult, y: scaleMult, z: scaleMult, duration: 1.5, ease: 'elastic.out(1, 0.8)' });
-      });
-      if (starsMaterial) {
-        gsap.to(starsMaterial, { opacity: 1.0, size: 0.65, duration: 1.5 });
+      if (!isMobile) {
+        meshes.forEach((m, idx) => {
+          const scaleMult = idx === 0 ? 1.7 : idx === 1 ? 1.6 : idx === 2 ? 1.4 : 1.35;
+          gsap.to(m.scale, { x: scaleMult, y: scaleMult, z: scaleMult, duration: 1.5, ease: 'elastic.out(1, 0.8)' });
+        });
       }
-      if (goldLight) gsap.to(goldLight, { intensity: 8, duration: 1.5 });
-      if (emeraldLight) gsap.to(emeraldLight, { intensity: 9, duration: 1.5 });
+      if (starsMaterial) {
+        gsap.to(starsMaterial, { opacity: 1.0, size: isMobile ? 0.8 : 0.65, duration: 1.5 });
+      }
+      if (goldLight) gsap.to(goldLight, { intensity: isMobile ? 4 : 8, duration: 1.5 });
+      if (emeraldLight) gsap.to(emeraldLight, { intensity: isMobile ? 4.5 : 9, duration: 1.5 });
       if (violetLight) gsap.to(violetLight, { intensity: 5, duration: 1.5 });
     }
   }, [dimensionScale]);

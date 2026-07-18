@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Admin, Announcement, PrayerTiming, HistorySection, Activity, MapSettings, 
   Administrator, FundModule, FundMember, FundMemberTransaction, OtherFundEntry, 
-  Expense, ProtectedPagePassword, Project, AuditLog, resolveImageUrl, Commitment,
+  Expense, ProtectedPagePassword, Project, AuditLog, resolveImageUrl, formatDateStr, formatDateTimeStr, Commitment,
   ReligiousStaff
 } from './types';
 import { PortalDatabase, INITIAL_PASSWORDS } from './data';
@@ -28,6 +28,7 @@ import TiltCard from './components/TiltCard';
 import MagneticButton from './components/MagneticButton';
 import Counter from './components/Counter';
 import AIChatWidget from './components/AIChatWidget';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 // Lucide icons
 import { 
@@ -862,6 +863,7 @@ export default function App() {
 
   return (
     <ToastProvider>
+      <PWAInstallPrompt />
       <div className="min-h-screen bg-pine-bg text-pine-text-body font-sans relative overflow-x-hidden selection:bg-pine-btn selection:text-white pb-0">
         
         {/* Custom Theme Wallpaper Background Overlay */}
@@ -1202,7 +1204,7 @@ export default function App() {
                                       {ann.title}
                                     </h5>
                                     <span className="text-[9px] font-mono text-pine-text-muted shrink-0">
-                                      {new Date(ann.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                      {formatDateStr(ann.createdAt)}
                                     </span>
                                   </div>
                                   <p className="text-[11px] font-sans text-zinc-300 leading-relaxed whitespace-pre-wrap">
@@ -1667,7 +1669,7 @@ export default function App() {
                   onChange={(e) => setAdminPasswordInput(e.target.value)}
                   placeholder="••••••"
                   autoFocus
-                  className="w-full bg-pine-bar/60 border border-pine-border rounded-lg py-2 px-3 text-center text-white text-sm tracking-widest uppercase placeholder-pine-text-muted/20 focus:outline-none focus:border-pine-btn"
+                  className="w-full bg-pine-bar/60 border border-pine-border rounded-lg py-2 px-3 text-center text-white text-sm tracking-widest placeholder-pine-text-muted/20 focus:outline-none focus:border-pine-btn"
                 />
               </div>
               {adminError && (
@@ -1730,11 +1732,7 @@ export default function App() {
                         {ann.title}
                       </h4>
                       <span className="text-[9px] font-mono text-zinc-500 shrink-0">
-                        {new Date(ann.createdAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
+                        {formatDateStr(ann.createdAt)}
                       </span>
                     </div>
                     <p className="text-[11px] font-sans text-zinc-300 leading-relaxed pl-1.5 whitespace-pre-wrap mb-1">

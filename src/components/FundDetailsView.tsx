@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FundModule, FundMember, FundMemberTransaction, OtherFundEntry, Expense, 
-  ProtectedPagePassword, Project, Administrator, AuditLog, resolveImageUrl, Commitment
+  ProtectedPagePassword, Project, Administrator, AuditLog, resolveImageUrl, formatDateStr, formatDateTimeStr, Commitment
 } from '../types';
 import { GREGORIAN_MONTHS, ISLAMIC_MONTHS, PortalDatabase } from '../data';
 import TiltCard from './TiltCard';
@@ -322,7 +322,7 @@ export default function FundDetailsView({
         </div>
       </div>
       <div class="ref-box">
-        <span class="date-str">Date: ${receipt.paymentDate}</span>
+        <span class="date-str">Date: ${formatDateStr(receipt.paymentDate)}</span>
       </div>
     </div>
     
@@ -349,7 +349,7 @@ export default function FundDetailsView({
     <div class="footer">
       <div class="legal">
         <div style="font-weight: 800; color: #000000; margin-bottom: 2px;">✓ Digitally Authenticated Ledger</div>
-        <span style="color: #374151; font-size: 7.5px;">Generated: ${new Date().toISOString().substring(0, 16).replace('T', ' ')}</span>
+        <span style="color: #374151; font-size: 7.5px;">Generated: ${formatDateTimeStr(new Date())}</span>
       </div>
       <div style="display: flex; gap: 12px; align-items: flex-end;">
         <div class="seal">VERIFIED</div>
@@ -682,7 +682,7 @@ export default function FundDetailsView({
         </div>
       </div>
       <div class="ref-box">
-        <span class="date-str">Date: ${receipt.paymentDate}</span>
+        <span class="date-str">Date: ${formatDateStr(receipt.paymentDate)}</span>
       </div>
     </div>
     
@@ -712,7 +712,7 @@ export default function FundDetailsView({
     <div class="footer">
       <div class="legal">
         <div style="font-weight: 700; color: #34d399; margin-bottom: 2px;">✓ Digitally Authenticated Ledger</div>
-        <span style="color: #9cb3af; font-size: 8px;">Generated: ${new Date().toISOString().substring(0, 16).replace('T', ' ')}</span>
+        <span style="color: #9cb3af; font-size: 8px;">Generated: ${formatDateTimeStr(new Date())}</span>
       </div>
       <div style="display: flex; gap: 16px; align-items: flex-end;">
         <div class="seal">VERIFIED</div>
@@ -974,7 +974,7 @@ export default function FundDetailsView({
                   onChange={(e) => setPasswordInput(e.target.value)}
                   placeholder="******"
                   autoFocus
-                  className="w-full bg-pine-bar/60 border border-pine-border rounded-lg py-2.5 px-3 uppercase font-mono text-center text-white placeholder-pine-text-muted/40 focus:outline-none focus:border-pine-btn"
+                  className="w-full bg-pine-bar/60 border border-pine-border rounded-lg py-2.5 px-3 font-mono text-center text-white placeholder-pine-text-muted/40 focus:outline-none focus:border-pine-btn"
                 />
               </div>
               {authError && <p className="text-xs text-pine-error font-medium text-center">{authError}</p>}
@@ -1070,7 +1070,7 @@ export default function FundDetailsView({
                         onChange={(e) => setMasterPassInput(e.target.value)}
                         placeholder="••••••"
                         autoFocus
-                        className="w-full bg-pine-bar border border-pine-border rounded-lg py-2.5 px-3 uppercase font-mono text-center text-white focus:outline-none focus:border-pine-btn"
+                        className="w-full bg-pine-bar border border-pine-border rounded-lg py-2.5 px-3 font-mono text-center text-white focus:outline-none focus:border-pine-btn"
                       />
                     </div>
                     {masterError && <p className="text-xs text-pine-error font-medium text-center text-red-400">{masterError}</p>}
@@ -2032,7 +2032,7 @@ export default function FundDetailsView({
 
                 <div className="text-right shrink-0">
                   <span className="text-[9px] text-zinc-400 block mt-1.5 font-mono print:text-gray-600 bg-black/30 print:bg-transparent py-0.5 px-2 rounded">
-                    Date: {selectedReceipt.paymentDate}
+                    Date: {formatDateStr(selectedReceipt.paymentDate)}
                   </span>
                 </div>
               </div>
@@ -2096,7 +2096,7 @@ export default function FundDetailsView({
                     <CheckCircle className="w-3.5 h-3.5 text-[#0AEAA2]" /> Digitally Authenticated Ledger Transaction
                   </p>
                   <p className="text-zinc-500 mt-0.5 font-mono print:text-gray-600">
-                    System Timestamp: {new Date().toISOString().substring(0, 16).replace('T', ' ')} • Wah Cantt Area
+                    System Timestamp: {formatDateTimeStr(new Date())} • Wah Cantt Area
                   </p>
                 </div>
                 <div className="text-center w-40 border-t border-zinc-700/60 pt-2 print:border-black/50 h-16 flex flex-col justify-end mt-2 shrink-0">
@@ -2187,7 +2187,7 @@ export const printMemberStatement = (
 ) => {
   const paidSum = memberTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
   const balance = member.requiredAmount - paidSum;
-  const generatedDate = new Date().toLocaleString('en-US', { hour12: true });
+  const generatedDate = formatDateTimeStr(new Date());
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -2392,7 +2392,7 @@ export const printMemberStatement = (
       ${months.map((month, idx) => {
         const trans = memberTrans.find(t => t.monthKey === month);
         const amt = trans ? trans.amount : 0;
-        const dateStr = trans ? trans.paymentDate : '—';
+        const dateStr = trans ? formatDateStr(trans.paymentDate) : '—';
         return `
           <tr>
             <td style="color: #000000; font-weight: bold;">${(idx+1).toString().padStart(2, '0')}</td>
@@ -2428,7 +2428,7 @@ export const printGeneralRegistryReport = (
   months: string[],
   fund: FundModule
 ) => {
-  const generatedDate = new Date().toLocaleString();
+  const generatedDate = formatDateTimeStr(new Date());
   const isProject = fund.type === 'project';
   const totalGoal = orderedMembers.reduce((sum, m) => sum + m.requiredAmount, 0);
 
@@ -2651,7 +2651,7 @@ export const printExpensesStatement = (
   filteredExpenses: Expense[],
   filterLabel: string
 ) => {
-  const generatedDate = new Date().toLocaleString();
+  const generatedDate = formatDateTimeStr(new Date());
   const totalAmount = filteredExpenses.reduce((sum, item) => sum + item.amount, 0);
 
   const printWindow = window.open('', '_blank');
@@ -2800,7 +2800,7 @@ export const printExpensesStatement = (
         <tr>
           <td style="color: #000000; font-weight: bold;">${idx + 1}</td>
           <td style="font-weight: 700; color: #000000;">${expense.name}</td>
-          <td style="text-align: center; font-family: monospace; color: #000000;">${new Date(expense.date).toLocaleDateString()}</td>
+          <td style="text-align: center; font-family: monospace; color: #000000;">${formatDateStr(expense.date)}</td>
           <td style="text-align: right; font-weight: bold; font-family: monospace; color: #000000;">
             ${expense.amount.toLocaleString()} Rs
           </td>
@@ -2835,7 +2835,7 @@ export const printOtherDonationsStatement = (
   filteredOthers: OtherFundEntry[],
   filterLabel: string
 ) => {
-  const generatedDate = new Date().toLocaleString();
+  const generatedDate = formatDateTimeStr(new Date());
   const totalAmount = filteredOthers.reduce((sum, item) => sum + item.amount, 0);
 
   const printWindow = window.open('', '_blank');
@@ -2984,7 +2984,7 @@ export const printOtherDonationsStatement = (
         <tr>
           <td style="color: #000000; font-weight: bold;">${idx + 1}</td>
           <td style="font-weight: 700; color: #000000;">${item.source}</td>
-          <td style="text-align: center; font-family: monospace; color: #000000;">${new Date(item.date).toLocaleDateString()}</td>
+          <td style="text-align: center; font-family: monospace; color: #000000;">${formatDateStr(item.date)}</td>
           <td style="text-align: right; font-weight: bold; font-family: monospace; color: #000000;">
             ${item.amount.toLocaleString()} Rs
           </td>
@@ -3025,7 +3025,7 @@ export const printAnalyticalPortfolioStatement = (
   overrideMonthFilter?: { monthIndex: number; name: string },
   showVisuals: boolean = true
 ) => {
-  const generatedDate = new Date().toLocaleString();
+  const generatedDate = formatDateTimeStr(new Date());
   
   // Totals calculations
   let totalFixed = 0;
@@ -3551,6 +3551,7 @@ function FixedFundRegister({
   isFundAdminUnlocked = false
 }: FixedRegisterProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchAmount, setSearchAmount] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('all');
   const [activeMonthFilter, setActiveMonthFilter] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'sr' | 'name'>('sr');
@@ -3703,18 +3704,26 @@ function FixedFundRegister({
     if (activeFilter === 'ff-25-plus') return payPercent >= 25;
     if (activeFilter === 'ff-zero-paid') return payPercent < 25;
 
+    if (activeFilter === 'enter-amount') {
+      if (!searchAmount.trim()) return true;
+      const targetAmt = Number(searchAmount.trim());
+      const mTransAll = transactions.filter(t => t.memberId === m.id);
+      const paidSumAll = mTransAll.reduce((s, x) => s + x.amount, 0);
+      return paidSumAll === targetAmt || mTransAll.some(t => t.amount === targetAmt);
+    }
+
     return true;
   });
 
   // Custom secondary rankings sorts (High / Low contribution ranges)
   let orderedMembers = [...processedMembers];
-  if (activeFilter === 'high-contributors') {
+  if (activeFilter === 'high-contributors' || activeFilter === 'highest-amount') {
     orderedMembers.sort((a, b) => {
       const sumA = transactions.filter(t => t.memberId === a.id && t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
       const sumB = transactions.filter(t => t.memberId === b.id && t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
       return sumB - sumA;
     });
-  } else if (activeFilter === 'low-contributors') {
+  } else if (activeFilter === 'low-contributors' || activeFilter === 'lowest-amount') {
     orderedMembers.sort((a, b) => {
       const sumA = transactions.filter(t => t.memberId === a.id && t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
       const sumB = transactions.filter(t => t.memberId === b.id && t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
@@ -3730,7 +3739,7 @@ function FixedFundRegister({
 
   const getMonthDate = (memberId: string, monthKey: string) => {
     const items = transactions.filter(t => t.memberId === memberId && t.monthKey === monthKey);
-    return items.map(item => item.paymentDate).filter(Boolean).join(', ');
+    return items.map(item => formatDateStr(item.paymentDate)).filter(Boolean).join(', ');
   };
 
   // Saved/mutated action handles
@@ -4009,6 +4018,9 @@ function FixedFundRegister({
               <option value="prev-cleared" className="bg-zinc-900">Prev-Year Cleared</option>
               <option value="high-contributors" className="bg-zinc-900">Top Contributors ↑</option>
               <option value="low-contributors" className="bg-zinc-900">Low Contributors ↓</option>
+              <option value="highest-amount" className="bg-zinc-900">Highest Amount first (Sab Se Zyada Paid) ↑</option>
+              <option value="lowest-amount" className="bg-zinc-900">Lowest Amount first (Sab Se Kam Paid) ↓</option>
+              <option value="enter-amount" className="bg-zinc-900">Enter Amount (Search by Amount) 🔍</option>
               <option value="ff-fully-paid" className="bg-zinc-900">Fully Paid (100% or More) ({countFFFullyPaid})</option>
               <option value="ff-75-plus" className="bg-zinc-900">75% or More Paid ({countFF75Plus})</option>
               <option value="ff-50-plus" className="bg-zinc-900">50% or More Paid ({countFF50Plus})</option>
@@ -4067,6 +4079,22 @@ function FixedFundRegister({
           </div>
 
         </div>
+
+        {activeFilter === 'enter-amount' && (
+          <div className="mt-3 p-2 bg-pine-bar/30 border border-pine-border/60 rounded-lg flex items-center gap-2 animate-fadeIn">
+            <label className="text-xs text-pine-text-body font-bold uppercase whitespace-nowrap">Enter Amount:</label>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-pine-text-muted" />
+              <input
+                type="text"
+                value={searchAmount}
+                onChange={(e) => setSearchAmount(e.target.value)}
+                placeholder="E.g., 50 (Displays donors who have paid exactly this amount)"
+                className="w-full bg-pine-bar border border-pine-border pl-8 pr-3 py-1.5 text-xs rounded-md text-white font-sans focus:outline-none focus:border-pine-btn"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Massive Pivot table container with solid scroll locks */}
@@ -4115,7 +4143,8 @@ function FixedFundRegister({
                 const paidSum = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, item) => s + item.amount, 0);
                 const isKhatmDone = mTrans.some(t => t.monthKey === 'khatm' && t.amount > 0);
                 const khatmVal = mTrans.find(t => t.monthKey === 'khatm')?.amount || 0;
-                const khatmDateStr = mTrans.find(t => t.monthKey === 'khatm')?.paymentDate || '';
+                const rawKhatmDate = mTrans.find(t => t.monthKey === 'khatm')?.paymentDate;
+                const khatmDateStr = rawKhatmDate ? formatDateStr(rawKhatmDate) : '';
                 const balance = m.requiredAmount - paidSum;
 
                 return (
@@ -4750,7 +4779,7 @@ function FixedFundRegister({
             <h2 className="text-xl font-black uppercase tracking-wider text-zinc-900">MASJID AL-HABIB NOORANI</h2>
             <h3 className="text-xs font-bold tracking-widest text-zinc-650 mt-1 uppercase">INDIVIDUAL FINANCIAL STATEMENT REPORT — {fund.name.toUpperCase()}</h3>
             <div className="text-[9px] font-mono text-zinc-500 mt-1.5">
-              Report Generated: {new Date().toLocaleString()} | Account Status Summary
+              Report Generated: {formatDateTimeStr(new Date())} | Account Status Summary
             </div>
           </div>
 
@@ -4841,7 +4870,7 @@ function FixedFundRegister({
             <h2 className="text-xl font-black uppercase tracking-wider text-zinc-900">MASJID AL-HABIB NOORANI</h2>
             <h3 className="text-xs font-bold tracking-widest text-zinc-650 mt-1 uppercase">GENERAL REGISTRY LEDGER REPORT — {fund.name.toUpperCase()}</h3>
             <div className="text-[9px] font-mono text-zinc-500 mt-1.5">
-              Report Generated: {new Date().toLocaleString()} | Active filter results: {orderedMembers.length} contributors
+              Report Generated: {formatDateTimeStr(new Date())} | Active filter results: {orderedMembers.length} contributors
             </div>
           </div>
 
@@ -4952,20 +4981,22 @@ function OtherFundRegister(props: any) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonthIdx, setSelectedMonthIdx] = useState<number | null>(null);
   const [editingEntry, setEditingEntry] = useState<OtherFundEntry | null>(null);
+  const [sortType, setSortType] = useState<string>('none');
+  const [searchAmount, setSearchAmount] = useState<string>('');
 
 
   // New Direct Inflow additions states
   const [newSource, setNewSource] = useState('');
   const [newAmount, setNewAmount] = useState('');
-  const [newDate, setNewDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [newDate, setNewDate] = useState('');
   const [newDetails, setNewDetails] = useState('');
-  const [newMonthKey, setNewMonthKey] = useState(() => monthsList[0] || 'January');
+  const [newMonthKey, setNewMonthKey] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
 
   // Sync state if monthsList changes
   useEffect(() => {
     if (monthsList && monthsList.length > 0) {
-      setNewMonthKey(monthsList[0]);
+      // setNewMonthKey removed so optional is respected
     }
   }, [monthsList]);
 
@@ -4975,7 +5006,7 @@ function OtherFundRegister(props: any) {
     const entry: OtherFundEntry = {
       id: 'other_' + Date.now(),
       fundId: fund.id,
-      date: newDate || new Date().toISOString().split('T')[0],
+      date: newDate || '',
       source: newSource,
       amount: Number(newAmount),
       details: newDetails,
@@ -4994,24 +5025,45 @@ function OtherFundRegister(props: any) {
     setNewDetails('');
     setNewDate(new Date().toISOString().split('T')[0]);
     if (monthsList && monthsList.length > 0) {
-      setNewMonthKey(monthsList[0]);
+      // setNewMonthKey removed so optional is respected
     }
     setShowAddForm(false);
   };
 
-  // Month filters details
+  // Month and amount filters details
   const filteredOthers = others.filter(o => {
     const sTerm = searchTerm.toLowerCase();
     const matchSearch = o.source.toLowerCase().includes(sTerm) || o.details.toLowerCase().includes(sTerm);
+    if (!matchSearch) return false;
     
     if (selectedMonthIdx !== null) {
-      try {
-        const oDate = new Date(o.date);
-        return matchSearch && oDate.getMonth() === selectedMonthIdx;
-      } catch { return false; }
+      const selectedMonthName = monthsList[selectedMonthIdx];
+      if (o.monthKey) {
+        if (o.monthKey !== selectedMonthName) return false;
+      } else {
+        try {
+          const oDate = new Date(o.date);
+          if (oDate.getMonth() !== selectedMonthIdx) return false;
+        } catch { return false; }
+      }
     }
-    return matchSearch;
+
+    if (sortType === 'enter-amount') {
+      if (!searchAmount.trim()) return true;
+      const targetAmt = Number(searchAmount.trim());
+      return o.amount === targetAmt;
+    }
+
+    return true;
   });
+
+  // Apply sorting based on sortType
+  const sortedOthers = [...filteredOthers];
+  if (sortType === 'highest-amount') {
+    sortedOthers.sort((a, b) => b.amount - a.amount);
+  } else if (sortType === 'lowest-amount') {
+    sortedOthers.sort((a, b) => a.amount - b.amount);
+  }
 
   const getSumOfSelectedList = () => filteredOthers.reduce((sum, o) => sum + o.amount, 0);
 
@@ -5114,6 +5166,7 @@ function OtherFundRegister(props: any) {
                   onChange={(e) => setNewMonthKey(e.target.value)}
                   className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn font-semibold cursor-pointer"
                 >
+                  <option value="">-- Optional --</option>
                   {monthsList.map(m => (
                     <option key={m} value={m} className="bg-zinc-900 text-white">{m}</option>
                   ))}
@@ -5162,7 +5215,7 @@ function OtherFundRegister(props: any) {
 
       {/* Advanced compact search & filter bar */}
       <div className="bg-pine-card border border-pine-border/80 p-3 rounded-xl shadow-md font-sans">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
           {/* Column 1: Search */}
           <div className="relative">
             <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-pine-text-muted" />
@@ -5179,7 +5232,7 @@ function OtherFundRegister(props: any) {
           <div className="relative">
             <select
               value={selectedMonthIdx !== null ? selectedMonthIdx : ''}
-              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? (e.target.value === '' ? '' : Number(e.target.value)) as any : null)}
+              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? Number(e.target.value) : null)}
               className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
             >
               <option value="" className="bg-zinc-900">All Months</option>
@@ -5191,7 +5244,40 @@ function OtherFundRegister(props: any) {
               <Calendar className="w-3.5 h-3.5" />
             </div>
           </div>
+
+          {/* Column 3: Sorting & Amount Filter */}
+          <div className="relative">
+            <select
+              value={sortType}
+              onChange={(e) => setSortType(e.target.value)}
+              className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
+            >
+              <option value="none" className="bg-zinc-900">Default Sorting</option>
+              <option value="highest-amount" className="bg-zinc-900">Highest Amount first (Sab Se Zyada) ↑</option>
+              <option value="lowest-amount" className="bg-zinc-900">Lowest Amount first (Sab Se Kam) ↓</option>
+              <option value="enter-amount" className="bg-zinc-900">Enter Amount (Search by Amount) 🔍</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-pine-text-muted">
+              <Sliders className="w-3.5 h-3.5" />
+            </div>
+          </div>
         </div>
+
+        {sortType === 'enter-amount' && (
+          <div className="mt-3 p-2 bg-pine-bar/30 border border-pine-border/60 rounded-lg flex items-center gap-2 animate-fadeIn">
+            <label className="text-xs text-pine-text-body font-bold uppercase whitespace-nowrap">Enter Amount:</label>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-pine-text-muted" />
+              <input
+                type="text"
+                value={searchAmount}
+                onChange={(e) => setSearchAmount(e.target.value)}
+                placeholder="E.g., 50 (Displays donations of exactly this amount)"
+                className="w-full bg-pine-bar border border-pine-border pl-8 pr-3 py-1.5 text-xs rounded-md text-white font-sans focus:outline-none focus:border-pine-btn"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Spreadsheet List */}
@@ -5209,7 +5295,7 @@ function OtherFundRegister(props: any) {
             </tr>
           </thead>
           <tbody className="divide-y divide-pine-border/40 font-mono">
-            {filteredOthers.map((o) => (
+            {sortedOthers.map((o) => (
               <tr key={o.id} className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs">
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{o.date}</td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
@@ -5385,19 +5471,21 @@ function ExpensesRegister({
   const [selectedMonthIdx, setSelectedMonthIdx] = useState<number | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [sortType, setSortType] = useState<string>('none');
+  const [searchAmount, setSearchAmount] = useState<string>('');
 
   // New Direct Expense Addition states
   const [newExpName, setNewExpName] = useState('');
   const [newExpAmount, setNewExpAmount] = useState('');
-  const [newExpDate, setNewExpDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [newExpDate, setNewExpDate] = useState('');
   const [newExpDetails, setNewExpDetails] = useState('');
-  const [newExpMonthKey, setNewExpMonthKey] = useState(() => monthsList[0] || 'January');
+  const [newExpMonthKey, setNewExpMonthKey] = useState('');
   const [showAddExpForm, setShowAddExpForm] = useState(false);
 
   // Sync state if monthsList changes
   useEffect(() => {
     if (monthsList && monthsList.length > 0) {
-      setNewExpMonthKey(monthsList[0]);
+      // setNewExpMonthKey removed so optional is respected
     }
   }, [monthsList]);
 
@@ -5409,7 +5497,7 @@ function ExpensesRegister({
       fundId: fund.id,
       name: newExpName,
       amount: Number(newExpAmount),
-      date: newExpDate || new Date().toISOString().split('T')[0],
+      date: newExpDate || '',
       details: newExpDetails,
       monthKey: newExpMonthKey
     };
@@ -5426,7 +5514,7 @@ function ExpensesRegister({
     setNewExpDetails('');
     setNewExpDate(new Date().toISOString().split('T')[0]);
     if (monthsList && monthsList.length > 0) {
-      setNewExpMonthKey(monthsList[0]);
+      // setNewExpMonthKey removed so optional is respected
     }
     setShowAddExpForm(false);
   };
@@ -5434,15 +5522,35 @@ function ExpensesRegister({
   const filteredExpenses = expenses.filter(e => {
     const sTerm = searchTerm.toLowerCase();
     const matchSearch = e.name.toLowerCase().includes(sTerm) || e.details.toLowerCase().includes(sTerm);
+    if (!matchSearch) return false;
 
     if (selectedMonthIdx !== null) {
-      try {
-        const eDate = new Date(e.date);
-        return matchSearch && eDate.getMonth() === selectedMonthIdx;
-      } catch { return false; }
+      const selectedMonthName = monthsList[selectedMonthIdx];
+      if (e.monthKey) {
+        if (e.monthKey !== selectedMonthName) return false;
+      } else {
+        try {
+          const eDate = new Date(e.date);
+          if (eDate.getMonth() !== selectedMonthIdx) return false;
+        } catch { return false; }
+      }
     }
-    return matchSearch;
+
+    if (sortType === 'enter-amount') {
+      if (!searchAmount.trim()) return true;
+      const targetAmt = Number(searchAmount.trim());
+      return e.amount === targetAmt;
+    }
+
+    return true;
   });
+
+  const sortedExpenses = [...filteredExpenses];
+  if (sortType === 'highest-amount') {
+    sortedExpenses.sort((a, b) => b.amount - a.amount);
+  } else if (sortType === 'lowest-amount') {
+    sortedExpenses.sort((a, b) => a.amount - b.amount);
+  }
 
   const getSumOfSelectedExpenses = () => filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
@@ -5543,6 +5651,7 @@ function ExpensesRegister({
                   onChange={(e) => setNewExpMonthKey(e.target.value)}
                   className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn font-semibold cursor-pointer"
                 >
+                  <option value="">-- Optional --</option>
                   {monthsList.map(m => (
                     <option key={m} value={m} className="bg-zinc-900 text-white">{m}</option>
                   ))}
@@ -5591,7 +5700,7 @@ function ExpensesRegister({
 
       {/* Advanced compact search & filter bar */}
       <div className="bg-pine-card border border-pine-border/80 p-3 rounded-xl shadow-md font-sans">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
           {/* Column 1: Search */}
           <div className="relative">
             <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-pine-text-muted" />
@@ -5608,7 +5717,7 @@ function ExpensesRegister({
           <div className="relative">
             <select
               value={selectedMonthIdx !== null ? selectedMonthIdx : ''}
-              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? (e.target.value === '' ? '' : Number(e.target.value)) as any : null)}
+              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? Number(e.target.value) : null)}
               className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
             >
               <option value="" className="bg-zinc-900">All Months (Debit/Expenses)</option>
@@ -5620,7 +5729,40 @@ function ExpensesRegister({
               <Calendar className="w-3.5 h-3.5" />
             </div>
           </div>
+
+          {/* Column 3: Sorting & Amount Filter */}
+          <div className="relative">
+            <select
+              value={sortType}
+              onChange={(e) => setSortType(e.target.value)}
+              className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
+            >
+              <option value="none" className="bg-zinc-900">Default Sorting</option>
+              <option value="highest-amount" className="bg-zinc-900">Highest Amount first (Sab Se Zyada) ↑</option>
+              <option value="lowest-amount" className="bg-zinc-900">Lowest Amount first (Sab Se Kam) ↓</option>
+              <option value="enter-amount" className="bg-zinc-900">Enter Amount (Search by Amount) 🔍</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-pine-text-muted">
+              <Sliders className="w-3.5 h-3.5" />
+            </div>
+          </div>
         </div>
+
+        {sortType === 'enter-amount' && (
+          <div className="mt-3 p-2 bg-pine-bar/30 border border-pine-border/60 rounded-lg flex items-center gap-2 animate-fadeIn">
+            <label className="text-xs text-pine-text-body font-bold uppercase whitespace-nowrap">Enter Amount:</label>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-pine-text-muted" />
+              <input
+                type="text"
+                value={searchAmount}
+                onChange={(e) => setSearchAmount(e.target.value)}
+                placeholder="E.g., 50 (Displays expenses of exactly this amount)"
+                className="w-full bg-pine-bar border border-pine-border pl-8 pr-3 py-1.5 text-xs rounded-md text-white font-sans focus:outline-none focus:border-pine-btn"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Expense ledger layout spreadsheet */}
@@ -5638,7 +5780,7 @@ function ExpensesRegister({
             </tr>
           </thead>
           <tbody className="divide-y divide-pine-border/40 font-mono">
-            {filteredExpenses.map((e) => (
+            {sortedExpenses.map((e) => (
               <tr key={e.id} className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs">
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{e.date}</td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
@@ -5880,7 +6022,7 @@ function CommitmentsRegister({
   
   <div class="footer">
     <p>This is a system generated notice.</p>
-    <p>Date Generated: ${new Date().toLocaleDateString()}</p>
+    <p>Date Generated: ${formatDateStr(new Date())}</p>
   </div>
   <button onclick="window.print()" style="padding: 10px 20px; background: #000000; color: #fff; border: 2px solid #000000; cursor: pointer; border-radius: 4px; font-weight: bold; text-transform: uppercase;">Print Notice</button>
 </body>

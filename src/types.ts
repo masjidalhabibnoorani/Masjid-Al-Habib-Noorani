@@ -86,15 +86,15 @@ export interface FundMember {
 export interface FundMemberTransaction {
   id: string;
   memberId: string;
-  monthKey: string; // '2026-01' (Gregorian), 'Rabi-ul-Awwal' (Islamic), or 'Phase 1' etc.
+  monthKey?: string; // '2026-01' (Gregorian), 'Rabi-ul-Awwal' (Islamic), or 'Phase 1' etc.
   amount: number;
-  paymentDate: string; // 'YYYY-MM-DD'
+  paymentDate?: string; // 'YYYY-MM-DD'
 }
 
 export interface OtherFundEntry {
   id: string;
   fundId: string;
-  date: string;
+  date?: string;
   source: string;
   amount: number;
   details: string;
@@ -106,7 +106,7 @@ export interface Expense {
   fundId: string;
   name: string;
   amount: number;
-  date: string;
+  date?: string;
   details: string;
   monthKey?: string;
 }
@@ -174,7 +174,7 @@ export interface ShopRentRecord {
   isRented: boolean;
   payments: Record<string, {
     isPaid: boolean;
-    paymentDate: string;
+    paymentDate?: string;
     amountPaid: number;
   }>;
 }
@@ -184,7 +184,7 @@ export interface ZakatEntry {
   type: 'collection' | 'disbursement';
   donorOrBeneficiary: string;
   amount: number;
-  date: string;
+  date?: string;
   category: string; // e.g., 'Widow support', 'Medical Aid', 'General Sadqah'
   month: string;
 }
@@ -208,3 +208,37 @@ export interface ReligiousStaff {
   active: boolean;
 }
 
+
+export function formatDateStr(dateStr: string | Date | undefined | null): string {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+  } catch {
+    return '';
+  }
+}
+
+export function formatDateTimeStr(dateStr: string | Date | undefined | null): string {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    let hr = d.getHours();
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hr >= 12 ? 'PM' : 'AM';
+    hr = hr % 12;
+    hr = hr ? hr : 12;
+    const hrStr = String(hr).padStart(2, '0');
+    return `${dd}-${mm}-${yyyy} ${hrStr}:${min} ${ampm}`;
+  } catch {
+    return '';
+  }
+}

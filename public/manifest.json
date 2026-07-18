@@ -1,0 +1,21 @@
+{
+  "short_name": "Habib Noorani",
+  "name": "Masjid Al Habib Noorani",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/52Yfptkk/Masjid-Logo.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://i.postimg.cc/52Yfptkk/Masjid-Logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#064e3b",
+  "theme_color": "#064e3b",
+  "display": "standalone",
+  "orientation": "portrait"
+}
