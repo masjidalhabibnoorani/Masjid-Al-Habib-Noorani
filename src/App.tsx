@@ -514,19 +514,17 @@ export default function App() {
           'section_bg_settings', 'section_custom_colors', 'current_theme_id'
         ];
 
-        // Bi-directional synchronization on startup
+        // Bi-directional synchronization on startup (Cloud is the master source of truth to ensure all devices match)
         for (const key of SYNC_KEYS) {
-          const localTimeStr = localStorage.getItem(`masjid_habib_time_${key}`);
-          const localTime = localTimeStr ? parseInt(localTimeStr, 10) : 0;
           const cloudItem = cloudData[key];
           const cloudTime = cloudItem ? (cloudItem.updatedAt || 0) : 0;
 
-          if (cloudTime > localTime && cloudItem) {
-            // Cloud is newer -> Update local
+          if (cloudItem) {
+            // Cloud has data -> Always use cloud on startup to ensure perfect synchronization across devices!
             localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(cloudItem.data));
             localStorage.setItem(`masjid_habib_time_${key}`, cloudTime.toString());
-          } else if (localTime > cloudTime || !cloudItem) {
-            // Local is newer or not present on cloud -> Push to cloud
+          } else {
+            // Not present on cloud -> Push local to cloud
             const localValStr = localStorage.getItem(`masjid_habib_${key}`);
             if (localValStr !== null) {
               try {
@@ -590,8 +588,11 @@ export default function App() {
         (key, data, updatedAt) => {
           const localTimeStr = localStorage.getItem(`masjid_habib_time_${key}`);
           const localTime = localTimeStr ? parseInt(localTimeStr, 10) : 0;
+          const localValStr = localStorage.getItem(`masjid_habib_${key}`);
           
-          if (updatedAt > localTime) {
+          const isDifferent = localValStr === null || JSON.stringify(data) !== localValStr;
+          
+          if (updatedAt !== localTime && isDifferent) {
             localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(data));
             localStorage.setItem(`masjid_habib_time_${key}`, updatedAt.toString());
             
@@ -730,14 +731,12 @@ export default function App() {
 
       for (const key of SYNC_KEYS) {
         const cloudItem = cloudData[key];
-        const localTimeStr = localStorage.getItem(`masjid_habib_time_${key}`);
-        const localTime = localTimeStr ? parseInt(localTimeStr, 10) : 0;
         const cloudTime = cloudItem?.updatedAt || 0;
 
-        if (cloudTime > localTime && cloudItem) {
+        if (cloudItem) {
           localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(cloudItem.data));
           localStorage.setItem(`masjid_habib_time_${key}`, cloudTime.toString());
-        } else if (localTime > cloudTime || !cloudItem) {
+        } else {
           const localValStr = localStorage.getItem(`masjid_habib_${key}`);
           if (localValStr) {
             try {
