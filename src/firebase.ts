@@ -91,6 +91,19 @@ const debounceTimers = new Map<string, any>();
 const activeSaves = { count: 0 };
 
 export function isCloudBypassed(): boolean {
+  try {
+    const bypassUntil = localStorage.getItem('masjid_habib_cloud_bypass_until');
+    if (bypassUntil) {
+      const untilTime = parseInt(bypassUntil, 10);
+      if (Date.now() < untilTime) {
+        return true;
+      } else {
+        localStorage.removeItem('masjid_habib_cloud_bypass_until');
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
   return false;
 }
 

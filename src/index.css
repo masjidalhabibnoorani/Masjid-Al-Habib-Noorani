@@ -90,6 +90,11 @@
   }
 }
 
+/* Scroll target offset for fixed header */
+[id] {
+  scroll-margin-top: 110px;
+}
+
 .text-sharp {
   text-shadow: 0 1px 1px rgba(0,0,0,0.1);
 }

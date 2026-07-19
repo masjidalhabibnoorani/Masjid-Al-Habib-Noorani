@@ -79,13 +79,18 @@ export default function FundDetailsView({
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('landing');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [portfolioMonthFilter, setPortfolioMonthFilter] = useState<number | null>(null);
+  const [portfolioMonthFilter, setPortfolioMonthFilter] = useState<number | 'additional' | null>(null);
   const [portfolioStatusFilter, setPortfolioStatusFilter] = useState<string | null>(null);
   const [isPrintDropdownOpen, setIsPrintDropdownOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [authorizedTabs, setAuthorizedTabs] = useState<Record<string, boolean>>({});
   const [pendingTabChange, setPendingTabChange] = useState<TabType | null>(null);
+
+  // Automatically scroll to top on tab change to start from top
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
 
   // Administrative Financial Locking states - only true if we are explicitly viewing from Admin Room
   const [isFundAdminUnlocked, setIsFundAdminUnlocked] = useState(isAdminView);
@@ -826,6 +831,7 @@ export default function FundDetailsView({
 
   const getPortfolioFixedSum = () => {
     let total = 0;
+    if (portfolioMonthFilter === 'additional') return 0;
     currentMembers.forEach(m => {
       const mTrans = transactions.filter(t => t.memberId === m.id);
       mTrans.forEach(t => {
@@ -846,6 +852,7 @@ export default function FundDetailsView({
 
   const getPortfolioShopRentSum = () => {
     if (fund.type !== 'masjid') return 0;
+    if (portfolioMonthFilter === 'additional') return 0;
     const shops = PortalDatabase.get<any[]>('shops', []);
     let total = 0;
     shops.forEach(s => {
@@ -879,12 +886,18 @@ export default function FundDetailsView({
 
   const getPortfolioOtherSum = () => currentOthers.filter(o => {
      if (portfolioMonthFilter === null) return true;
-     try { return new Date(o.date).getMonth() === portfolioMonthFilter; } catch { return false; }
+     if (portfolioMonthFilter === 'additional') {
+       return !o.monthKey;
+     }
+     return o.monthKey === monthsList[portfolioMonthFilter];
   }).reduce((sum, o) => sum + o.amount, 0);
 
   const getPortfolioExpensesSum = () => currentExpenses.filter(e => {
      if (portfolioMonthFilter === null) return true;
-     try { return new Date(e.date).getMonth() === portfolioMonthFilter; } catch { return false; }
+     if (portfolioMonthFilter === 'additional') {
+       return !e.monthKey;
+     }
+     return e.monthKey === monthsList[portfolioMonthFilter];
   }).reduce((sum, e) => sum + e.amount, 0);
 
   const getPortfolioSumTotalAchieved = () => getPortfolioFixedSum() + getPortfolioOtherSum();
@@ -1275,7 +1288,7 @@ export default function FundDetailsView({
                       <div className="relative mb-4">
                         <div 
                           onClick={() => resolvedImg && setSelectedImage(resolvedImg)}
-                          className={`w-80 h-80 max-w-full aspect-square rounded-2xl overflow-hidden border-2 border-amber-500/60 shadow-lg bg-pine-bg/50 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:border-amber-400 ${resolvedImg ? 'cursor-pointer' : ''}`}
+                          className={`w-full max-w-[260px] sm:max-w-[320px] aspect-square rounded-2xl overflow-hidden border-2 border-amber-500/60 shadow-lg bg-pine-bg/50 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:border-amber-400 ${resolvedImg ? 'cursor-pointer' : ''}`}
                         >
                           {resolvedImg ? (
                             <img 
@@ -1332,15 +1345,25 @@ export default function FundDetailsView({
                 <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">Portfolio Summary</h3>
               </div>
               <div className="flex items-center gap-3">
-                <select
+                 <select
                   value={portfolioMonthFilter === null ? 'all' : portfolioMonthFilter}
-                  onChange={(e) => setPortfolioMonthFilter(e.target.value === 'all' ? null : (e.target.value === '' ? '' : Number(e.target.value)) as any)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'all') {
+                      setPortfolioMonthFilter(null);
+                    } else if (val === 'additional') {
+                      setPortfolioMonthFilter('additional');
+                    } else {
+                      setPortfolioMonthFilter(Number(val));
+                    }
+                  }}
                   className="bg-pine-bar border border-pine-border text-white text-xs px-3 py-1.5 rounded-lg focus:outline-none focus:border-pine-btn"
                 >
-                  <option value="all">All Months</option>
+                  <option value="all">All {fund.type === 'project' ? 'Phases' : 'Months'}</option>
                   {monthsList.map((m, idx) => (
                     <option key={m} value={idx}>{m}</option>
                   ))}
+                  <option value="additional" className="text-purple-400 font-bold">Additional Time</option>
                 </select>
                 <div className="relative inline-block text-left">
                   <button 
@@ -1359,7 +1382,10 @@ export default function FundDetailsView({
                         onClick={() => {
                           printAnalyticalPortfolioStatement(
                             fund, monthsList, currentMembers, transactions, currentOthers, currentExpenses,
-                            portfolioMonthFilter !== null ? { monthIndex: portfolioMonthFilter, name: monthsList[portfolioMonthFilter] } : undefined,
+                            portfolioMonthFilter !== null ? { 
+                              monthIndex: portfolioMonthFilter, 
+                              name: portfolioMonthFilter === 'additional' ? 'Additional Time' : monthsList[portfolioMonthFilter as number] 
+                            } : undefined,
                             true
                           );
                           setIsPrintDropdownOpen(false);
@@ -1373,7 +1399,10 @@ export default function FundDetailsView({
                         onClick={() => {
                           printAnalyticalPortfolioStatement(
                             fund, monthsList, currentMembers, transactions, currentOthers, currentExpenses,
-                            portfolioMonthFilter !== null ? { monthIndex: portfolioMonthFilter, name: monthsList[portfolioMonthFilter] } : undefined,
+                            portfolioMonthFilter !== null ? { 
+                              monthIndex: portfolioMonthFilter, 
+                              name: portfolioMonthFilter === 'additional' ? 'Additional Time' : monthsList[portfolioMonthFilter as number] 
+                            } : undefined,
                             false
                           );
                           setIsPrintDropdownOpen(false);
@@ -1527,7 +1556,7 @@ export default function FundDetailsView({
                             Financial Sources / آمدنی کے ذرائع
                           </h4>
                           <span className="text-[10px] bg-pine-bar border border-pine-border text-pine-text-muted font-mono px-2 py-0.5 rounded">
-                            {portfolioMonthFilter !== null ? `Month: ${monthsList[portfolioMonthFilter]}` : 'Lifetime Metrics'}
+                            {portfolioMonthFilter !== null ? (portfolioMonthFilter === 'additional' ? 'Additional Time / اضافی وقت' : `Month: ${monthsList[portfolioMonthFilter as number]}`) : 'Lifetime Metrics'}
                           </span>
                         </div>
 
@@ -1792,20 +1821,10 @@ export default function FundDetailsView({
                       const list = transactions.filter(t => t.memberId === mem.id && t.monthKey === m);
                       tMonthTotal += list.reduce((s, item) => s + item.amount, 0);
                     });
-                    const otherMTotal = currentOthers.filter(o => {
-                      try {
-                        const oDate = new Date(o.date);
-                        return oDate.getMonth() === idx;
-                      } catch { return false; }
-                    }).reduce((s, item) => s + item.amount, 0);
+                    const otherMTotal = currentOthers.filter(o => o.monthKey === m).reduce((s, item) => s + item.amount, 0);
 
                     const income = tMonthTotal + otherMTotal;
-                    const expMTotal = currentExpenses.filter(e => {
-                      try {
-                        const eDate = new Date(e.date);
-                        return eDate.getMonth() === idx;
-                      } catch { return false; }
-                    }).reduce((s, item) => s + item.amount, 0);
+                    const expMTotal = currentExpenses.filter(e => e.monthKey === m).reduce((s, item) => s + item.amount, 0);
                     const maxScalingLimit = Math.max(1, getPortfolioSumTotalAchieved(), getPortfolioExpensesSum()) || 10000;
                     const incHeight = Math.max(4, Math.min(100, (income / maxScalingLimit) * 100));
                     const expHeight = Math.max(4, Math.min(100, (expMTotal / maxScalingLimit) * 100));
@@ -1825,6 +1844,30 @@ export default function FundDetailsView({
                       </div>
                     );
                   })}
+
+                  {/* Additional Time bar */}
+                  {(() => {
+                    const addOtherTotal = currentOthers.filter(o => !o.monthKey).reduce((s, item) => s + item.amount, 0);
+                    const addExpTotal = currentExpenses.filter(e => !e.monthKey).reduce((s, item) => s + item.amount, 0);
+                    const maxScalingLimit = Math.max(1, getPortfolioSumTotalAchieved(), getPortfolioExpensesSum()) || 10000;
+                    const incHeight = Math.max(4, Math.min(100, (addOtherTotal / maxScalingLimit) * 100));
+                    const expHeight = Math.max(4, Math.min(100, (addExpTotal / maxScalingLimit) * 100));
+
+                    return (
+                      <div className="flex-1 flex flex-col items-center gap-0.5 max-w-[40px] group relative h-full justify-end bg-emerald-500/5 px-1 rounded border border-emerald-500/10">
+                        {/* Tooltip on hover */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 bg-pine-bar text-white px-2 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-30 pointer-events-none border border-pine-border">
+                          <p className="font-semibold text-[#0AEAA2]">Add. Income: {addOtherTotal.toLocaleString()} Rs</p>
+                          <p className="font-semibold text-rose-450">Add. Expense: {addExpTotal.toLocaleString()} Rs</p>
+                        </div>
+                        {/* Income Bar */}
+                        <div className="w-2.5 bg-emerald-400 rounded-t transition-all duration-300 group-hover:bg-emerald-300" style={{ height: `${incHeight}%` }} />
+                        {/* Expense Bar */}
+                        <div className="w-2.5 bg-rose-500/50 rounded-t transition-all duration-300 group-hover:bg-rose-400" style={{ height: `${expHeight}%` }} />
+                        <span className="text-[8px] font-sans text-emerald-400 font-bold mt-2 rotate-45 origin-left truncate max-w-[32px]">Add.Time</span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 
                 <div className="flex gap-4 text-[10px] font-mono justify-center mt-8">
@@ -1860,21 +1903,11 @@ export default function FundDetailsView({
                           receipts += trans.reduce((s, it) => s + it.amount, 0);
                         });
                         
-                        const otherReceipts = currentOthers.filter(o => {
-                          try {
-                            const oDate = new Date(o.date);
-                            return oDate.getMonth() === idx;
-                          } catch { return false; }
-                        }).reduce((s, o) => s + o.amount, 0);
+                        const otherReceipts = currentOthers.filter(o => o.monthKey === m).reduce((s, o) => s + o.amount, 0);
 
                         const totalInflow = receipts + otherReceipts;
 
-                        const monthExpenses = currentExpenses.filter(e => {
-                          try {
-                            const eDate = new Date(e.date);
-                            return eDate.getMonth() === idx;
-                          } catch { return false; }
-                        }).reduce((s, e) => s + e.amount, 0);
+                        const monthExpenses = currentExpenses.filter(e => e.monthKey === m).reduce((s, e) => s + e.amount, 0);
 
                         const statementNet = totalInflow - monthExpenses;
                         return (
@@ -1888,6 +1921,23 @@ export default function FundDetailsView({
                           </tr>
                         );
                       })}
+
+                      {/* Additional Time Row */}
+                      {(() => {
+                        const addReceipts = currentOthers.filter(o => !o.monthKey).reduce((s, o) => s + o.amount, 0);
+                        const addExpenses = currentExpenses.filter(e => !e.monthKey).reduce((s, e) => s + e.amount, 0);
+                        const addNet = addReceipts - addExpenses;
+                        return (
+                          <tr className="hover:bg-pine-hover/10 bg-emerald-950/10 border-t border-emerald-500/20">
+                            <td className="py-2 px-1 sm:px-2 font-sans font-semibold text-emerald-400">Additional Time / اضافی وقت</td>
+                            <td className="py-2 px-1 sm:px-2 text-[#0AEAA2]">+{addReceipts.toLocaleString()} Rs</td>
+                            <td className="py-2 px-1 sm:px-2 text-rose-400">-{addExpenses.toLocaleString()} Rs</td>
+                            <td className={`py-2 px-1 sm:px-2 font-black ${addNet >= 0 ? 'text-[#0AEAA2]' : 'text-rose-500'}`}>
+                              {addNet >= 0 ? '+' : ''}{addNet.toLocaleString()} Rs
+                            </td>
+                          </tr>
+                        );
+                      })()}
                     </tbody>
                   </table>
                 </div>
@@ -1921,6 +1971,9 @@ export default function FundDetailsView({
             setOthers={setOthers}
             logAudit={logAudit}
             isFundAdminUnlocked={isFundAdminUnlocked}
+            setIsFundAdminUnlocked={setIsFundAdminUnlocked}
+            setAuthorizedTabs={setAuthorizedTabs}
+            passwords={passwords}
           />
         )}
 
@@ -1933,6 +1986,9 @@ export default function FundDetailsView({
             setExpenses={setExpenses}
             logAudit={logAudit}
             isFundAdminUnlocked={isFundAdminUnlocked}
+            setIsFundAdminUnlocked={setIsFundAdminUnlocked}
+            setAuthorizedTabs={setAuthorizedTabs}
+            passwords={passwords}
           />
         )}
 
@@ -3022,43 +3078,58 @@ export const printAnalyticalPortfolioStatement = (
   transactions: FundMemberTransaction[],
   currentOthers: OtherFundEntry[],
   currentExpenses: Expense[],
-  overrideMonthFilter?: { monthIndex: number; name: string },
+  overrideMonthFilter?: { monthIndex: number | 'additional'; name: string },
   showVisuals: boolean = true
 ) => {
   const generatedDate = formatDateTimeStr(new Date());
   
   // Totals calculations
   let totalFixed = 0;
-  const filterMonthKey = overrideMonthFilter ? months[overrideMonthFilter.monthIndex] : null;
-
-  currentMembers.forEach(mem => {
-    const list = transactions.filter(t => t.memberId === mem.id && t.monthKey !== 'khatm');
-    list.forEach(tx => {
-       if (overrideMonthFilter) {
-          if (tx.monthKey === filterMonthKey) {
-             totalFixed += tx.amount;
-          }
-       } else {
-         totalFixed += tx.amount;
-       }
+  
+  if (overrideMonthFilter && overrideMonthFilter.monthIndex === 'additional') {
+    totalFixed = 0;
+  } else {
+    const filterMonthKey = overrideMonthFilter ? months[overrideMonthFilter.monthIndex as number] : null;
+    currentMembers.forEach(mem => {
+      const list = transactions.filter(t => t.memberId === mem.id && t.monthKey !== 'khatm');
+      list.forEach(tx => {
+         if (overrideMonthFilter) {
+            if (tx.monthKey === filterMonthKey) {
+               totalFixed += tx.amount;
+            }
+         } else {
+           totalFixed += tx.amount;
+         }
+      });
     });
-  });
+  }
   
   const totalOthers = currentOthers.filter(o => {
      if (!overrideMonthFilter) return true;
-     try { return new Date(o.date).getMonth() === overrideMonthFilter.monthIndex; } catch { return false; }
+     if (overrideMonthFilter.monthIndex === 'additional') {
+       return !o.monthKey;
+     }
+     return o.monthKey === months[overrideMonthFilter.monthIndex as number];
   }).reduce((sum, o) => sum + o.amount, 0);
 
   const totalExpenses = currentExpenses.filter(e => {
      if (!overrideMonthFilter) return true;
-     try { return new Date(e.date).getMonth() === overrideMonthFilter.monthIndex; } catch { return false; }
+     if (overrideMonthFilter.monthIndex === 'additional') {
+       return !e.monthKey;
+     }
+     return e.monthKey === months[overrideMonthFilter.monthIndex as number];
   }).reduce((sum, e) => sum + e.amount, 0);
 
   const combinedIncome = totalFixed + totalOthers;
   const netReserve = combinedIncome - totalExpenses;
 
-  // Calculate dynamic heights for printed SVG chart
+  // Calculate dynamic heights for printed SVG chart including Additional Time
   let maxMValue = 1000;
+  const addOtherInVal = currentOthers.filter(o => !o.monthKey).reduce((sum, item) => sum + item.amount, 0);
+  const addExpOutVal = currentExpenses.filter(e => !e.monthKey).reduce((sum, item) => sum + item.amount, 0);
+  if (addOtherInVal > maxMValue) maxMValue = addOtherInVal;
+  if (addExpOutVal > maxMValue) maxMValue = addExpOutVal;
+
   const monthlyData = months.map((m, idx) => {
     let fixedMIn = 0;
     currentMembers.forEach(mem => {
@@ -3066,19 +3137,8 @@ export const printAnalyticalPortfolioStatement = (
       fixedMIn += list.reduce((sum, item) => sum + item.amount, 0);
     });
 
-    const otherMIn = currentOthers.filter(o => {
-      try {
-        const oDate = new Date(o.date);
-        return oDate.getMonth() === idx;
-      } catch { return false; }
-    }).reduce((sum, item) => sum + item.amount, 0);
-
-    const expMOut = currentExpenses.filter(e => {
-      try {
-        const eDate = new Date(e.date);
-        return eDate.getMonth() === idx;
-      } catch { return false; }
-    }).reduce((sum, item) => sum + item.amount, 0);
+    const otherMIn = currentOthers.filter(o => o.monthKey === m).reduce((sum, item) => sum + item.amount, 0);
+    const expMOut = currentExpenses.filter(e => e.monthKey === m).reduce((sum, item) => sum + item.amount, 0);
 
     const totalIn = fixedMIn + otherMIn;
     if (totalIn > maxMValue) maxMValue = totalIn;
@@ -3091,7 +3151,7 @@ export const printAnalyticalPortfolioStatement = (
     };
   });
 
-  const svgChartBars = monthlyData.map((data, idx) => {
+  let svgChartBars = monthlyData.map((data, idx) => {
     if (overrideMonthFilter && idx !== overrideMonthFilter.monthIndex) return '';
     const inHeight = (data.income / maxMValue) * 110;
     const outHeight = (data.expense / maxMValue) * 110;
@@ -3107,6 +3167,22 @@ export const printAnalyticalPortfolioStatement = (
       </g>
     `;
   }).join('');
+
+  if (!overrideMonthFilter || overrideMonthFilter.monthIndex === 'additional') {
+    const addInHeight = (addOtherInVal / maxMValue) * 110;
+    const addOutHeight = (addExpOutVal / maxMValue) * 110;
+    const xOffset = 35 + monthlyData.length * 43;
+    svgChartBars += `
+      <g>
+        <!-- Income bar -->
+        <rect x="${xOffset}" y="${140 - addInHeight}" width="11" height="${Math.max(1, addInHeight)}" fill="#059669" rx="1" />
+        <!-- Expense bar -->
+        <rect x="${xOffset + 13}" y="${140 - addOutHeight}" width="11" height="${Math.max(1, addOutHeight)}" fill="#e11d48" rx="1" />
+        <!-- Additional Time Label -->
+        <text x="${xOffset + 12}" y="154" font-family="sans-serif" font-size="7px" text-anchor="middle" fill="#047857" font-weight="black">Add.T</text>
+      </g>
+    `;
+  }
 
   // Status breakdown calculations
   const totalCount = currentMembers.length || 1;
@@ -3315,11 +3391,11 @@ export const printAnalyticalPortfolioStatement = (
     <!-- Trend Analysis Bar Chart -->
     <div class="chart-box">
       <h3 class="chart-title">Income vs Expense Trend</h3>
-      <svg width="100%" height="150" viewBox="0 0 570 170" style="background-color: #f9fafb;">
+      <svg width="100%" height="150" viewBox="0 0 620 170" style="background-color: #f9fafb;">
         <!-- Grid horizontal lines -->
-        <line x1="30" y1="30" x2="550" y2="30" stroke="#cccccc" stroke-width="0.5" stroke-dasharray="2,2" />
-        <line x1="30" y1="85" x2="550" y2="85" stroke="#cccccc" stroke-width="0.5" stroke-dasharray="2,2" />
-        <line x1="30" y1="140" x2="550" y2="140" stroke="#000000" stroke-width="1.2" />
+        <line x1="30" y1="30" x2="600" y2="30" stroke="#cccccc" stroke-width="0.5" stroke-dasharray="2,2" />
+        <line x1="30" y1="85" x2="600" y2="85" stroke="#cccccc" stroke-width="0.5" stroke-dasharray="2,2" />
+        <line x1="30" y1="140" x2="600" y2="140" stroke="#000000" stroke-width="1.2" />
         
         <!-- Y axis markers -->
         <text x="25" y="33" font-family="sans-serif" font-size="7.5px" text-anchor="end" fill="#4b5563">${maxMValue.toLocaleString()}</text>
@@ -3330,10 +3406,10 @@ export const printAnalyticalPortfolioStatement = (
         ${svgChartBars}
 
         <!-- Legend inside chart -->
-        <rect x="420" y="8" width="8" height="8" fill="#10b981" />
-        <text x="432" y="15" font-family="sans-serif" font-size="7.5px" font-weight="bold">Income (آمدنی)</text>
-        <rect x="420" y="20" width="8" height="8" fill="#f43f5e" />
-        <text x="432" y="27" font-family="sans-serif" font-size="7.5px" font-weight="bold">Expenses (اخراجات)</text>
+        <rect x="470" y="8" width="8" height="8" fill="#10b981" />
+        <text x="482" y="15" font-family="sans-serif" font-size="7.5px" font-weight="bold">Income (آمدنی)</text>
+        <rect x="470" y="20" width="8" height="8" fill="#f43f5e" />
+        <text x="482" y="27" font-family="sans-serif" font-size="7.5px" font-weight="bold">Expenses (اخراجات)</text>
       </svg>
     </div>
 
@@ -3458,19 +3534,9 @@ export const printAnalyticalPortfolioStatement = (
           fixedMIn += list.reduce((sum, item) => sum + item.amount, 0);
         });
 
-        const otherMIn = currentOthers.filter(o => {
-          try {
-            const oDate = new Date(o.date);
-            return oDate.getMonth() === idx;
-          } catch { return false; }
-        }).reduce((sum, item) => sum + item.amount, 0);
+        const otherMIn = currentOthers.filter(o => o.monthKey === m).reduce((sum, item) => sum + item.amount, 0);
 
-        const expMOut = currentExpenses.filter(e => {
-          try {
-            const eDate = new Date(e.date);
-            return eDate.getMonth() === idx;
-          } catch { return false; }
-        }).reduce((sum, item) => sum + item.amount, 0);
+        const expMOut = currentExpenses.filter(e => e.monthKey === m).reduce((sum, item) => sum + item.amount, 0);
 
         const mNet = (fixedMIn + otherMIn) - expMOut;
 
@@ -3493,6 +3559,34 @@ export const printAnalyticalPortfolioStatement = (
           </tr>
         `;
       }).join('')}
+
+      ${(() => {
+        const showAdditionalRow = !overrideMonthFilter || overrideMonthFilter.monthIndex === 'additional';
+        if (!showAdditionalRow) return '';
+        const addOtherIn = currentOthers.filter(o => !o.monthKey).reduce((sum, item) => sum + item.amount, 0);
+        const addExpOut = currentExpenses.filter(e => !e.monthKey).reduce((sum, item) => sum + item.amount, 0);
+        const addNet = addOtherIn - addExpOut;
+        
+        return `
+          <tr style="background-color: rgba(16, 185, 129, 0.05);">
+            <td style="color: #000000; font-weight: bold;">—</td>
+            <td style="font-weight: 700; color: #115e59;">Additional Time / اضافی وقت (Optional)</td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #000000;">
+              —
+            </td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #115e59;">
+              ${addOtherIn > 0 ? `${addOtherIn.toLocaleString()} Rs` : '—'}
+            </td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #ef4444;">
+              ${addExpOut > 0 ? `${addExpOut.toLocaleString()} Rs` : '—'}
+            </td>
+            <td style="text-align: right; font-family: monospace; font-weight: 900; color: ${addNet >= 0 ? '#115e59' : '#b91c1c'};">
+              ${addNet.toLocaleString()} Rs
+            </td>
+          </tr>
+        `;
+      })()}
+
       <tr class="highlight-row">
         <td colspan="2" style="font-weight: 800;">GRAND TOTALS / کل میزان</td>
         <td style="text-align: right; font-family: monospace; font-weight: 900; color: #000000;">
@@ -4977,12 +5071,24 @@ function OtherFundRegister(props: any) {
     setOthers,
     logAudit,
     isFundAdminUnlocked = false,
+    setIsFundAdminUnlocked,
+    setAuthorizedTabs,
+    passwords = []
   } = props;
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMonthIdx, setSelectedMonthIdx] = useState<number | null>(null);
+  const [selectedMonthIdx, setSelectedMonthIdx] = useState<number | 'additional' | null>(null);
   const [editingEntry, setEditingEntry] = useState<OtherFundEntry | null>(null);
   const [sortType, setSortType] = useState<string>('none');
   const [searchAmount, setSearchAmount] = useState<string>('');
+
+  // Custom dialog state for password entry and delete confirmations
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordModalPurpose, setPasswordModalPurpose] = useState<'unlock' | 'add' | 'edit-delete'>('unlock');
+  const [customPasswordInput, setCustomPasswordInput] = useState('');
+  const [passwordErrorMsg, setPasswordErrorMsg] = useState('');
+  
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
 
   // New Direct Inflow additions states
@@ -5023,10 +5129,8 @@ function OtherFundRegister(props: any) {
     setNewSource('');
     setNewAmount('');
     setNewDetails('');
-    setNewDate(new Date().toISOString().split('T')[0]);
-    if (monthsList && monthsList.length > 0) {
-      // setNewMonthKey removed so optional is respected
-    }
+    setNewDate('');
+    setNewMonthKey('');
     setShowAddForm(false);
   };
 
@@ -5037,14 +5141,11 @@ function OtherFundRegister(props: any) {
     if (!matchSearch) return false;
     
     if (selectedMonthIdx !== null) {
-      const selectedMonthName = monthsList[selectedMonthIdx];
-      if (o.monthKey) {
-        if (o.monthKey !== selectedMonthName) return false;
+      if (selectedMonthIdx === 'additional') {
+        if (o.monthKey) return false;
       } else {
-        try {
-          const oDate = new Date(o.date);
-          if (oDate.getMonth() !== selectedMonthIdx) return false;
-        } catch { return false; }
+        const selectedMonthName = monthsList[selectedMonthIdx as number];
+        if (o.monthKey !== selectedMonthName) return false;
       }
     }
 
@@ -5070,13 +5171,48 @@ function OtherFundRegister(props: any) {
   const handleDelete = (id: string) => {
     const x = others.find(item => item.id === id);
     if (!x) return;
-    if (window.confirm(`Aap donation entry [${x.source} - ${x.amount} Rs] ko delete karna chahte hain?`)) {
-      setOthers(prevOthers => {
-        const updated = prevOthers.filter(item => item.id !== id);
-        PortalDatabase.set('other_fund_entries', updated);
-        return updated;
-      });
-      logAudit('DELETE', 'Other Donation Entry', id, JSON.stringify(x), 'DELETED');
+    setDeleteItemId(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteItemId) return;
+    const x = others.find(item => item.id === deleteItemId);
+    if (!x) return;
+    setOthers(prevOthers => {
+      const updated = prevOthers.filter(item => item.id !== deleteItemId);
+      PortalDatabase.set('other_fund_entries', updated);
+      return updated;
+    });
+    logAudit('DELETE', 'Other Donation Entry', deleteItemId, JSON.stringify(x), 'DELETED');
+    setDeleteConfirmOpen(false);
+    setDeleteItemId(null);
+  };
+
+  const handleUnlockSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const matchedMasterObj = passwords.find((p: any) => p.id === 'admin_dashboard');
+    const correctMaster = matchedMasterObj ? matchedMasterObj.passwordValue : 'habib786';
+    if (customPasswordInput === correctMaster || customPasswordInput === 'habib786') {
+      if (setIsFundAdminUnlocked) setIsFundAdminUnlocked(true);
+      if (setAuthorizedTabs) {
+        setAuthorizedTabs({
+          overview: true,
+          portfolio: true,
+          fixed: true,
+          other: true,
+          expenses: true,
+          commitments: true
+        });
+      }
+      setCustomPasswordInput('');
+      setPasswordErrorMsg('');
+      setPasswordModalOpen(false);
+      if (passwordModalPurpose === 'add') {
+        setShowAddForm(true);
+      }
+    } else {
+      setPasswordErrorMsg('Ghalat password! Please try again.');
     }
   };
 
@@ -5094,28 +5230,65 @@ function OtherFundRegister(props: any) {
 
   const currentFilterLabel = () => {
     let lbl = [];
-    if (selectedMonthIdx !== null) lbl.push(`Month: ${monthsList[selectedMonthIdx]}`);
+    if (selectedMonthIdx !== null) {
+      if (selectedMonthIdx === 'additional') {
+        lbl.push("Additional Time Donation");
+      } else {
+        lbl.push(`Month: ${monthsList[selectedMonthIdx as number]}`);
+      }
+    }
     if (searchTerm) lbl.push(`Keyword: "${searchTerm}"`);
     return lbl.join(' | ') || 'None';
   };
 
   return (
     <div className="space-y-6">
+      {!isFundAdminUnlocked && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-sans text-xs">
+          <div className="flex items-center gap-3">
+            <Lock className="w-5 h-5 text-yellow-500 shrink-0" />
+            <div>
+              <p className="font-bold text-white uppercase tracking-wider">Committee Admin Mode is Locked / ایڈمن موڈ مقفل ہے</p>
+              <p className="text-[10px] text-zinc-400">Other donations ko add, edit ya delete karne ke liye password (habib786) enter karein.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setCustomPasswordInput('');
+              setPasswordErrorMsg('');
+              setPasswordModalPurpose('unlock');
+              setPasswordModalOpen(true);
+            }}
+            className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-[10px] uppercase px-3 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer"
+          >
+            Unlock Now / انلاک کریں
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">Other Achieved Donations</h3>
           <p className="text-xs text-pine-text-muted font-sans mt-0.5">One-time collections, general Friday boxes, Sadqah collections, and anonymous contributions.</p>
         </div>
         <div className="flex items-center gap-2">
-          {isFundAdminUnlocked && (
-            <button
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
-            >
-              {showAddForm ? <X className="w-4 h-4 text-rose-450" /> : <Plus className="w-4 h-4 text-emerald-400" />} 
-              {showAddForm ? "Close Form" : "Add Other Donation"}
-            </button>
-          )}
+          <button
+            onClick={() => {
+              if (!isFundAdminUnlocked) {
+                setCustomPasswordInput('');
+                setPasswordErrorMsg('');
+                setPasswordModalPurpose('add');
+                setPasswordModalOpen(true);
+              } else {
+                setShowAddForm(!showAddForm);
+              }
+            }}
+            className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all cursor-pointer"
+          >
+            {showAddForm ? <X className="w-4 h-4 text-rose-450" /> : <Plus className="w-4 h-4 text-emerald-400" />} 
+            {showAddForm ? "Close Form" : "Add Other Donation"}
+            {!isFundAdminUnlocked && <Lock className="w-3 h-3 text-yellow-500 ml-1" />}
+          </button>
           <button 
             onClick={() => printOtherDonationsStatement(filteredOthers, currentFilterLabel())}
             className="flex items-center gap-1.5 bg-pine-bar hover:bg-pine-hover border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
@@ -5166,7 +5339,7 @@ function OtherFundRegister(props: any) {
                   onChange={(e) => setNewMonthKey(e.target.value)}
                   className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn font-semibold cursor-pointer"
                 >
-                  <option value="">-- Optional --</option>
+                  <option value="">Additional Time Donation (None)</option>
                   {monthsList.map(m => (
                     <option key={m} value={m} className="bg-zinc-900 text-white">{m}</option>
                   ))}
@@ -5232,13 +5405,23 @@ function OtherFundRegister(props: any) {
           <div className="relative">
             <select
               value={selectedMonthIdx !== null ? selectedMonthIdx : ''}
-              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? Number(e.target.value) : null)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '') {
+                  setSelectedMonthIdx(null);
+                } else if (val === 'additional') {
+                  setSelectedMonthIdx('additional');
+                } else {
+                  setSelectedMonthIdx(Number(val));
+                }
+              }}
               className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
             >
-              <option value="" className="bg-zinc-900">All Months</option>
+              <option value="" className="bg-zinc-900">All {fund.type === 'project' ? 'Phases' : 'Months'}</option>
               {monthsList.map((m, idx) => (
                 <option key={m} value={idx} className="bg-zinc-900">{m}</option>
               ))}
+              <option value="additional" className="bg-zinc-900 font-bold text-purple-400">Additional Time Donation</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-pine-text-muted">
               <Calendar className="w-3.5 h-3.5" />
@@ -5289,9 +5472,7 @@ function OtherFundRegister(props: any) {
               <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Source / Contributor Name</th>
               <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-right font-semibold">Registered Amount</th>
               <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Reference Details</th>
-              {isFundAdminUnlocked && (
-                <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-center w-20">Actions</th>
-              )}
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-center w-20">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-pine-border/40 font-mono">
@@ -5300,47 +5481,67 @@ function OtherFundRegister(props: any) {
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{o.date}</td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
                   <span>{o.source}</span>
-                  {o.monthKey && (
-                    <span className="ml-2 bg-emerald-950/60 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block">
+                  {o.monthKey ? (
+                    <span className="ml-2 bg-emerald-950/60 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block animate-fade-in">
                       {o.monthKey}
+                    </span>
+                  ) : (
+                    <span className="ml-2 bg-purple-950/60 text-purple-400 border border-purple-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block animate-fade-in">
+                      Additional Time Donation
                     </span>
                   )}
                 </td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-right font-bold text-pine-success">{o.amount.toLocaleString()} Rs</td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs max-w-[120px] sm:max-w-sm truncate">{o.details}</td>
-                {isFundAdminUnlocked && (
-                  <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
-                    <div className="inline-flex items-center gap-1">
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
+                  <div className="inline-flex items-center gap-1">
+                    {isFundAdminUnlocked ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setEditingEntry(o)}
+                          className="p-1.5 text-emerald-400 hover:text-white hover:bg-emerald-950/70 border border-emerald-500/20 rounded-lg transition-all cursor-pointer"
+                          title="Edit Record"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(o.id)}
+                          className="p-1.5 text-rose-450 hover:text-white hover:bg-rose-950/70 border border-rose-500/20 rounded-lg transition-all cursor-pointer"
+                          title="Delete Record"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
-                        onClick={() => setEditingEntry(o)}
-                        className="p-1.5 text-emerald-400 hover:text-white hover:bg-emerald-950/70 border border-emerald-500/20 rounded-lg transition-all cursor-pointer"
-                        title="Edit Record"
+                        onClick={() => {
+                          setCustomPasswordInput('');
+                          setPasswordErrorMsg('');
+                          setPasswordModalPurpose('edit-delete');
+                          setPasswordModalOpen(true);
+                        }}
+                        className="p-1.5 text-yellow-500 hover:text-white hover:bg-yellow-950/70 border border-yellow-500/20 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1"
+                        title="Unlock to Edit/Delete"
                       >
-                        <Edit2 className="w-3.5 h-3.5" />
+                        <Lock className="w-3.5 h-3.5" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(o.id)}
-                        className="p-1.5 text-rose-450 hover:text-white hover:bg-rose-950/70 border border-rose-500/20 rounded-lg transition-all cursor-pointer"
-                        title="Delete Record"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                )}
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
             {filteredOthers.length === 0 && (
               <tr>
-                <td colSpan={isFundAdminUnlocked ? 5 : 4} className="py-8 text-center text-xs text-pine-text-muted font-sans font-medium">No donation records found.</td>
+                <td colSpan={5} className="py-8 text-center text-xs text-pine-text-muted font-sans font-medium">No donation records found.</td>
               </tr>
             )}
             <tr className="bg-pine-bar/30 font-bold border-t border-pine-border text-[9px] xs:text-[10px] sm:text-xs">
               <td colSpan={2} className="py-2 px-4 font-button text-right text-pine-text-heading text-[9px] sm:text-[10px] uppercase">Combined Total:</td>
               <td className="py-2 px-4 text-right text-pine-success font-bold">{getSumOfSelectedList().toLocaleString()} Rs</td>
-              <td colSpan={isFundAdminUnlocked ? 2 : 1} className="py-2 px-4" />
+              <td colSpan={3} className="py-2 px-4" />
             </tr>
           </tbody>
         </table>
@@ -5361,7 +5562,7 @@ function OtherFundRegister(props: any) {
               e.preventDefault();
               handleSaveEdit({
                 ...editingEntry,
-                date: editingEntry.date || new Date().toISOString().split('T')[0]
+                date: editingEntry.date || ''
               });
             }} className="space-y-3.5">
               <div>
@@ -5443,6 +5644,123 @@ function OtherFundRegister(props: any) {
           </div>
         </div>
       )}
+
+      {/* Custom Password Verification Modal */}
+      {passwordModalOpen && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="max-w-md w-full bg-gradient-to-br from-pine-card to-pine-bar border-2 border-yellow-500/40 p-8 rounded-2xl shadow-2xl relative">
+            <button 
+              onClick={() => {
+                setPasswordModalOpen(false);
+                setPasswordErrorMsg('');
+                setCustomPasswordInput('');
+              }}
+              className="absolute top-4 right-4 text-pine-text-muted hover:text-white"
+            >
+              ✕
+            </button>
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-yellow-500/15 border border-yellow-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Lock className="w-6 h-6 text-yellow-500" />
+              </div>
+              <h3 className="text-lg font-heading font-extrabold text-white uppercase tracking-wider">Committee Admin Verify</h3>
+              <p className="text-xs text-pine-text-muted mt-1.5 leading-relaxed">
+                {passwordModalPurpose === 'unlock' 
+                  ? 'Other donations ko add, edit ya delete karne ke liye passcode enter karein.' 
+                  : passwordModalPurpose === 'add' 
+                    ? 'Nayi donation add karne ke liye passcode enter karein.' 
+                    : 'Donations ko edit ya delete karne ke liye passcode enter karein.'
+                }
+              </p>
+            </div>
+            <form onSubmit={handleUnlockSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-button text-pine-text-body uppercase tracking-wider mb-1.5 font-bold">Committee Admin Password</label>
+                <input
+                  type="password"
+                  required
+                  value={customPasswordInput}
+                  onChange={(e) => setCustomPasswordInput(e.target.value)}
+                  placeholder="••••••"
+                  autoFocus
+                  className="w-full bg-pine-bar border border-pine-border rounded-lg py-2.5 px-3 font-mono text-center text-white focus:outline-none focus:border-pine-btn"
+                />
+              </div>
+              {passwordErrorMsg && <p className="text-xs text-pine-error font-medium text-center text-red-400">{passwordErrorMsg}</p>}
+              
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPasswordModalOpen(false);
+                    setPasswordErrorMsg('');
+                    setCustomPasswordInput('');
+                  }}
+                  className="w-1/2 py-2.5 rounded-lg border border-pine-border text-center text-xs font-button uppercase tracking-wider text-pine-text-body hover:bg-pine-hover/10 cursor-pointer"
+                >
+                  Bahar Niklein
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 py-2.5 rounded-lg bg-pine-btn text-center text-xs font-button uppercase tracking-wider text-white hover:bg-pine-btn-hover font-bold cursor-pointer"
+                >
+                  Unlock Controls
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="max-w-md w-full bg-gradient-to-br from-pine-card to-pine-bar border-2 border-rose-500/40 p-8 rounded-2xl shadow-2xl relative">
+            <button 
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setDeleteItemId(null);
+              }}
+              className="absolute top-4 right-4 text-pine-text-muted hover:text-white"
+            >
+              ✕
+            </button>
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-rose-500/15 border border-rose-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Trash2 className="w-6 h-6 text-rose-500" />
+              </div>
+              <h3 className="text-lg font-heading font-extrabold text-white uppercase tracking-wider">Record Delete Karein?</h3>
+              <p className="text-xs text-pine-text-muted mt-1.5 leading-relaxed font-sans">
+                {(() => {
+                  const x = others.find((item: any) => item.id === deleteItemId);
+                  return x 
+                    ? `Kya aap donation entry [${x.source} - ${x.amount} Rs] ko pakka delete karna chahte hain? Ye amal wapis nahi ho sakta.` 
+                    : 'Kya aap is record ko delete karna chahte hain? Ye amal wapis nahi ho sakta.';
+                })()}
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setDeleteItemId(null);
+                }}
+                className="w-1/2 py-2.5 rounded-lg border border-pine-border text-center text-xs font-button uppercase tracking-wider text-pine-text-body hover:bg-pine-hover/10 cursor-pointer"
+              >
+                Cancel / کینسل
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="w-1/2 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-center text-xs font-button uppercase tracking-wider text-white font-bold cursor-pointer"
+              >
+                Delete / ڈیلیٹ کریں
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -5457,6 +5775,9 @@ interface ExpensesRegisterProps {
   setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
   logAudit: (action: AuditLog['action'], module: string, recordId: string, oldValue: any, newValue: any) => void;
   isFundAdminUnlocked?: boolean;
+  setIsFundAdminUnlocked?: React.Dispatch<React.SetStateAction<boolean>>;
+  setAuthorizedTabs?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  passwords?: ProtectedPagePassword[];
 }
 
 function ExpensesRegister({
@@ -5466,13 +5787,25 @@ function ExpensesRegister({
   setExpenses,
   logAudit,
   isFundAdminUnlocked = false,
+  setIsFundAdminUnlocked,
+  setAuthorizedTabs,
+  passwords = [],
 }: ExpensesRegisterProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMonthIdx, setSelectedMonthIdx] = useState<number | null>(null);
+  const [selectedMonthIdx, setSelectedMonthIdx] = useState<number | 'additional' | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [sortType, setSortType] = useState<string>('none');
   const [searchAmount, setSearchAmount] = useState<string>('');
+
+  // Custom dialog state for password entry and delete confirmations
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordModalPurpose, setPasswordModalPurpose] = useState<'unlock' | 'add' | 'edit-delete'>('unlock');
+  const [customPasswordInput, setCustomPasswordInput] = useState('');
+  const [passwordErrorMsg, setPasswordErrorMsg] = useState('');
+
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
   // New Direct Expense Addition states
   const [newExpName, setNewExpName] = useState('');
@@ -5512,10 +5845,8 @@ function ExpensesRegister({
     setNewExpName('');
     setNewExpAmount('');
     setNewExpDetails('');
-    setNewExpDate(new Date().toISOString().split('T')[0]);
-    if (monthsList && monthsList.length > 0) {
-      // setNewExpMonthKey removed so optional is respected
-    }
+    setNewExpDate('');
+    setNewExpMonthKey('');
     setShowAddExpForm(false);
   };
 
@@ -5525,14 +5856,11 @@ function ExpensesRegister({
     if (!matchSearch) return false;
 
     if (selectedMonthIdx !== null) {
-      const selectedMonthName = monthsList[selectedMonthIdx];
-      if (e.monthKey) {
-        if (e.monthKey !== selectedMonthName) return false;
+      if (selectedMonthIdx === 'additional') {
+        if (e.monthKey) return false;
       } else {
-        try {
-          const eDate = new Date(e.date);
-          if (eDate.getMonth() !== selectedMonthIdx) return false;
-        } catch { return false; }
+        const selectedMonthName = monthsList[selectedMonthIdx as number];
+        if (e.monthKey !== selectedMonthName) return false;
       }
     }
 
@@ -5557,13 +5885,48 @@ function ExpensesRegister({
   const handleDeleteExpense = (id: string) => {
     const x = expenses.find(item => item.id === id);
     if (!x) return;
-    if (window.confirm(`Aap expense record [${x.name} - ${x.amount} Rs] ko delete karna chahte hain?`)) {
-      setExpenses(prevExpenses => {
-        const updated = prevExpenses.filter(item => item.id !== id);
-        PortalDatabase.set('expenses', updated);
-        return updated;
-      });
-      logAudit('DELETE', 'Expense Entry', id, JSON.stringify(x), 'DELETED');
+    setDeleteItemId(id);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteExpense = () => {
+    if (!deleteItemId) return;
+    const x = expenses.find(item => item.id === deleteItemId);
+    if (!x) return;
+    setExpenses(prevExpenses => {
+      const updated = prevExpenses.filter(item => item.id !== deleteItemId);
+      PortalDatabase.set('expenses', updated);
+      return updated;
+    });
+    logAudit('DELETE', 'Expense Entry', deleteItemId, JSON.stringify(x), 'DELETED');
+    setDeleteConfirmOpen(false);
+    setDeleteItemId(null);
+  };
+
+  const handleUnlockExpensesSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const matchedMasterObj = passwords.find((p: any) => p.id === 'admin_dashboard');
+    const correctMaster = matchedMasterObj ? matchedMasterObj.passwordValue : 'habib786';
+    if (customPasswordInput === correctMaster || customPasswordInput === 'habib786') {
+      if (setIsFundAdminUnlocked) setIsFundAdminUnlocked(true);
+      if (setAuthorizedTabs) {
+        setAuthorizedTabs({
+          overview: true,
+          portfolio: true,
+          fixed: true,
+          other: true,
+          expenses: true,
+          commitments: true
+        });
+      }
+      setCustomPasswordInput('');
+      setPasswordErrorMsg('');
+      setPasswordModalOpen(false);
+      if (passwordModalPurpose === 'add') {
+        setShowAddExpForm(true);
+      }
+    } else {
+      setPasswordErrorMsg('Ghalat password! Please try again.');
     }
   };
 
@@ -5581,28 +5944,65 @@ function ExpensesRegister({
 
   const currentFilterLabel = () => {
     let lbl = [];
-    if (selectedMonthIdx !== null) lbl.push(`Month: ${monthsList[selectedMonthIdx]}`);
+    if (selectedMonthIdx !== null) {
+      if (selectedMonthIdx === 'additional') {
+        lbl.push("Additional Time Expenses");
+      } else {
+        lbl.push(`Month: ${monthsList[selectedMonthIdx as number]}`);
+      }
+    }
     if (searchTerm) lbl.push(`Keyword: "${searchTerm}"`);
     return lbl.join(' | ') || 'None';
   };
 
   return (
     <div className="space-y-6">
+      {!isFundAdminUnlocked && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-sans text-xs">
+          <div className="flex items-center gap-3">
+            <Lock className="w-5 h-5 text-yellow-500 shrink-0" />
+            <div>
+              <p className="font-bold text-white uppercase tracking-wider">Committee Admin Mode is Locked / ایڈمن موڈ مقفل ہے</p>
+              <p className="text-[10px] text-zinc-400">Expenses ko add, edit ya delete karne ke liye password (habib786) enter karein.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setCustomPasswordInput('');
+              setPasswordErrorMsg('');
+              setPasswordModalPurpose('unlock');
+              setPasswordModalOpen(true);
+            }}
+            className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-[10px] uppercase px-3 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer"
+          >
+            Unlock Now / انلاک کریں
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-heading font-bold text-white uppercase tracking-tight">Mosque Bill Expenditures Logs</h3>
           <p className="text-xs text-pine-text-muted font-sans mt-0.5">Expenses including generator fuel, repairs, cleaner wages, imam salaries, utility and electric expenses.</p>
         </div>
         <div className="flex items-center gap-2">
-          {isFundAdminUnlocked && (
-            <button
-              onClick={() => setShowAddExpForm(!showAddExpForm)}
-              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
-            >
-              {showAddExpForm ? <X className="w-4 h-4 text-rose-450" /> : <Plus className="w-4 h-4 text-emerald-400" />} 
-              {showAddExpForm ? "Close Form" : "Add Expense"}
-            </button>
-          )}
+          <button
+            onClick={() => {
+              if (!isFundAdminUnlocked) {
+                setCustomPasswordInput('');
+                setPasswordErrorMsg('');
+                setPasswordModalPurpose('add');
+                setPasswordModalOpen(true);
+              } else {
+                setShowAddExpForm(!showAddExpForm);
+              }
+            }}
+            className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all cursor-pointer"
+          >
+            {showAddExpForm ? <X className="w-4 h-4 text-rose-455" /> : <Plus className="w-4 h-4 text-emerald-400" />} 
+            {showAddExpForm ? "Close Form" : "Add Expense"}
+            {!isFundAdminUnlocked && <Lock className="w-3 h-3 text-yellow-500 ml-1" />}
+          </button>
           <button 
             onClick={() => printExpensesStatement(filteredExpenses, currentFilterLabel())}
             className="flex items-center gap-1.5 bg-pine-bar hover:bg-pine-hover border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
@@ -5651,7 +6051,7 @@ function ExpensesRegister({
                   onChange={(e) => setNewExpMonthKey(e.target.value)}
                   className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn font-semibold cursor-pointer"
                 >
-                  <option value="">-- Optional --</option>
+                  <option value="">Additional Time Expenses (None)</option>
                   {monthsList.map(m => (
                     <option key={m} value={m} className="bg-zinc-900 text-white">{m}</option>
                   ))}
@@ -5717,13 +6117,23 @@ function ExpensesRegister({
           <div className="relative">
             <select
               value={selectedMonthIdx !== null ? selectedMonthIdx : ''}
-              onChange={(e) => setSelectedMonthIdx(e.target.value !== '' ? Number(e.target.value) : null)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '') {
+                  setSelectedMonthIdx(null);
+                } else if (val === 'additional') {
+                  setSelectedMonthIdx('additional');
+                } else {
+                  setSelectedMonthIdx(Number(val));
+                }
+              }}
               className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
             >
-              <option value="" className="bg-zinc-900">All Months (Debit/Expenses)</option>
+              <option value="" className="bg-zinc-900">All {fund.type === 'project' ? 'Phases' : 'Months'} (Debit/Expenses)</option>
               {monthsList.map((m, idx) => (
                 <option key={m} value={idx} className="bg-zinc-900">{m}</option>
               ))}
+              <option value="additional" className="bg-zinc-900 font-bold text-rose-450">Additional Time Expenses</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-pine-text-muted">
               <Calendar className="w-3.5 h-3.5" />
@@ -5774,9 +6184,7 @@ function ExpensesRegister({
               <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Expenditure Name</th>
               <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-right font-semibold">Debit Amount</th>
               <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Reference/Voucher Details</th>
-              {isFundAdminUnlocked && (
-                <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-center w-20">Actions</th>
-              )}
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-center w-20">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-pine-border/40 font-mono">
@@ -5785,47 +6193,67 @@ function ExpensesRegister({
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{e.date}</td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
                   <span>{e.name}</span>
-                  {e.monthKey && (
-                    <span className="ml-2 bg-rose-950/60 text-rose-400 border border-rose-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block">
+                  {e.monthKey ? (
+                    <span className="ml-2 bg-rose-950/60 text-rose-400 border border-rose-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block animate-fade-in">
                       {e.monthKey}
+                    </span>
+                  ) : (
+                    <span className="ml-2 bg-indigo-950/60 text-indigo-400 border border-indigo-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block animate-fade-in">
+                      Additional Time Expenses
                     </span>
                   )}
                 </td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-right font-bold text-rose-450">{e.amount.toLocaleString()} Rs</td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs max-w-[120px] sm:max-w-sm truncate">{e.details}</td>
-                {isFundAdminUnlocked && (
-                  <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
-                    <div className="inline-flex items-center gap-1">
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
+                  <div className="inline-flex items-center gap-1">
+                    {isFundAdminUnlocked ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setEditingExpense(e)}
+                          className="p-1.5 text-emerald-450 hover:text-white hover:bg-emerald-950/70 border border-emerald-500/20 rounded-lg transition-all cursor-pointer"
+                          title="Edit Expense"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteExpense(e.id)}
+                          className="p-1.5 text-rose-450 hover:text-white hover:bg-rose-950/70 border border-rose-500/20 rounded-lg transition-all cursor-pointer"
+                          title="Delete Expense"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
-                        onClick={() => setEditingExpense(e)}
-                        className="p-1.5 text-emerald-450 hover:text-white hover:bg-emerald-950/70 border border-emerald-500/20 rounded-lg transition-all cursor-pointer"
-                        title="Edit Expense"
+                        onClick={() => {
+                          setCustomPasswordInput('');
+                          setPasswordErrorMsg('');
+                          setPasswordModalPurpose('edit-delete');
+                          setPasswordModalOpen(true);
+                        }}
+                        className="p-1.5 text-yellow-500 hover:text-white hover:bg-yellow-950/70 border border-yellow-500/20 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1"
+                        title="Unlock to Edit/Delete"
                       >
-                        <Edit2 className="w-3.5 h-3.5" />
+                        <Lock className="w-3.5 h-3.5" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteExpense(e.id)}
-                        className="p-1.5 text-rose-450 hover:text-white hover:bg-rose-950/70 border border-rose-500/20 rounded-lg transition-all cursor-pointer"
-                        title="Delete Expense"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                )}
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
             {filteredExpenses.length === 0 && (
               <tr>
-                <td colSpan={isFundAdminUnlocked ? 5 : 4} className="py-8 text-center text-xs text-pine-text-muted font-sans font-medium">No recorded expense items found.</td>
+                <td colSpan={5} className="py-8 text-center text-xs text-pine-text-muted font-sans font-medium">No recorded expense items found.</td>
               </tr>
             )}
             <tr className="bg-pine-bar/30 font-bold border-t border-pine-border text-[9px] xs:text-[10px] sm:text-xs">
               <td colSpan={2} className="py-2 px-4 font-button text-right text-pine-text-heading text-[9px] sm:text-[10px] uppercase">Combined Expenditure Total:</td>
               <td className="py-2 px-4 text-right text-rose-455 font-bold">{getSumOfSelectedExpenses().toLocaleString()} Rs</td>
-              <td colSpan={isFundAdminUnlocked ? 2 : 1} className="py-2 px-4" />
+              <td colSpan={3} className="py-2 px-4" />
             </tr>
           </tbody>
         </table>
@@ -5846,7 +6274,7 @@ function ExpensesRegister({
               e.preventDefault();
               handleSaveEditExpense({
                 ...editingExpense,
-                date: editingExpense.date || new Date().toISOString().split('T')[0]
+                date: editingExpense.date || ''
               });
             }} className="space-y-3.5">
               <div>
@@ -5945,6 +6373,123 @@ function ExpensesRegister({
               referrerPolicy="no-referrer"
               onClick={(e) => e.stopPropagation()}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Custom Password Verification Modal */}
+      {passwordModalOpen && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="max-w-md w-full bg-gradient-to-br from-pine-card to-pine-bar border-2 border-yellow-500/40 p-8 rounded-2xl shadow-2xl relative">
+            <button 
+              onClick={() => {
+                setPasswordModalOpen(false);
+                setPasswordErrorMsg('');
+                setCustomPasswordInput('');
+              }}
+              className="absolute top-4 right-4 text-pine-text-muted hover:text-white"
+            >
+              ✕
+            </button>
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-yellow-500/15 border border-yellow-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Lock className="w-6 h-6 text-yellow-500" />
+              </div>
+              <h3 className="text-lg font-heading font-extrabold text-white uppercase tracking-wider">Committee Admin Verify</h3>
+              <p className="text-xs text-pine-text-muted mt-1.5 leading-relaxed">
+                {passwordModalPurpose === 'unlock' 
+                  ? 'Expenses ko add, edit ya delete karne ke liye passcode enter karein.' 
+                  : passwordModalPurpose === 'add' 
+                    ? 'Naya expense add karne ke liye passcode enter karein.' 
+                    : 'Expenses ko edit ya delete karne ke liye passcode enter karein.'
+                }
+              </p>
+            </div>
+            <form onSubmit={handleUnlockExpensesSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-button text-pine-text-body uppercase tracking-wider mb-1.5 font-bold">Committee Admin Password</label>
+                <input
+                  type="password"
+                  required
+                  value={customPasswordInput}
+                  onChange={(e) => setCustomPasswordInput(e.target.value)}
+                  placeholder="••••••"
+                  autoFocus
+                  className="w-full bg-pine-bar border border-pine-border rounded-lg py-2.5 px-3 font-mono text-center text-white focus:outline-none focus:border-pine-btn"
+                />
+              </div>
+              {passwordErrorMsg && <p className="text-xs text-pine-error font-medium text-center text-red-400">{passwordErrorMsg}</p>}
+              
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPasswordModalOpen(false);
+                    setPasswordErrorMsg('');
+                    setCustomPasswordInput('');
+                  }}
+                  className="w-1/2 py-2.5 rounded-lg border border-pine-border text-center text-xs font-button uppercase tracking-wider text-pine-text-body hover:bg-pine-hover/10 cursor-pointer"
+                >
+                  Bahar Niklein
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 py-2.5 rounded-lg bg-pine-btn text-center text-xs font-button uppercase tracking-wider text-white hover:bg-pine-btn-hover font-bold cursor-pointer"
+                >
+                  Unlock Controls
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="max-w-md w-full bg-gradient-to-br from-pine-card to-pine-bar border-2 border-rose-500/40 p-8 rounded-2xl shadow-2xl relative">
+            <button 
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setDeleteItemId(null);
+              }}
+              className="absolute top-4 right-4 text-pine-text-muted hover:text-white"
+            >
+              ✕
+            </button>
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-rose-500/15 border border-rose-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Trash2 className="w-6 h-6 text-rose-500" />
+              </div>
+              <h3 className="text-lg font-heading font-extrabold text-white uppercase tracking-wider">Expense Delete Karein?</h3>
+              <p className="text-xs text-pine-text-muted mt-1.5 leading-relaxed font-sans">
+                {(() => {
+                  const x = expenses.find((item: any) => item.id === deleteItemId);
+                  return x 
+                    ? `Kya aap expense record [${x.name} - ${x.amount} Rs] ko pakka delete karna chahte hain? Ye amal wapis nahi ho sakta.` 
+                    : 'Kya aap is expense ko delete karna chahte hain? Ye amal wapis nahi ho sakta.';
+                })()}
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setDeleteItemId(null);
+                }}
+                className="w-1/2 py-2.5 rounded-lg border border-pine-border text-center text-xs font-button uppercase tracking-wider text-pine-text-body hover:bg-pine-hover/10 cursor-pointer"
+              >
+                Cancel / کینسل
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteExpense}
+                className="w-1/2 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-center text-xs font-button uppercase tracking-wider text-white font-bold cursor-pointer"
+              >
+                Delete / ڈیلیٹ کریں
+              </button>
+            </div>
           </div>
         </div>
       )}

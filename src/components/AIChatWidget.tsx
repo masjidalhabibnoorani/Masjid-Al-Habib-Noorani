@@ -163,7 +163,7 @@ export default function AIChatWidget({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             transition={{ type: 'spring', damping: 20 }}
-            className="w-[360px] sm:w-[400px] h-[520px] max-h-[80vh] bg-gradient-to-b from-pine-card to-pine-bar border border-pine-border rounded-2xl shadow-2xl flex flex-col overflow-hidden mb-4 font-sans"
+            className="w-[calc(100vw-2rem)] xs:w-[350px] sm:w-[400px] h-[520px] max-h-[80vh] bg-gradient-to-b from-pine-card to-pine-bar border border-pine-border rounded-2xl shadow-2xl flex flex-col overflow-hidden mb-4 font-sans"
           >
             {/* Header */}
             <div className="bg-pine-bar/90 border-b border-pine-border/60 py-4 px-4 flex items-center justify-between">

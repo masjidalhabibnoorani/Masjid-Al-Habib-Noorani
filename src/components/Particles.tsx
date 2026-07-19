@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { gsap } from 'gsap';
 
@@ -27,14 +27,22 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
 
   // Mouse coordinate targets for smooth GSAP parallax
   const mouse = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // --- Effect 1: Handle WebGL Canvas Initialization ---
   useEffect(() => {
+    if (isMobile) return;
     const container = containerRef.current;
     if (!container) return;
-
-    // Detect mobile device to apply extreme optimization
-    const isMobile = window.innerWidth < 768;
 
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -352,16 +360,16 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
       if (sphereGeom) sphereGeom.dispose();
       if (sphereMat) sphereMat.dispose();
 
-      if (rendererRef.current && rendererRef.current.domElement) {
+      if (rendererRef.current && rendererRef.current.domElement && container.contains(rendererRef.current.domElement)) {
         container.removeChild(rendererRef.current.domElement);
       }
       renderer.dispose();
     };
-  }, []);
+  }, [isMobile]);
 
   // --- Effect 2: Handle Dimension Scale Changes (GSAP Transition Matrix) ---
   useEffect(() => {
-    const isMobile = window.innerWidth < 768;
+    if (isMobile) return;
     const camera = cameraRef.current;
     const meshes = meshesRef.current;
     const starsMaterial = starMaterialRef.current;
@@ -432,7 +440,18 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
       if (emeraldLight) gsap.to(emeraldLight, { intensity: isMobile ? 4.5 : 9, duration: 1.5 });
       if (violetLight) gsap.to(violetLight, { intensity: 5, duration: 1.5 });
     }
-  }, [dimensionScale]);
+  }, [dimensionScale, isMobile]);
+
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#020806] opacity-80">
+        {/* Soft elegant glowing orbs using pure CSS gradient layers for mobile performance */}
+        <div className="absolute top-1/4 left-1/4 w-[250px] h-[250px] rounded-full bg-teal-500/10 blur-[90px] animate-[pulse_8s_ease-in-out_infinite]" />
+        <div className="absolute bottom-1/3 right-1/4 w-[300px] h-[300px] rounded-full bg-amber-500/5 blur-[110px] animate-[pulse_12s_ease-in-out_infinite]" />
+        <div className="absolute top-1/2 left-1/3 w-[200px] h-[200px] rounded-full bg-emerald-500/5 blur-[80px] animate-[pulse_10s_ease-in-out_infinite]" />
+      </div>
+    );
+  }
 
   return (
     <div

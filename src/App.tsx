@@ -444,60 +444,7 @@ export default function App() {
     PortalDatabase.get('commitments', [])
   );
 
-  // Auto-healing Project security keys registry synchronization and system passwords healing
-  useEffect(() => {
-    if (!hasLoadedFromCloud) return;
 
-    let passwordsUpdated = false;
-    const currentPasswords = [...passwords];
-    
-    // First, heal static INITIAL_PASSWORDS
-    INITIAL_PASSWORDS.forEach(seeded => {
-      const exists = currentPasswords.some(p => p.id === seeded.id);
-      if (!exists) {
-        currentPasswords.push(seeded);
-        passwordsUpdated = true;
-      }
-    });
-
-    // Remove legacy unused passwords
-    const legacyIds = ['masjid_shop_rent', 'masjid_zakat_ledger', 'bazm_bazm_custom_event'];
-    for (let i = currentPasswords.length - 1; i >= 0; i--) {
-      if (legacyIds.includes(currentPasswords[i].id)) {
-        currentPasswords.splice(i, 1);
-        passwordsUpdated = true;
-      }
-    }
-
-    // Then, dynamic project keys
-    projects.forEach(proj => {
-      const keys = [
-        { suffix: 'portfolio', name: 'Portfolio' },
-        { suffix: 'fixed', name: 'Monthly Fund' },
-        { suffix: 'other', name: 'Other Contrib' },
-        { suffix: 'expenses', name: 'Expenditures' },
-        { suffix: 'commitments', name: 'Commitments' }
-      ];
-      
-      keys.forEach(k => {
-        const passwordId = `project_${proj.id}_${k.suffix}`;
-        const exists = currentPasswords.some(p => p.id === passwordId);
-        if (!exists) {
-          currentPasswords.push({
-            id: passwordId,
-            pageName: `Project [${proj.name}] ${k.name}`,
-            passwordValue: '786' // Standard default password for dynamic views
-          });
-          passwordsUpdated = true;
-        }
-      });
-    });
-    
-    if (passwordsUpdated) {
-      setPasswords(currentPasswords);
-      PortalDatabase.set('passwords', currentPasswords);
-    }
-  }, [projects, passwords, hasLoadedFromCloud]);
 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => 
     PortalDatabase.get('audit_logs', [])
@@ -527,19 +474,33 @@ export default function App() {
           'section_bg_settings', 'section_custom_colors', 'current_theme_id'
         ];
 
-        // Bi-directional synchronization on startup (Cloud is the master source of truth to ensure all devices match)
+        // Bi-directional synchronization on startup (ensuring no data is lost and offline/quota-exhausted local changes can sync when possible)
         const startupPromises = [];
         for (const key of SYNC_KEYS) {
           const cloudItem = cloudData[key];
           const cloudTime = cloudItem ? (cloudItem.updatedAt || 0) : 0;
 
+          const localValStr = localStorage.getItem(`masjid_habib_${key}`);
+          const localTimeStr = localStorage.getItem(`masjid_habib_time_${key}`);
+          const localTime = localTimeStr ? parseInt(localTimeStr, 10) : 0;
+
           if (cloudItem) {
-            // Cloud has data -> Always use cloud on startup to ensure perfect synchronization across devices!
-            localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(cloudItem.data));
-            localStorage.setItem(`masjid_habib_time_${key}`, cloudTime.toString());
+            // Cloud has data
+            if (localValStr === null || cloudTime > localTime) {
+              // Pull from cloud: either new device/session or cloud has newer edits
+              localStorage.setItem(`masjid_habib_${key}`, JSON.stringify(cloudItem.data));
+              localStorage.setItem(`masjid_habib_time_${key}`, cloudTime.toString());
+            } else if (localTime > cloudTime && localValStr !== null) {
+              // Local has newer changes (e.g. from quota bypass or offline edits) -> Push local to cloud
+              try {
+                const parsed = JSON.parse(localValStr);
+                startupPromises.push(saveToCloud(key, parsed, true));
+              } catch (e) {
+                console.error(`Failed to push newer local key "${key}" to cloud:`, e);
+              }
+            }
           } else {
             // Not present on cloud -> Push local to cloud
-            const localValStr = localStorage.getItem(`masjid_habib_${key}`);
             if (localValStr !== null) {
               try {
                 const parsed = JSON.parse(localValStr);
@@ -551,11 +512,67 @@ export default function App() {
           }
         }
         if (startupPromises.length > 0) {
-          await Promise.all(startupPromises);
+          try {
+            await Promise.all(startupPromises);
+          } catch (e) {
+            console.error('Some startup sync pushes failed:', e);
+          }
         }
         
         // Hydrate React states from the resolved local database (which is guaranteed to have the newest values)
         const resolvedPasswords = PortalDatabase.get('passwords', []);
+        const resolvedProjects = PortalDatabase.get('projects', []);
+
+        // Auto-healing Project security keys registry synchronization and system passwords healing (only run once on startup)
+        let passwordsUpdated = false;
+        const currentPasswords = [...resolvedPasswords];
+
+        // First, heal static INITIAL_PASSWORDS
+        INITIAL_PASSWORDS.forEach(seeded => {
+          const exists = currentPasswords.some(p => p.id === seeded.id);
+          if (!exists) {
+            currentPasswords.push(seeded);
+            passwordsUpdated = true;
+          }
+        });
+
+        // Remove legacy unused passwords
+        const legacyIds = ['masjid_shop_rent', 'masjid_zakat_ledger', 'bazm_bazm_custom_event'];
+        for (let i = currentPasswords.length - 1; i >= 0; i--) {
+          if (legacyIds.includes(currentPasswords[i].id)) {
+            currentPasswords.splice(i, 1);
+            passwordsUpdated = true;
+          }
+        }
+
+        // Then, dynamic project keys
+        resolvedProjects.forEach(proj => {
+          const keys = [
+            { suffix: 'portfolio', name: 'Portfolio' },
+            { suffix: 'fixed', name: 'Monthly Fund' },
+            { suffix: 'other', name: 'Other Contrib' },
+            { suffix: 'expenses', name: 'Expenditures' },
+            { suffix: 'commitments', name: 'Commitments' }
+          ];
+          
+          keys.forEach(k => {
+            const passwordId = `project_${proj.id}_${k.suffix}`;
+            const exists = currentPasswords.some(p => p.id === passwordId);
+            if (!exists) {
+              currentPasswords.push({
+                id: passwordId,
+                pageName: `Project [${proj.name}] ${k.name}`,
+                passwordValue: '786' // Standard default password for dynamic views
+              });
+              passwordsUpdated = true;
+            }
+          });
+        });
+
+        if (passwordsUpdated) {
+          PortalDatabase.set('passwords', currentPasswords);
+        }
+
         const resolvedPrayerTimings = PortalDatabase.get('prayer_timings', []);
         const resolvedHistorySections = PortalDatabase.get('history_sections', []);
         const resolvedActivities = PortalDatabase.get('activities', []);
@@ -566,7 +583,6 @@ export default function App() {
         const resolvedTransactions = PortalDatabase.get('transactions', []);
         const resolvedOthers = PortalDatabase.get('other_fund_entries', []);
         const resolvedExpenses = PortalDatabase.get('expenses', []);
-        const resolvedProjects = PortalDatabase.get('projects', []);
         const resolvedCommitments = PortalDatabase.get('commitments', []);
         const resolvedStaff = PortalDatabase.get('religious_staff', []);
         const resolvedAdmins = PortalDatabase.get('administrators', []);
@@ -841,6 +857,11 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedFund, setSelectedFund] = useState<FundModule | null>(null);
   const [adminLedgerMode, setAdminLedgerMode] = useState(false);
+
+  // Automatically scroll to top when changing views
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [viewState, selectedFund, adminLedgerMode]);
 
   // 3D dimensions and tilting removed
   
@@ -1337,7 +1358,7 @@ export default function App() {
                   .map((staff) => (
                     <TiltCard key={staff.id} className="bg-gradient-to-b from-pine-card/50 to-pine-bar/60 border border-pine-border/40 hover:border-amber-500/50 transition-all p-6 flex flex-col items-center text-center">
                       <div className="relative mb-4">
-                        <div className="w-80 h-80 max-w-full aspect-square rounded-2xl overflow-hidden border-2 border-amber-500/60 shadow-lg bg-pine-bg/50 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:border-amber-400">
+                        <div className="w-full max-w-[260px] sm:max-w-[320px] aspect-square rounded-2xl overflow-hidden border-2 border-amber-500/60 shadow-lg bg-pine-bg/50 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:border-amber-400">
                           {staff.imageUrl ? (
                             <img 
                               src={staff.imageUrl} 
@@ -1790,6 +1811,32 @@ export default function App() {
               </button>
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {/* Floating Back Button (Peechay Jaen / Back) */}
+      {viewState !== 'gateway' && (
+        <div className="fixed bottom-6 left-6 z-[9999] font-sans">
+          <button
+            onClick={() => {
+              if (viewState === 'fund_details') {
+                if (adminLedgerMode) {
+                  setViewState('admin');
+                } else {
+                  setViewState('public');
+                }
+              } else if (viewState === 'admin') {
+                setViewState('gateway');
+              } else if (viewState === 'public') {
+                setViewState('gateway');
+              }
+            }}
+            className="flex items-center gap-2 bg-gradient-to-r from-emerald-850 to-teal-800 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold uppercase px-5 py-3.5 rounded-full shadow-2xl border-2 border-amber-500/60 transition-all hover:scale-105 active:scale-95 cursor-pointer text-xs tracking-wider animate-fadeIn"
+            title="Pichlay page par wapis jayen / Go Back"
+          >
+            <span className="text-sm font-black text-amber-400">←</span>
+            <span className="text-white drop-shadow">Pichla Page / واپس آئیں</span>
+          </button>
         </div>
       )}
     </div>

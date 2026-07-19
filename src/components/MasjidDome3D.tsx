@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { gsap } from 'gsap';
 
@@ -13,11 +13,22 @@ export default function MasjidDome3D() {
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const domeGroupRef = useRef<THREE.Group | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Mouse coordinate targets for smooth GSAP parallax
   const mouse = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
 
   useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) return;
     const container = containerRef.current;
     if (!container) return;
 
@@ -284,12 +295,84 @@ export default function MasjidDome3D() {
       baseRingGeom.dispose();
       baseRingMat.dispose();
 
-      if (rendererRef.current && rendererRef.current.domElement) {
+      if (rendererRef.current && rendererRef.current.domElement && container.contains(rendererRef.current.domElement)) {
         container.removeChild(rendererRef.current.domElement);
       }
       renderer.dispose();
     };
-  }, []);
+  }, [isMobile]);
+
+  if (isMobile) {
+    return (
+      <div className="relative w-full h-[280px] flex items-center justify-center select-none cursor-pointer">
+        {/* Decorative ambient background rings */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="absolute w-[200px] h-[200px] rounded-full border border-teal-500/10 animate-pulse" />
+          <div className="absolute w-[240px] h-[240px] rounded-full border border-gold-500/5 animate-[spin_45s_linear_infinite]" style={{ borderStyle: 'dashed' }} />
+        </div>
+        
+        {/* Vector dome */}
+        <div className="w-[180px] h-[240px] relative z-10 flex items-center justify-center animate-[bounce_6s_ease-in-out_infinite]">
+          <svg viewBox="0 0 100 130" className="w-full h-full drop-shadow-[0_10px_25px_rgba(20,184,166,0.3)]">
+            <defs>
+              <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFF1C5" />
+                <stop offset="50%" stopColor="#D4A53A" />
+                <stop offset="100%" stopColor="#AA7C11" />
+              </linearGradient>
+              <linearGradient id="domeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#0B372F" />
+                <stop offset="30%" stopColor="#115E51" />
+                <stop offset="50%" stopColor="#14B8A6" />
+                <stop offset="70%" stopColor="#115E51" />
+                <stop offset="100%" stopColor="#0B372F" />
+              </linearGradient>
+              <linearGradient id="glowGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="#14B8A6" stopOpacity="0" />
+                <stop offset="100%" stopColor="#14B8A6" stopOpacity="0.4" />
+              </linearGradient>
+            </defs>
+            
+            {/* Back glowing aura */}
+            <circle cx="50" cy="75" r="30" fill="url(#glowGrad)" />
+
+            {/* Base rings */}
+            <rect x="25" y="105" width="50" height="4" rx="2" fill="url(#goldGrad)" />
+            <rect x="22" y="109" width="56" height="6" rx="3" fill="#0B372F" stroke="#14B8A6" strokeWidth="0.5" />
+            
+            {/* Main dome body */}
+            <path d="M 28,105 
+                     C 28,85 18,75 50,45 
+                     C 82,75 72,85 72,105 Z" 
+                  fill="url(#domeGrad)" 
+                  stroke="url(#goldGrad)" 
+                  strokeWidth="1.5" />
+                  
+            {/* Internal vertical structural design lines */}
+            <path d="M 50,45 C 44,75 42,85 42,105" fill="none" stroke="#14B8A6" strokeWidth="0.5" opacity="0.6" />
+            <path d="M 50,45 C 56,75 58,85 58,105" fill="none" stroke="#14B8A6" strokeWidth="0.5" opacity="0.6" />
+            <path d="M 50,45 Q 50,105 50,105" fill="none" stroke="url(#goldGrad)" strokeWidth="0.8" opacity="0.8" />
+            
+            {/* Spire shaft */}
+            <rect x="48.5" y="20" width="3" height="25" fill="url(#goldGrad)" />
+            
+            {/* Spire ornament balls */}
+            <circle cx="50" cy="38" r="3.5" fill="url(#goldGrad)" />
+            <circle cx="50" cy="30" r="2.5" fill="url(#goldGrad)" />
+            <circle cx="50" cy="24" r="1.5" fill="url(#goldGrad)" />
+            
+            {/* Crescent at the tip */}
+            <path d="M 50,10 
+                     C 44,10 40,14 40,20 
+                     C 40,26 44,30 50,30 
+                     C 47,28 45,24 45,20 
+                     C 45,16 47,12 50,10 Z" 
+                  fill="url(#goldGrad)" />
+          </svg>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-[320px] md:h-[450px] flex items-center justify-center select-none cursor-pointer">
