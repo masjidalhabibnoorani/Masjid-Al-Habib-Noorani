@@ -173,6 +173,11 @@
 }
 
 /* HIGH FIDELITY UNIFIED PRINTING STYLESHEET */
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
 @media print {
   /* Set pure white print surface with zero offsets */
   html, body {
@@ -222,12 +227,26 @@
     color: #000000 !important;
   }
 
-  /* Table styling adjustments for printers */
+  /* Table styling adjustments for printers with multi-page support */
   table {
     border-collapse: collapse !important;
     width: 100% !important;
     color: #000000 !important;
     background: #ffffff !important;
+    page-break-inside: auto !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
   }
 
   th, td {

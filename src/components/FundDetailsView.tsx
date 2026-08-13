@@ -57,6 +57,227 @@ interface OtherRegisterProps {
 // SECTION: OTHER FUND ACHIEVED
 // ----------------------------------------------------
 
+// Helper function to build standardized A4 report pages with mobile/desktop download & print controls
+const createPrintReportHtml = ({
+  title,
+  orientation = 'portrait',
+  contentHtml,
+}: {
+  title: string;
+  orientation?: 'portrait' | 'landscape';
+  contentHtml: string;
+}) => {
+  const isLandscape = orientation === 'landscape';
+  const maxWidth = isLandscape ? '297mm' : '210mm';
+
+  return `<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    @page {
+      size: A4 ${orientation};
+      margin: 12mm 12mm 15mm 12mm;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #f1f5f9;
+      color: #000000;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: ${isLandscape ? '9px' : '11.5px'};
+      line-height: 1.4;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    /* Top Action Bar for Mobile & Desktop */
+    #report-toolbar {
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #3b82f6;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      z-index: 999999;
+      margin-bottom: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    #report-toolbar .title-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #report-toolbar .badge {
+      background: #1e293b;
+      color: #38bdf8;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid #334155;
+    }
+    #report-toolbar .btn-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    #report-toolbar button {
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    #report-toolbar .btn-download {
+      background: #059669;
+      color: #ffffff;
+    }
+    #report-toolbar .btn-download:hover {
+      background: #047857;
+    }
+    #report-toolbar .btn-print {
+      background: #2563eb;
+      color: #ffffff;
+    }
+    #report-toolbar .btn-print:hover {
+      background: #1d4ed8;
+    }
+    #report-toolbar .btn-close {
+      background: #475569;
+      color: #ffffff;
+    }
+    #report-toolbar .btn-close:hover {
+      background: #334155;
+    }
+
+    #report-container {
+      width: 100%;
+      max-width: ${maxWidth};
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 12mm 15mm;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-radius: 4px;
+    }
+
+    @media print {
+      #report-toolbar, .no-print {
+        display: none !important;
+      }
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      #report-container {
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+      }
+    }
+
+    /* Page-break rules for clean A4 multi-page overflow */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      page-break-inside: auto;
+    }
+    tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+    thead {
+      display: table-header-group; /* Repeats table header at the top of 2nd, 3rd A4 pages */
+    }
+    tfoot {
+      display: table-footer-group;
+    }
+    .info-card, .summary-card, .summary-grid, .summary-stats, .chart-box, .amount-box, .no-break, .receipt-box {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+  <div id="report-toolbar" class="no-print">
+    <div class="title-badge">
+      <span class="badge">📄 A4 Paper Report</span>
+    </div>
+    <div class="btn-group">
+      <button type="button" class="btn-download" onclick="downloadReportPDF()">
+        📥 Download PDF (ڈاؤن لوڈ کریں)
+      </button>
+      <button type="button" class="btn-print" onclick="window.print()">
+        🖨️ Print A4 Paper (پرنٹ کریں)
+      </button>
+      <button type="button" class="btn-close" onclick="window.close()">
+        ✕ Close
+      </button>
+    </div>
+  </div>
+
+  <div id="report-container">
+    ${contentHtml}
+  </div>
+
+  <script>
+    function downloadReportPDF() {
+      var element = document.getElementById('report-container') || document.body;
+      var toolbar = document.getElementById('report-toolbar');
+      if (toolbar) toolbar.style.display = 'none';
+
+      var filename = '${title.replace(/[^a-zA-Z0-9_\-]/g, '_')}_A4.pdf';
+
+      var opt = {
+        margin:       [10, 10, 12, 10],
+        filename:     filename,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: '${orientation}' },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      if (typeof html2pdf !== 'undefined') {
+        html2pdf().set(opt).from(element).save().then(function() {
+          if (toolbar) toolbar.style.display = 'flex';
+        }).catch(function(err) {
+          if (toolbar) toolbar.style.display = 'flex';
+          window.print();
+        });
+      } else {
+        if (toolbar) toolbar.style.display = 'flex';
+        window.print();
+      }
+    }
+  </script>
+</body>
+</html>`;
+};
+
 export default function FundDetailsView({
   fund,
   project,
@@ -137,238 +358,59 @@ export default function FundDetailsView({
     if (!receipt) return;
     const printWindow = window.open('', '_blank', 'width=800,height=850');
     if (!printWindow) {
-      alert('Popup blockers active! Please allow popups to print receipt or use the dynamic 1-Click HTML download.');
+      alert('Popup blocker active! Barah-e-karam popups allow karein taake report new tab me open ho sake.');
       return;
     }
     
-    const receiptHtml = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Receipt_Ref_${receipt.id}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;850&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <style>
-    @page {
-      size: A4 portrait;
-      margin: 15mm;
-    }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #ffffff;
-      color: #000000;
-      padding: 0;
-      margin: 0;
-      line-height: 1.4;
-      font-size: 13px;
-    }
-    .receipt-box {
-      background: #ffffff;
-      border: 3px double #000000;
-      border-radius: 8px;
-      width: 100%;
-      max-width: 600px;
-      padding: 24px;
-      margin: 20px auto;
-      box-sizing: border-box;
-    }
-    .header {
-      border-bottom: 2px solid #000000;
-      padding-bottom: 12px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .title-area h2 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 850;
-      text-transform: uppercase;
-      color: #000000;
-    }
-    .title-area p {
-      margin: 2px 0 0 0;
-      font-size: 10px;
-      color: #000000;
-      font-weight: bold;
-    }
-    .title-area .sub {
-      font-size: 9px;
-      color: #374151;
-      margin-top: 1px;
-    }
-    .ref-box {
-      text-align: right;
-    }
-    .date-str {
-      font-size: 9px;
-      color: #000000;
-      font-weight: bold;
-      display: block;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .card {
-      background: #f3f4f6;
-      border: 1px solid #000000;
-      padding: 12px;
-      border-radius: 6px;
-    }
-    .card-header {
-      font-size: 8px;
-      color: #000000;
-      text-transform: uppercase;
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      margin-bottom: 3px;
-    }
-    .card-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: #000000;
-    }
-    .card-desc {
-      font-size: 9px;
-      color: #374151;
-      margin-top: 3px;
-    }
-    .amount-box {
-      background: #f3f4f6;
-      border: 2px solid #000000;
-      padding: 16px;
-      border-radius: 6px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .amount-title {
-      font-size: 9px;
-      color: #000000;
-      text-transform: uppercase;
-      font-weight: 800;
-      margin-bottom: 4px;
-    }
-    .amount-val {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 26px;
-      font-weight: 900;
-      color: #000000;
-    }
-    .amount-words {
-      font-size: 9px;
-      font-style: italic;
-      color: #000000;
-      margin-top: 6px;
-      background: #ffffff;
-      padding: 3px 8px;
-      border-radius: 4px;
-      display: inline-block;
-      border: 1px solid #000000;
-      font-weight: bold;
-    }
-    .barcode-area {
-      background: #ffffff;
-      border: 1px dashed #000000;
-      padding: 10px 14px;
-      border-radius: 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    .footer {
-      border-top: 1px dashed #000000;
-      padding-top: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-    }
-    .legal {
-      font-size: 8.5px;
-      color: #000000;
-    }
-    .seal {
-      border: 2px solid #000000;
-      color: #000000;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 9px;
-      text-transform: uppercase;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      display: inline-block;
-      background: #ffffff;
-    }
-    @media print {
-      body {
-        background: #ffffff;
-        padding: 0;
-      }
-      .receipt-box {
-        border-color: #000000;
-        box-shadow: none;
-        margin: 0 auto;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="receipt-box">
-    <div class="header">
-      <div style="display: flex; align-items: center;">
-        <div class="title-area">
-          <h2>Masjid Al-Habib Noorani Community Trust</h2>
-          <p>Wah Cantt, Punjab, Pakistan</p>
-          <div class="sub">Official Receipt • Tasdeeq Shuda Raseed</div>
-        </div>
+    const contentHtml = `
+  <div class="receipt-box" style="border: 3px double #000000; padding: 24px; border-radius: 8px; background: #ffffff;">
+    <div style="border-bottom: 2px solid #000000; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h2 style="margin: 0; font-size: 16px; font-weight: 850; text-transform: uppercase; color: #000000;">Masjid Al-Habib Noorani Community Trust</h2>
+        <p style="margin: 2px 0 0; font-size: 10px; font-weight: bold; color: #000000;">Wah Cantt, Punjab, Pakistan</p>
+        <div style="font-size: 9px; color: #374151; margin-top: 1px;">Official Receipt • Tasdeeq Shuda Raseed</div>
       </div>
-      <div class="ref-box">
-        <span class="date-str">Date: ${formatDateStr(receipt.paymentDate)}</span>
+      <div style="text-align: right;">
+        <span style="font-size: 9px; font-weight: bold; font-family: monospace; color: #000000;">Date: ${formatDateStr(receipt.paymentDate)}</span>
       </div>
     </div>
     
-    <div class="grid">
-      <div class="card">
-        <div class="card-header">Received From (Mausool Kuninda)</div>
-        <div class="card-title">${receipt.memberName}</div>
-        <div class="card-desc">Phone: ${receipt.memberPhone || '-'}</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+      <div style="background: #f3f4f6; border: 1px solid #000000; padding: 12px; border-radius: 6px;">
+        <div style="font-size: 8px; text-transform: uppercase; font-weight: 800; margin-bottom: 3px; color: #000000;">Received From (Mausool Kuninda)</div>
+        <div style="font-size: 12px; font-weight: 700; color: #000000;">${receipt.memberName}</div>
+        <div style="font-size: 9px; color: #374151; margin-top: 3px;">Phone: ${receipt.memberPhone || '-'}</div>
       </div>
       
-      <div class="card">
-        <div class="card-header">Fund Allocation (Khata)</div>
-        <div class="card-title">${receipt.fundName}</div>
-        <div class="card-desc">Purpose: <strong>${receipt.monthKey}</strong></div>
+      <div style="background: #f3f4f6; border: 1px solid #000000; padding: 12px; border-radius: 6px;">
+        <div style="font-size: 8px; text-transform: uppercase; font-weight: 800; margin-bottom: 3px; color: #000000;">Fund Allocation (Khata)</div>
+        <div style="font-size: 12px; font-weight: 700; color: #000000;">${receipt.fundName}</div>
+        <div style="font-size: 9px; color: #374151; margin-top: 3px;">Purpose: <strong style="color: #000000;">${receipt.monthKey}</strong></div>
       </div>
     </div>
     
-    <div class="amount-box">
-      <div class="amount-title">Total Cash Received (Mausool Shuda Raqam)</div>
-      <div class="amount-val">${receipt.amount.toLocaleString()} Rs</div>
-      <div class="amount-words">Words: ${NumberToWords(receipt.amount)} Rupees Only</div>
+    <div style="background: #f3f4f6; border: 2px solid #000000; padding: 16px; border-radius: 6px; text-align: center; margin-bottom: 20px;">
+      <div style="font-size: 9px; text-transform: uppercase; font-weight: 800; margin-bottom: 4px; color: #000000;">Total Cash Received (Mausool Shuda Raqam)</div>
+      <div style="font-family: monospace; font-size: 26px; font-weight: 900; color: #000000;">${receipt.amount.toLocaleString()} Rs</div>
+      <div style="font-size: 9px; font-style: italic; margin-top: 6px; background: #ffffff; padding: 3px 8px; border-radius: 4px; display: inline-block; border: 1px solid #000000; font-weight: bold; color: #000000;">Words: ${NumberToWords(receipt.amount)} Rupees Only</div>
     </div>
     
-    <div class="footer">
-      <div class="legal">
-        <div style="font-weight: 800; color: #000000; margin-bottom: 2px;">✓ Digitally Authenticated Ledger</div>
+    <div style="border-top: 1px dashed #000000; padding-top: 14px; display: flex; justify-content: space-between; align-items: flex-end;">
+      <div style="font-size: 8.5px; color: #000000;">
+        <div style="font-weight: 800; margin-bottom: 2px;">✓ Digitally Authenticated Ledger</div>
         <span style="color: #374151; font-size: 7.5px;">Generated: ${formatDateTimeStr(new Date())}</span>
       </div>
-      <div style="display: flex; gap: 12px; align-items: flex-end;">
-        <div class="seal">VERIFIED</div>
+      <div>
+        <div style="border: 2px solid #000000; padding: 3px 8px; border-radius: 4px; font-size: 9px; text-transform: uppercase; font-weight: 800; background: #ffffff; color: #000000;">VERIFIED</div>
       </div>
     </div>
-  </div>
-  <script>
-    window.onload = function() {
-      window.print();
-      setTimeout(function() { window.close(); }, 500);
-    }
-  </script>
-</body>
-</html>`;
+  </div>`;
+
+    const receiptHtml = createPrintReportHtml({
+      title: `Receipt_Ref_${receipt.id}`,
+      orientation: 'portrait',
+      contentHtml
+    });
 
     printWindow.document.open();
     printWindow.document.write(receiptHtml);
@@ -2247,176 +2289,47 @@ export const printMemberStatement = (
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Allow popups to print reports!');
+    alert('Popup blocker active! Barah-e-karam popups allow karein taake report new tab me open ho sake.');
     return;
   }
 
-  const reportHtml = `
-<!DOCTYPE html>
-<html lang="ur" dir="ltr">
-<head>
-  <meta charset="UTF-8">
-  <title>${member.name} - Individual Report</title>
-  <style>
-    @page {
-      size: A4 portrait;
-      margin: 15mm;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      color: #000000;
-      background-color: #ffffff;
-      line-height: 1.4;
-      font-size: 13px;
-    }
-    .print-header {
-      border-bottom: 4px double #000000;
-      padding-bottom: 12px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .print-header h2 {
-      font-size: 18px;
-      font-weight: 800;
-      color: #000000;
-      margin: 0;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .print-header h3 {
-      font-size: 11px;
-      font-weight: 700;
-      color: #000000;
-      margin: 4px 0 0;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    .print-meta {
-      font-size: 8.5px;
-      font-family: monospace;
-      color: #000000;
-      margin-top: 6px;
-    }
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    .info-card {
-      border: 1px solid #000000;
-      border-radius: 4px;
-      padding: 12px;
-      background-color: #f3f4f6;
-    }
-    .info-card p {
-      margin: 4px 0;
-      font-size: 13px;
-    }
-    .summary-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .stat-box {
-      border: 1px solid #000000;
-      border-radius: 4px;
-      background: #ffffff;
-      padding: 8px;
-      text-align: center;
-    }
-    .stat-label {
-      font-size: 8.5px;
-      text-transform: uppercase;
-      color: #000000;
-      display: block;
-      margin-bottom: 2px;
-      font-weight: bold;
-    }
-    .stat-value {
-      font-family: monospace;
-      font-size: 13px;
-      font-weight: 700;
-      color: #000000;
-    }
-    .stat-val-outstanding {
-      font-size: 14px;
-      color: #000000;
-      font-weight: 800;
-    }
-    .table-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: #000000;
-      margin: 16px 0 6px;
-      border-bottom: 1px solid #000000;
-      padding-bottom: 4px;
-      text-transform: uppercase;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 24px;
-      font-size: 11px;
-    }
-    th {
-      background-color: #e5e7eb;
-      color: #000000;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 8px 12px;
-      border: 1px solid #000000;
-      text-align: left;
-    }
-    td {
-      padding: 6px 12px;
-      border: 1px solid #000000;
-      color: #000000;
-    }
-    tr:nth-child(even) td {
-      background-color: #f9fafb;
-    }
-  </style>
-</head>
-<body>
-  <div class="print-header">
-    <h2>MASJID AL-HABIB NOORANI</h2>
-    <h3>INDIVIDUAL FINANCIAL STATEMENT REPORT — ${fundName.toUpperCase()}</h3>
-    <div class="print-meta">
+  const contentHtml = `
+  <div style="border-bottom: 4px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center;">
+    <h2 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">MASJID AL-HABIB NOORANI</h2>
+    <h3 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">INDIVIDUAL FINANCIAL STATEMENT REPORT — ${fundName.toUpperCase()}</h3>
+    <div style="font-size: 8.5px; font-family: monospace; color: #000000; margin-top: 6px;">
       Report Generated: ${generatedDate}
     </div>
   </div>
 
-  <div class="info-grid">
-    <div class="info-card">
-      <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: #000000; margin-bottom: 6px;">
+  <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; margin-bottom: 20px;" class="no-break">
+    <div style="border: 1px solid #000000; border-radius: 4px; padding: 12px; background-color: #f3f4f6;" class="info-card">
+      <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: #000000; margin: 0 0 6px;">
         Contributor Details / ممبر کی معلومات
       </p>
-      <p style="font-size: 15px; font-weight: 800; color: #000000;">${member.name}</p>
-      <p style="color: #000000;">📞 Phone: <strong>${member.phone || 'Not Provided / درج نہیں'}</strong></p>
-      <p style="color: #000000;">📂 Registry Category: <strong>${fundName}</strong></p>
+      <p style="font-size: 15px; font-weight: 800; color: #000000; margin: 0 0 4px;">${member.name}</p>
+      <p style="color: #000000; margin: 2px 0;">📞 Phone: <strong>${member.phone || 'Not Provided / درج نہیں'}</strong></p>
+      <p style="color: #000000; margin: 2px 0;">📂 Registry Category: <strong>${fundName}</strong></p>
     </div>
-    <div class="summary-stats">
-      <div class="stat-box">
-        <span class="stat-label">Annual Goal (ہدف)</span>
-        <span class="stat-value">${member.requiredAmount.toLocaleString()} Rs</span>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="summary-stats">
+      <div style="border: 1px solid #000000; border-radius: 4px; background: #ffffff; padding: 8px; text-align: center;">
+        <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; margin-bottom: 2px; font-weight: bold;">Annual Goal (ہدف)</span>
+        <span style="font-family: monospace; font-size: 13px; font-weight: 700; color: #000000;">${member.requiredAmount.toLocaleString()} Rs</span>
       </div>
-      <div class="stat-box">
-        <span class="stat-label">Paid Total (موصول)</span>
-        <span class="stat-value">${paidSum.toLocaleString()} Rs</span>
+      <div style="border: 1px solid #000000; border-radius: 4px; background: #ffffff; padding: 8px; text-align: center;">
+        <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; margin-bottom: 2px; font-weight: bold;">Paid Total (موصول)</span>
+        <span style="font-family: monospace; font-size: 13px; font-weight: 700; color: #000000;">${paidSum.toLocaleString()} Rs</span>
       </div>
-      <div class="stat-box" style="grid-column: span 2; background-color: #f3f4f6; border-color: #000000;">
-        <span class="stat-label" style="color: #000000; font-weight: 800;">Remaining Balance Dues (بقایا واجب الادا رقم)</span>
-        <span class="stat-value stat-val-outstanding">${balance.toLocaleString()} Rs</span>
+      <div style="grid-column: span 2; background-color: #f3f4f6; border: 1px solid #000000; border-radius: 4px; padding: 8px; text-align: center;">
+        <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; margin-bottom: 2px; font-weight: 800;">Remaining Balance Dues (بقایا واجب الادا رقم)</span>
+        <span style="font-family: monospace; font-size: 14px; font-weight: 900; color: #000000;">${balance.toLocaleString()} Rs</span>
       </div>
     </div>
   </div>
 
   ${(member.remainingPrevious > 0 || member.paidPrevious > 0) ? `
-  <div class="info-card" style="margin-bottom: 20px; padding: 10px 12px; background-color: #f3f4f6; border-color: #000000;">
-    <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: #000000; margin-bottom: 4px;">Opening Previous Balance Summary / پچھلا بقایا جات</p>
+  <div style="margin-bottom: 20px; padding: 10px 12px; background-color: #f3f4f6; border: 1px solid #000000; border-radius: 4px;" class="no-break">
+    <p style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: #000000; margin: 0 0 4px;">Opening Previous Balance Summary / پچھلا بقایا جات</p>
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; font-size: 11px;">
       <div>
         <span style="color: #000000; font-size: 8px; text-transform: uppercase; display: block; font-weight: bold;">Dues Remaining</span>
@@ -2434,14 +2347,14 @@ export const printMemberStatement = (
   </div>
   ` : ''}
 
-  <div class="table-title">Combined Monthly Contribution Ledger — 12 Months Registry</div>
-  <table>
+  <div style="font-size: 12px; font-weight: 700; color: #000000; margin: 16px 0 6px; border-bottom: 1px solid #000000; padding-bottom: 4px; text-transform: uppercase;">Combined Monthly Contribution Ledger — 12 Months Registry</div>
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 11px;">
     <thead>
       <tr>
-        <th style="width: 5%;">Sr</th>
-        <th>Month Index / ماہانہ قسط</th>
-        <th style="text-align: center;">Amount Paid (Rs)</th>
-        <th style="text-align: right;">Payment Date</th>
+        <th style="width: 5%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">Sr</th>
+        <th style="background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">Month Index / ماہانہ قسط</th>
+        <th style="text-align: center; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000;">Amount Paid (Rs)</th>
+        <th style="text-align: right; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000;">Payment Date</th>
       </tr>
     </thead>
     <tbody>
@@ -2451,26 +2364,23 @@ export const printMemberStatement = (
         const dateStr = trans ? formatDateStr(trans.paymentDate) : '—';
         return `
           <tr>
-            <td style="color: #000000; font-weight: bold;">${(idx+1).toString().padStart(2, '0')}</td>
-            <td style="font-weight: 700;">${month}</td>
-            <td style="text-align: center; font-weight: bold; color: #000000;">
+            <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 6px 12px;">${(idx+1).toString().padStart(2, '0')}</td>
+            <td style="font-weight: 700; border: 1px solid #000000; padding: 6px 12px; color: #000000;">${month}</td>
+            <td style="text-align: center; font-weight: bold; color: #000000; border: 1px solid #000000; padding: 6px 12px;">
               ${amt > 0 ? `${amt.toLocaleString()} Rs` : '—'}
             </td>
-            <td style="text-align: right; font-family: monospace; color: #000000;">${dateStr}</td>
+            <td style="text-align: right; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 12px;">${dateStr}</td>
           </tr>
         `;
       }).join('')}
     </tbody>
-  </table>
+  </table>`;
 
-  <script>
-    window.onload = function() {
-      window.print();
-    }
-  </script>
-</body>
-</html>
-  `;
+  const reportHtml = createPrintReportHtml({
+    title: `${member.name}_Individual_Statement_A4`,
+    orientation: 'portrait',
+    contentHtml
+  });
 
   printWindow.document.open();
   printWindow.document.write(reportHtml);
@@ -2498,156 +2408,52 @@ export const printGeneralRegistryReport = (
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Allow popups to print reports!');
+    alert('Popup blocker active! Barah-e-karam popups allow karein taake report new tab me open ho sake.');
     return;
   }
 
-  const reportHtml = `
-<!DOCTYPE html>
-<html lang="ur" dir="ltr">
-<head>
-  <meta charset="UTF-8">
-  <title>General Ledger - ${fund.name}</title>
-  <style>
-    @page {
-      size: A4 landscape;
-      margin: 10mm;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      color: #000000;
-      background-color: #ffffff;
-      font-size: 9.5px;
-      line-height: 1.2;
-    }
-    .print-header {
-      padding-bottom: 8px;
-      margin-bottom: 12px;
-      text-align: center;
-      border-bottom: 3px double #000000;
-    }
-    .print-header h2 {
-      font-size: 16px;
-      font-weight: 800;
-      color: #000000;
-      margin: 0;
-      text-transform: uppercase;
-    }
-    .print-header h3 {
-      font-size: 10px;
-      font-weight: 700;
-      color: #000000;
-      margin: 2px 0 0;
-      text-transform: uppercase;
-    }
-    .print-meta {
-      font-size: 8px;
-      font-family: monospace;
-      color: #000000;
-      margin-top: 4px;
-    }
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .summary-box {
-      border: 1px solid #000000;
-      background-color: #f3f4f6;
-      padding: 6px;
-      border-radius: 4px;
-      text-align: center;
-    }
-    .summary-box span {
-      font-size: 8px;
-      text-transform: uppercase;
-      color: #374151;
-      display: block;
-      font-weight: bold;
-    }
-    .summary-box strong {
-      font-size: 11px;
-      font-family: monospace;
-      color: #000000;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 9px;
-      font-family: monospace;
-    }
-    th {
-      background-color: #e5e7eb;
-      color: #000000;
-      font-weight: 700;
-      border: 1px solid #000000;
-      padding: 5px 3px;
-      text-align: center;
-      font-size: 8.5px;
-    }
-    td {
-      border: 1px solid #000000;
-      padding: 4px 3px;
-      text-align: center;
-      color: #000000;
-    }
-    .name-cell {
-      text-align: left;
-      font-family: sans-serif;
-      font-weight: 700;
-      padding-left: 6px;
-    }
-    .highlight-row {
-      background-color: #e5e7eb;
-      font-weight: 800;
-    }
-  </style>
-</head>
-<body>
-  <div class="print-header">
-    <h2>MASJID AL-HABIB NOORANI</h2>
-    <h3>GENERAL REGISTRY LEDGER REPORT — ${fund.name.toUpperCase()}</h3>
-    <div class="print-meta">
+  const contentHtml = `
+  <div style="padding-bottom: 8px; margin-bottom: 12px; text-align: center; border-bottom: 3px double #000000;">
+    <h2 style="font-size: 16px; font-weight: 800; color: #000000; margin: 0; text-transform: uppercase;">MASJID AL-HABIB NOORANI</h2>
+    <h3 style="font-size: 10px; font-weight: 700; color: #000000; margin: 2px 0 0; text-transform: uppercase;">GENERAL REGISTRY LEDGER REPORT — ${fund.name.toUpperCase()}</h3>
+    <div style="font-size: 8px; font-family: monospace; color: #000000; margin-top: 4px;">
       Report Generated: ${generatedDate} | Total ${orderedMembers.length} active contributors list
     </div>
   </div>
 
-  <div class="summary-grid">
-    <div class="summary-box">
-      <span>Total Contributors</span>
-      <strong>${orderedMembers.length} Members</strong>
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;" class="no-break">
+    <div style="border: 1px solid #000000; background-color: #f3f4f6; padding: 6px; border-radius: 4px; text-align: center;">
+      <span style="font-size: 8px; text-transform: uppercase; color: #374151; display: block; font-weight: bold;">Total Contributors</span>
+      <strong style="font-size: 11px; font-family: monospace; color: #000000;">${orderedMembers.length} Members</strong>
     </div>
-    <div class="summary-box">
-      <span>Combined Goal</span>
-      <strong>${totalGoal.toLocaleString()} Rs</strong>
+    <div style="border: 1px solid #000000; background-color: #f3f4f6; padding: 6px; border-radius: 4px; text-align: center;">
+      <span style="font-size: 8px; text-transform: uppercase; color: #374151; display: block; font-weight: bold;">Combined Goal</span>
+      <strong style="font-size: 11px; font-family: monospace; color: #000000;">${totalGoal.toLocaleString()} Rs</strong>
     </div>
-    <div class="summary-box">
-      <span>Achieved Total</span>
-      <strong>${totalPaid.toLocaleString()} Rs</strong>
+    <div style="border: 1px solid #000000; background-color: #f3f4f6; padding: 6px; border-radius: 4px; text-align: center;">
+      <span style="font-size: 8px; text-transform: uppercase; color: #374151; display: block; font-weight: bold;">Achieved Total</span>
+      <strong style="font-size: 11px; font-family: monospace; color: #000000;">${totalPaid.toLocaleString()} Rs</strong>
     </div>
-    <div class="summary-box" style="background-color: #f3f4f6; border-color: #000000;">
-      <span>Dues Outstanding</span>
-      <strong style="font-weight: 900;">${totalOutstanding.toLocaleString()} Rs</strong>
+    <div style="border: 1px solid #000000; background-color: #f3f4f6; padding: 6px; border-radius: 4px; text-align: center;">
+      <span style="font-size: 8px; text-transform: uppercase; color: #374151; display: block; font-weight: bold;">Dues Outstanding</span>
+      <strong style="font-size: 11px; font-family: monospace; color: #000000; font-weight: 900;">${totalOutstanding.toLocaleString()} Rs</strong>
     </div>
   </div>
 
-  <table>
+  <table style="width: 100%; border-collapse: collapse; font-size: 9px; font-family: monospace;">
     <thead>
       <tr>
-        <th style="width: 3%;">Sr</th>
-        <th style="text-align: left; padding-left: 6px; width: 20%;">Name of Contributor</th>
-        ${!isProject ? '<th style="width: 6%;">Prev Due</th>' : ''}
-        ${months.map(m => `<th style="width: 5%;">${m.substring(0, 4)}</th>`).join('')}
-        <th style="width: 7%;">Required</th>
-        <th style="width: 7%;">Paid</th>
-        <th style="width: 7%;">Outstanding</th>
+        <th style="width: 3%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; padding: 5px 3px; text-align: center;">Sr</th>
+        <th style="text-align: left; padding-left: 6px; width: 20%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000;">Name of Contributor</th>
+        ${!isProject ? '<th style="width: 6%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">Prev Due</th>' : ''}
+        ${months.map(m => `<th style="width: 5%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">${m.substring(0, 4)}</th>`).join('')}
+        <th style="width: 7%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">Required</th>
+        <th style="width: 7%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">Paid</th>
+        <th style="width: 7%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">Outstanding</th>
       </tr>
     </thead>
     <tbody>
-      ${orderedMembers.map((m, idx) => {
+      ${orderedMembers.map((m) => {
         const naturalSNo = allFundMembers.findIndex(x => x.id === m.id) + 1;
         const mTrans = transactions.filter(t => t.memberId === m.id);
         const paid = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
@@ -2655,48 +2461,45 @@ export const printGeneralRegistryReport = (
 
         return `
           <tr>
-            <td style="color: #000000; font-weight: bold;">${naturalSNo}</td>
-            <td class="name-cell">${m.name}</td>
-            ${!isProject ? `<td>${m.remainingPrevious > 0 ? `${m.remainingPrevious.toLocaleString()}` : '—'}</td>` : ''}
+            <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 4px 3px; text-align: center;">${naturalSNo}</td>
+            <td style="text-align: left; font-family: sans-serif; font-weight: 700; padding-left: 6px; border: 1px solid #000000; color: #000000;">${m.name}</td>
+            ${!isProject ? `<td style="border: 1px solid #000000; text-align: center;">${m.remainingPrevious > 0 ? `${m.remainingPrevious.toLocaleString()}` : '—'}</td>` : ''}
             ${months.map(month => {
               const txList = mTrans.filter(t => t.monthKey === month);
               const mSum = txList.reduce((sum, item) => sum + item.amount, 0);
-              return `<td>${mSum > 0 ? `${mSum.toLocaleString()}` : '—'}</td>`;
+              return `<td style="border: 1px solid #000000; text-align: center;">${mSum > 0 ? `${mSum.toLocaleString()}` : '—'}</td>`;
             }).join('')}
-            <td style="font-weight: bold; background-color: #f9fafb;">${m.requiredAmount.toLocaleString()}</td>
-            <td style="font-weight: bold; background-color: #f9fafb;">${paid > 0 ? paid.toLocaleString() : '—'}</td>
-            <td style="font-weight: bold; background-color: #f9fafb;">
+            <td style="font-weight: bold; background-color: #f9fafb; border: 1px solid #000000; text-align: center;">${m.requiredAmount.toLocaleString()}</td>
+            <td style="font-weight: bold; background-color: #f9fafb; border: 1px solid #000000; text-align: center;">${paid > 0 ? paid.toLocaleString() : '—'}</td>
+            <td style="font-weight: bold; background-color: #f9fafb; border: 1px solid #000000; text-align: center;">
               ${outstanding > 0 ? outstanding.toLocaleString() : 'CLEAR'}
             </td>
           </tr>
         `;
       }).join('')}
-      <tr class="highlight-row">
-        <td colspan="2" style="text-align: left; padding-left: 6px;">GRAND TOTAL</td>
-        ${!isProject ? `<td>${orderedMembers.reduce((sum, m) => sum + m.remainingPrevious, 0).toLocaleString()}</td>` : ''}
+      <tr style="background-color: #e5e7eb; font-weight: 800;">
+        <td colspan="2" style="text-align: left; padding-left: 6px; border: 1px solid #000000;">GRAND TOTAL</td>
+        ${!isProject ? `<td style="border: 1px solid #000000; text-align: center;">${orderedMembers.reduce((sum, m) => sum + m.remainingPrevious, 0).toLocaleString()}</td>` : ''}
         ${months.map(month => {
           const sum = orderedMembers.reduce((acc, m) => {
             const txList = transactions.filter(t => t.memberId === m.id && t.monthKey === month);
             const mSum = txList.reduce((sum, item) => sum + item.amount, 0);
             return acc + mSum;
           }, 0);
-          return `<td>${sum > 0 ? sum.toLocaleString() : '—'}</td>`;
+          return `<td style="border: 1px solid #000000; text-align: center;">${sum > 0 ? sum.toLocaleString() : '—'}</td>`;
         }).join('')}
-        <td>${totalGoal.toLocaleString()}</td>
-        <td>${totalPaid.toLocaleString()}</td>
-        <td>${totalOutstanding.toLocaleString()}</td>
+        <td style="border: 1px solid #000000; text-align: center;">${totalGoal.toLocaleString()}</td>
+        <td style="border: 1px solid #000000; text-align: center;">${totalPaid.toLocaleString()}</td>
+        <td style="border: 1px solid #000000; text-align: center;">${totalOutstanding.toLocaleString()}</td>
       </tr>
     </tbody>
-  </table>
+  </table>`;
 
-  <script>
-    window.onload = function() {
-      window.print();
-    }
-  </script>
-</body>
-</html>
-  `;
+  const reportHtml = createPrintReportHtml({
+    title: `General_Registry_Ledger_${fund.name}_A4`,
+    orientation: 'landscape',
+    contentHtml
+  });
 
   printWindow.document.open();
   printWindow.document.write(reportHtml);
@@ -2712,175 +2515,72 @@ export const printExpensesStatement = (
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Allow popups to print reports!');
+    alert('Popup blocker active! Barah-e-karam popups allow karein taake report new tab me open ho sake.');
     return;
   }
 
-  const reportHtml = `
-<!DOCTYPE html>
-<html lang="ur" dir="ltr">
-<head>
-  <meta charset="UTF-8">
-  <title>Expenses Report - Masjid Al Habib Noorani</title>
-  <style>
-    @page {
-      size: A4 portrait;
-      margin: 15mm;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      color: #000000;
-      background-color: #ffffff;
-      line-height: 1.4;
-      font-size: 13px;
-    }
-    .print-header {
-      border-bottom: 4px double #000000;
-      padding-bottom: 12px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .print-header h1 {
-      font-size: 18px;
-      font-weight: 800;
-      color: #000000;
-      margin: 0;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .print-header h2 {
-      font-size: 11px;
-      font-weight: 700;
-      color: #000000;
-      margin: 4px 0 0;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    .print-meta {
-      font-size: 8.5px;
-      font-family: monospace;
-      color: #000000;
-      margin-top: 6px;
-    }
-    .summary-card {
-      border: 1px solid #000000;
-      border-radius: 4px;
-      padding: 12px;
-      background-color: #f3f4f6;
-      margin-bottom: 20px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      text-align: center;
-    }
-    .stat-box span {
-      font-size: 8.5px;
-      text-transform: uppercase;
-      color: #000000;
-      letter-spacing: 0.5px;
-      display: block;
-      font-weight: bold;
-    }
-    .stat-box strong {
-      font-size: 13px;
-      font-family: monospace;
-      color: #000000;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 24px;
-      font-size: 11px;
-    }
-    th {
-      background-color: #e5e7eb;
-      color: #000000;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 8px 12px;
-      border: 1px solid #000000;
-      text-align: left;
-    }
-    td {
-      padding: 6px 12px;
-      border: 1px solid #000000;
-      color: #000000;
-    }
-    tr:nth-child(even) td {
-      background-color: #f9fafb;
-    }
-    .highlight-row {
-      background-color: #e5e7eb !important;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <div class="print-header">
-    <h1>MASJID AL-HABIB NOORANI</h1>
-    <h2>MOSQUE EXPENDITURES REPORT</h2>
-    <div class="print-meta">
+  const contentHtml = `
+  <div style="border-bottom: 4px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center;">
+    <h1 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">MASJID AL-HABIB NOORANI</h1>
+    <h2 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">MOSQUE EXPENDITURES REPORT</h2>
+    <div style="font-size: 8.5px; font-family: monospace; color: #000000; margin-top: 6px;">
       Report Generated: ${generatedDate}
       ${filterLabel ? `<div style="background-color: #ffffff; border: 2px solid #000000; padding: 6px 12px; border-radius: 4px; font-size: 14px; color: #000000; font-weight: 800; margin-top: 10px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">Month Filtered: ${filterLabel.toUpperCase()}</div>` : ''}
     </div>
   </div>
 
-  <div class="summary-card">
-    <div class="stat-box">
-      <span>Total Printed Expenses</span>
-      <strong>${totalAmount.toLocaleString()} Rs</strong>
+  <div style="border: 1px solid #000000; border-radius: 4px; padding: 12px; background-color: #f3f4f6; margin-bottom: 20px; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;" class="no-break">
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">Total Printed Expenses</span>
+      <strong style="font-size: 13px; font-family: monospace; color: #000000;">${totalAmount.toLocaleString()} Rs</strong>
     </div>
-    <div class="stat-box">
-      <span>Total Voucher Invoices</span>
-      <strong style="color: #000000;">${filteredExpenses.length} Records</strong>
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">Total Voucher Invoices</span>
+      <strong style="font-size: 13px; font-family: monospace; color: #000000;">${filteredExpenses.length} Records</strong>
     </div>
-    <div class="stat-box">
-      <span>System Status</span>
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">System Status</span>
       <strong style="color: #000000; text-transform: uppercase; font-size: 11px;">DIGITALLY VERIFIED</strong>
     </div>
   </div>
 
-  <table>
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 11px;">
     <thead>
       <tr>
-        <th style="width: 5%;">Sr</th>
-        <th>Expense Head / تفصیلِ اخراجات</th>
-        <th style="text-align: center; width: 15%;">Date</th>
-        <th style="text-align: right; width: 20%;">Price (Rs)</th>
-        <th>In-depth Description / Details</th>
+        <th style="width: 5%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">Sr</th>
+        <th style="background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">Expense Head / تفصیلِ اخراجات</th>
+        <th style="text-align: center; width: 15%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000;">Date</th>
+        <th style="text-align: right; width: 20%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000;">Price (Rs)</th>
+        <th style="background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">In-depth Description / Details</th>
       </tr>
     </thead>
     <tbody>
       ${filteredExpenses.map((expense, idx) => `
         <tr>
-          <td style="color: #000000; font-weight: bold;">${idx + 1}</td>
-          <td style="font-weight: 700; color: #000000;">${expense.name}</td>
-          <td style="text-align: center; font-family: monospace; color: #000000;">${formatDateStr(expense.date)}</td>
-          <td style="text-align: right; font-weight: bold; font-family: monospace; color: #000000;">
+          <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 6px 12px;">${idx + 1}</td>
+          <td style="font-weight: 700; color: #000000; border: 1px solid #000000; padding: 6px 12px;">${expense.name}</td>
+          <td style="text-align: center; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 12px;">${formatDateStr(expense.date)}</td>
+          <td style="text-align: right; font-weight: bold; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 12px;">
             ${expense.amount.toLocaleString()} Rs
           </td>
-          <td style="color: #000000;">${expense.details || '—'}</td>
+          <td style="color: #000000; border: 1px solid #000000; padding: 6px 12px;">${expense.details || '—'}</td>
         </tr>
       `).join('')}
-      <tr class="highlight-row">
-        <td colspan="3" style="font-weight: 800;">GRAND TOTAL (کل اخراجات)</td>
-        <td style="text-align: right; font-weight: 900; font-family: monospace; color: #000000; font-size: 12px;">
+      <tr style="background-color: #e5e7eb; font-weight: bold;">
+        <td colspan="3" style="font-weight: 800; border: 1px solid #000000; padding: 6px 12px;">GRAND TOTAL (کل اخراجات)</td>
+        <td style="text-align: right; font-weight: 900; font-family: monospace; color: #000000; font-size: 12px; border: 1px solid #000000; padding: 6px 12px;">
           ${totalAmount.toLocaleString()} Rs
         </td>
-        <td></td>
+        <td style="border: 1px solid #000000; padding: 6px 12px;"></td>
       </tr>
     </tbody>
-  </table>
+  </table>`;
 
-  <script>
-    window.onload = function() {
-      window.print();
-    }
-  </script>
-</body>
-</html>
-  `;
+  const reportHtml = createPrintReportHtml({
+    title: `Expenses_Report_Masjid_Al_Habib_Noorani_A4`,
+    orientation: 'portrait',
+    contentHtml
+  });
 
   printWindow.document.open();
   printWindow.document.write(reportHtml);
@@ -2896,175 +2596,72 @@ export const printOtherDonationsStatement = (
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Allow popups to print reports!');
+    alert('Popup blocker active! Barah-e-karam popups allow karein taake report new tab me open ho sake.');
     return;
   }
 
-  const reportHtml = `
-<!DOCTYPE html>
-<html lang="ur" dir="ltr">
-<head>
-  <meta charset="UTF-8">
-  <title>Other Donations Report</title>
-  <style>
-    @page {
-      size: A4 portrait;
-      margin: 15mm;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      color: #000000;
-      background-color: #ffffff;
-      line-height: 1.4;
-      font-size: 13px;
-    }
-    .print-header {
-      border-bottom: 4px double #000000;
-      padding-bottom: 12px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .print-header h1 {
-      font-size: 18px;
-      font-weight: 800;
-      color: #000000;
-      margin: 0;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .print-header h2 {
-      font-size: 11px;
-      font-weight: 700;
-      color: #000000;
-      margin: 4px 0 0;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    .print-meta {
-      font-size: 8.5px;
-      font-family: monospace;
-      color: #000000;
-      margin-top: 6px;
-    }
-    .summary-card {
-      border: 1px solid #000000;
-      border-radius: 4px;
-      padding: 12px;
-      background-color: #f3f4f6;
-      margin-bottom: 20px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      text-align: center;
-    }
-    .stat-box span {
-      font-size: 8.5px;
-      text-transform: uppercase;
-      color: #000000;
-      letter-spacing: 0.5px;
-      display: block;
-      font-weight: bold;
-    }
-    .stat-box strong {
-      font-size: 13px;
-      font-family: monospace;
-      color: #000000;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 24px;
-      font-size: 11px;
-    }
-    th {
-      background-color: #e5e7eb;
-      color: #000000;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 8px 12px;
-      border: 1px solid #000000;
-      text-align: left;
-    }
-    td {
-      padding: 6px 12px;
-      border: 1px solid #000000;
-      color: #000000;
-    }
-    tr:nth-child(even) td {
-      background-color: #f9fafb;
-    }
-    .highlight-row {
-      background-color: #e5e7eb !important;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-  <div class="print-header">
-    <h1>MASJID AL-HABIB NOORANI</h1>
-    <h2>OTHER GENERAL ACHIEVED DONATIONS REPORT</h2>
-    <div class="print-meta">
+  const contentHtml = `
+  <div style="border-bottom: 4px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center;">
+    <h1 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">MASJID AL-HABIB NOORANI</h1>
+    <h2 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">OTHER GENERAL ACHIEVED DONATIONS REPORT</h2>
+    <div style="font-size: 8.5px; font-family: monospace; color: #000000; margin-top: 6px;">
       Report Generated: ${generatedDate}
       ${filterLabel ? `<div style="background-color: #ffffff; border: 2px solid #000000; padding: 6px 12px; border-radius: 4px; font-size: 14px; color: #000000; font-weight: 800; margin-top: 10px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">Month Filtered: ${filterLabel.toUpperCase()}</div>` : ''}
     </div>
   </div>
 
-  <div class="summary-card">
-    <div class="stat-box">
-      <span>Total Collections</span>
-      <strong>${totalAmount.toLocaleString()} Rs</strong>
+  <div style="border: 1px solid #000000; border-radius: 4px; padding: 12px; background-color: #f3f4f6; margin-bottom: 20px; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;" class="no-break">
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">Total Collections</span>
+      <strong style="font-size: 13px; font-family: monospace; color: #000000;">${totalAmount.toLocaleString()} Rs</strong>
     </div>
-    <div class="stat-box">
-      <span>Total Entries count</span>
-      <strong style="color: #000000;">${filteredOthers.length} Records</strong>
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">Total Entries count</span>
+      <strong style="font-size: 13px; font-family: monospace; color: #000000;">${filteredOthers.length} Records</strong>
     </div>
-    <div class="stat-box">
-      <span>System Status</span>
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">System Status</span>
       <strong style="color: #000000; text-transform: uppercase; font-size: 11px;">DIGITALLY VERIFIED</strong>
     </div>
   </div>
 
-  <table>
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 11px;">
     <thead>
       <tr>
-        <th style="width: 5%;">Sr</th>
-        <th>Source Head Name / تفصیلِ آمدنی</th>
-        <th style="text-align: center; width: 15%;">Date</th>
-        <th style="text-align: right; width: 20%;">Amount Paid (Rs)</th>
-        <th>Reference Notes</th>
+        <th style="width: 5%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">Sr</th>
+        <th style="background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">Source Head Name / تفصیلِ آمدنی</th>
+        <th style="text-align: center; width: 15%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000;">Date</th>
+        <th style="text-align: right; width: 20%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000;">Amount Paid (Rs)</th>
+        <th style="background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">Reference Notes</th>
       </tr>
     </thead>
     <tbody>
       ${filteredOthers.map((item, idx) => `
         <tr>
-          <td style="color: #000000; font-weight: bold;">${idx + 1}</td>
-          <td style="font-weight: 700; color: #000000;">${item.source}</td>
-          <td style="text-align: center; font-family: monospace; color: #000000;">${formatDateStr(item.date)}</td>
-          <td style="text-align: right; font-weight: bold; font-family: monospace; color: #000000;">
+          <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 6px 12px;">${idx + 1}</td>
+          <td style="font-weight: 700; color: #000000; border: 1px solid #000000; padding: 6px 12px;">${item.source}</td>
+          <td style="text-align: center; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 12px;">${formatDateStr(item.date)}</td>
+          <td style="text-align: right; font-weight: bold; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 12px;">
             ${item.amount.toLocaleString()} Rs
           </td>
-          <td style="color: #000000;">${item.details || '—'}</td>
+          <td style="color: #000000; border: 1px solid #000000; padding: 6px 12px;">${item.details || '—'}</td>
         </tr>
       `).join('')}
-      <tr class="highlight-row">
-        <td colspan="3" style="font-weight: 800;">GRAND TOTAL DONATIONS</td>
-        <td style="text-align: right; font-weight: 900; font-family: monospace; color: #000000; font-size: 12px;">
+      <tr style="background-color: #e5e7eb; font-weight: bold;">
+        <td colspan="3" style="font-weight: 800; border: 1px solid #000000; padding: 6px 12px;">GRAND TOTAL DONATIONS</td>
+        <td style="text-align: right; font-weight: 900; font-family: monospace; color: #000000; font-size: 12px; border: 1px solid #000000; padding: 6px 12px;">
           ${totalAmount.toLocaleString()} Rs
         </td>
-        <td></td>
+        <td style="border: 1px solid #000000; padding: 6px 12px;"></td>
       </tr>
     </tbody>
-  </table>
+  </table>`;
 
-  <script>
-    window.onload = function() {
-      window.print();
-    }
-  </script>
-</body>
-</html>
-  `;
+  const reportHtml = createPrintReportHtml({
+    title: `Other_Donations_Report_A4`,
+    orientation: 'portrait',
+    contentHtml
+  });
 
   printWindow.document.open();
   printWindow.document.write(reportHtml);
