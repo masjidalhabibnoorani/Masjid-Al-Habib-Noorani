@@ -6,19 +6,21 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FundModule, FundMember, FundMemberTransaction, OtherFundEntry, Expense, 
-  ProtectedPagePassword, Project, Administrator, AuditLog, resolveImageUrl, formatDateStr, formatDateTimeStr, Commitment
+  ProtectedPagePassword, Project, Administrator, AuditLog, resolveImageUrl, formatDateStr, formatDateTimeStr, toHtmlDateValue, parseDateToTimestamp, Commitment
 } from '../types';
 import { GREGORIAN_MONTHS, ISLAMIC_MONTHS, PortalDatabase } from '../data';
 import TiltCard from './TiltCard';
 import Counter from './Counter';
 import MagneticButton from './MagneticButton';
+import DateInput from './DateInput';
 import { useToast } from './Toast';
 // Removed ShopRentsLedger, ZakatLedger, and BazmCustomEventRegistry
 import { 
   Lock, Calendar, Users, DollarSign, ArrowLeft, Download, Printer, Sliders,
   Search, ShieldAlert, Plus, Edit, Trash, ChevronRight, User, Phone, CheckCircle, Info,
   Check, PlusCircle, Trash2, Edit2, Save, UserPlus, X, Building2, HeartHandshake, Award,
-  History, FileText, UserCheck, Layers, Clock, ListFilter, Sparkles, ChevronDown, ChevronUp, ArrowUpDown
+  History, FileText, UserCheck, Layers, Clock, ListFilter, Sparkles, ChevronDown, ChevronUp, ArrowUpDown,
+  ArrowUp, ArrowDown
 } from 'lucide-react';
 
 interface FundDetailsViewProps {
@@ -2605,7 +2607,7 @@ export const printMemberStatement = (
       </div>
       <div>
         <span style="color: #000000; font-size: 8px; text-transform: uppercase; display: block; font-weight: bold;">Payment Date</span>
-        <span style="font-family: monospace;">${member.paidPreviousDate || '—'}</span>
+        <span style="font-family: monospace;">${formatDateStr(member.paidPreviousDate) || '—'}</span>
       </div>
     </div>
   </div>
@@ -4272,7 +4274,7 @@ function FixedFundRegister({
                             isFundAdminUnlocked ? 'hover:bg-pine-btn/25 hover:text-white cursor-pointer' : ''
                           }`}
                         >
-                          {m.paidPreviousDate || '-'}
+                          {formatDateStr(m.paidPreviousDate) || '-'}
                         </td>
                       </>
                     )}
@@ -4453,16 +4455,13 @@ function FixedFundRegister({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-pine-text-body mb-1">Previous dues Paid Date or verification note</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 15-Jan-2026 or Paid"
-                    value={cellEditPrevDate}
-                    onChange={(e) => setCellEditPrevDate(e.target.value)}
-                    className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg"
-                  />
-                </div>
+                <DateInput
+                  value={cellEditPrevDate}
+                  onChange={setCellEditPrevDate}
+                  label="Previous dues Paid Date or verification note"
+                  placeholder="DD/MM/YYYY"
+                  badgeColor="emerald"
+                />
 
                 <div className="pt-2 flex gap-3">
                   <button
@@ -4506,15 +4505,13 @@ function FixedFundRegister({
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-pine-text-body mb-1">Payment Date</label>
-                  <input
-                    type="date"
-                    value={cellEditDate}
-                    onChange={(e) => setCellEditDate(e.target.value)}
-                    className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg font-mono"
-                  />
-                </div>
+                <DateInput
+                  value={cellEditDate}
+                  onChange={setCellEditDate}
+                  label="Payment Date"
+                  placeholder="DD/MM/YYYY"
+                  badgeColor="emerald"
+                />
 
                 <div className="pt-3 border-t border-pine-border/40 flex flex-wrap gap-2 justify-between">
                   {/* Delete button option */}
@@ -4648,16 +4645,13 @@ function FixedFundRegister({
                       className="w-full bg-pine-bar/50 border border-pine-border p-1.5 px-2.5 rounded text-white font-mono"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-pine-text-body mb-1">Paid Date</label>
-                    <input
-                      type="text"
-                      placeholder="15-Jan-2026"
-                      value={activeMemberEdit.paidPreviousDate || ''}
-                      onChange={(e) => setActiveMemberEdit({ ...activeMemberEdit, paidPreviousDate: e.target.value })}
-                      className="w-full bg-pine-bar/50 border border-pine-border p-1.5 px-2.5 rounded text-white text-[10px]"
-                    />
-                  </div>
+                  <DateInput
+                    value={activeMemberEdit.paidPreviousDate || ''}
+                    onChange={(val) => setActiveMemberEdit({ ...activeMemberEdit, paidPreviousDate: val })}
+                    label="Paid Date"
+                    placeholder="DD/MM/YYYY"
+                    badgeColor="emerald"
+                  />
                 </div>
               )}
 
@@ -4876,7 +4870,7 @@ function FixedFundRegister({
                 </div>
                 <div>
                   <span className="text-[9px] text-zinc-500 block">Payment Date</span>
-                  <span className="font-mono">{profileMember.paidPreviousDate || '—'}</span>
+                  <span className="font-mono">{formatDateStr(profileMember.paidPreviousDate) || '—'}</span>
                 </div>
               </div>
             </div>
@@ -5043,6 +5037,7 @@ function OtherFundRegister(props: any) {
     setAuthorizedTabs,
     passwords = []
   } = props;
+  const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonthIdx, setSelectedMonthIdx] = useState<number | 'additional' | null>(null);
   const [editingEntry, setEditingEntry] = useState<OtherFundEntry | null>(null);
@@ -5058,7 +5053,6 @@ function OtherFundRegister(props: any) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
-
   // New Direct Inflow additions states
   const [newSource, setNewSource] = useState('');
   const [newAmount, setNewAmount] = useState('');
@@ -5071,6 +5065,15 @@ function OtherFundRegister(props: any) {
   const [pendingLockedSource, setPendingLockedSource] = useState<string | null>(null);
   const [pendingLockedSourceId, setPendingLockedSourceId] = useState<string | null>(null);
 
+  // Custom Position states when adding new donation source
+  const [newPositionMode, setNewPositionMode] = useState<'end' | 'start' | 'after' | 'custom'>('end');
+  const [positionAfterSourceId, setPositionAfterSourceId] = useState<string>('');
+  const [customPositionNumber, setCustomPositionNumber] = useState<string>('');
+
+  // Reorder modal state for existing sources
+  const [reorderModalSource, setReorderModalSource] = useState<{ sourceId: string; source: string; currentRank: number } | null>(null);
+  const [targetRankInput, setTargetRankInput] = useState<string>('');
+
   // Sync state if monthsList changes
   useEffect(() => {
     if (monthsList && monthsList.length > 0) {
@@ -5078,25 +5081,113 @@ function OtherFundRegister(props: any) {
     }
   }, [monthsList]);
 
+  // Helper to extract distinct sources for this fund
+  const getFundSourceGroups = (fundEntries: OtherFundEntry[]) => {
+    const sourceIds: string[] = [];
+    const map: Record<string, { sourceId: string; source: string; entries: OtherFundEntry[] }> = {};
+    fundEntries.forEach(e => {
+      const sId = e.sourceId || e.id;
+      if (!map[sId]) {
+        map[sId] = { sourceId: sId, source: (e.source || 'Unknown').trim(), entries: [] };
+        sourceIds.push(sId);
+      }
+      map[sId].entries.push(e);
+    });
+    return { sourceIds, map };
+  };
+
+  // Distinct sources list for selectors
+  const fundDistinctSources = React.useMemo(() => {
+    const currentFundEntries = others.filter(o => o.fundId === fund.id);
+    const { sourceIds, map } = getFundSourceGroups(currentFundEntries);
+    return sourceIds.map((sId, index) => ({
+      sourceId: sId,
+      source: map[sId].source,
+      entriesCount: map[sId].entries.length,
+      rank: index + 1
+    }));
+  }, [others, fund.id]);
+
   const handleAddNewOtherEntry = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSource || !newAmount) return;
+    if (!newSource.trim() || !newAmount) return;
     const newId = 'other_' + Date.now();
+    const targetSourceId = lockedSourceId ? lockedSourceId : newId;
     const entry: OtherFundEntry = {
       id: newId,
       fundId: fund.id,
       date: newDate || '',
-      source: newSource,
-      sourceId: lockedSourceId ? lockedSourceId : newId,
+      source: newSource.trim(),
+      sourceId: targetSourceId,
       amount: Number(newAmount),
       details: newDetails,
       monthKey: newMonthKey
     };
+
     setOthers(prevOthers => {
-      const updated = [...prevOthers, entry];
-      PortalDatabase.set('other_fund_entries', updated);
-      return updated;
+      const currentFundEntries = prevOthers.filter(item => item.fundId === fund.id);
+      const otherFundsEntries = prevOthers.filter(item => item.fundId !== fund.id);
+
+      // 1. Appending an entry to an already existing locked source
+      if (lockedSourceId) {
+        let lastIdx = -1;
+        for (let i = currentFundEntries.length - 1; i >= 0; i--) {
+          if ((currentFundEntries[i].sourceId || currentFundEntries[i].id) === lockedSourceId) {
+            lastIdx = i;
+            break;
+          }
+        }
+        const updatedFundEntries = [...currentFundEntries];
+        if (lastIdx >= 0) {
+          updatedFundEntries.splice(lastIdx + 1, 0, entry);
+        } else {
+          updatedFundEntries.push(entry);
+        }
+        const allUpdated = [...otherFundsEntries, ...updatedFundEntries];
+        PortalDatabase.set('other_fund_entries', allUpdated);
+        return allUpdated;
+      }
+
+      // 2. Inserting a NEW source at a specific position / rank
+      const { sourceIds, map } = getFundSourceGroups(currentFundEntries);
+      let targetIndexInSourceIds = sourceIds.length; // default 'end'
+
+      if (newPositionMode === 'start') {
+        targetIndexInSourceIds = 0;
+      } else if (newPositionMode === 'after' && positionAfterSourceId) {
+        const foundIdx = sourceIds.indexOf(positionAfterSourceId);
+        if (foundIdx !== -1) {
+          targetIndexInSourceIds = foundIdx + 1;
+        }
+      } else if (newPositionMode === 'custom' && customPositionNumber) {
+        const num = parseInt(customPositionNumber, 10);
+        if (!isNaN(num) && num >= 1) {
+          targetIndexInSourceIds = Math.min(Math.max(0, num - 1), sourceIds.length);
+        }
+      }
+
+      const newSourceIdsOrder = [...sourceIds];
+      newSourceIdsOrder.splice(targetIndexInSourceIds, 0, newId);
+
+      map[newId] = { sourceId: newId, source: newSource.trim(), entries: [entry] };
+
+      const orderedFundEntries: OtherFundEntry[] = [];
+      newSourceIdsOrder.forEach((sId, orderIdx) => {
+        if (map[sId]) {
+          map[sId].entries.forEach(e => {
+            orderedFundEntries.push({
+              ...e,
+              customOrder: orderIdx + 1
+            });
+          });
+        }
+      });
+
+      const allUpdated = [...otherFundsEntries, ...orderedFundEntries];
+      PortalDatabase.set('other_fund_entries', allUpdated);
+      return allUpdated;
     });
+
     logAudit('ADD', 'Direct Other Inflow Donation Logged', entry.id, '', JSON.stringify(entry));
     
     // reset form fields
@@ -5108,6 +5199,78 @@ function OtherFundRegister(props: any) {
     setShowAddForm(false);
     setLockedSource(null);
     setLockedSourceId(null);
+    setNewPositionMode('end');
+    setPositionAfterSourceId('');
+    setCustomPositionNumber('');
+    showToast('Other Donation entry added successfully at chosen position', 'success');
+  };
+
+  // Move source up or down in sequence
+  const handleMoveSource = (sourceId: string, direction: 'up' | 'down') => {
+    setOthers(prevOthers => {
+      const currentFundEntries = prevOthers.filter(item => item.fundId === fund.id);
+      const otherFundsEntries = prevOthers.filter(item => item.fundId !== fund.id);
+      const { sourceIds, map } = getFundSourceGroups(currentFundEntries);
+
+      const currIdx = sourceIds.indexOf(sourceId);
+      if (currIdx === -1) return prevOthers;
+      if (direction === 'up' && currIdx === 0) return prevOthers;
+      if (direction === 'down' && currIdx === sourceIds.length - 1) return prevOthers;
+
+      const targetIdx = direction === 'up' ? currIdx - 1 : currIdx + 1;
+      const newSourceIdsOrder = [...sourceIds];
+      const [moved] = newSourceIdsOrder.splice(currIdx, 1);
+      newSourceIdsOrder.splice(targetIdx, 0, moved);
+
+      const orderedFundEntries: OtherFundEntry[] = [];
+      newSourceIdsOrder.forEach((sId, orderIdx) => {
+        if (map[sId]) {
+          map[sId].entries.forEach(e => {
+            orderedFundEntries.push({ ...e, customOrder: orderIdx + 1 });
+          });
+        }
+      });
+
+      const allUpdated = [...otherFundsEntries, ...orderedFundEntries];
+      PortalDatabase.set('other_fund_entries', allUpdated);
+      return allUpdated;
+    });
+    showToast(`Source moved ${direction === 'up' ? 'up' : 'down'} successfully`, 'success');
+  };
+
+  // Set explicit serial / rank for a source
+  const handleSetSourcePosition = (sourceId: string, newPosition1Indexed: number) => {
+    setOthers(prevOthers => {
+      const currentFundEntries = prevOthers.filter(item => item.fundId === fund.id);
+      const otherFundsEntries = prevOthers.filter(item => item.fundId !== fund.id);
+      const { sourceIds, map } = getFundSourceGroups(currentFundEntries);
+
+      const currIdx = sourceIds.indexOf(sourceId);
+      if (currIdx === -1) return prevOthers;
+
+      const targetIdx = Math.min(Math.max(0, newPosition1Indexed - 1), sourceIds.length - 1);
+      if (targetIdx === currIdx) return prevOthers;
+
+      const newSourceIdsOrder = [...sourceIds];
+      const [moved] = newSourceIdsOrder.splice(currIdx, 1);
+      newSourceIdsOrder.splice(targetIdx, 0, moved);
+
+      const orderedFundEntries: OtherFundEntry[] = [];
+      newSourceIdsOrder.forEach((sId, orderIdx) => {
+        if (map[sId]) {
+          map[sId].entries.forEach(e => {
+            orderedFundEntries.push({ ...e, customOrder: orderIdx + 1 });
+          });
+        }
+      });
+
+      const allUpdated = [...otherFundsEntries, ...orderedFundEntries];
+      PortalDatabase.set('other_fund_entries', allUpdated);
+      return allUpdated;
+    });
+    setReorderModalSource(null);
+    setTargetRankInput('');
+    showToast('Source position updated successfully', 'success');
   };
 
   // Month and amount filters details
@@ -5161,7 +5324,7 @@ function OtherFundRegister(props: any) {
     
     // Within each group, sort entries by date oldest to newest
     result.forEach(group => {
-      group.entries.sort((a, b) => (new Date(a.date).getTime() || 0) - (new Date(b.date).getTime() || 0));
+      group.entries.sort((a, b) => (parseDateToTimestamp(a.date)) - (parseDateToTimestamp(b.date)));
     });
     
     return result;
@@ -5321,7 +5484,7 @@ function OtherFundRegister(props: any) {
       {isFundAdminUnlocked && showAddForm && (
         <div className="glass-panel p-6 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-pine-bar/95 to-pine-bar shadow-xl animate-fade-in">
           <h3 className="text-sm font-button uppercase tracking-wider text-white mb-4 flex items-center gap-1.5">
-            <PlusCircle className="w-4 h-4 text-emerald-400" /> Add Other Donation
+            <PlusCircle className="w-4 h-4 text-emerald-400" /> {lockedSource ? `Add Entry to: ${lockedSource}` : 'Add Other Donation Source'}
           </h3>
           <form onSubmit={handleAddNewOtherEntry} className="space-y-4 font-sans text-xs">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -5363,16 +5526,124 @@ function OtherFundRegister(props: any) {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Receipt Date (Optional)</label>
-                <input
-                  type="date"
-                  value={newDate}
-                  onChange={(e) => setNewDate(e.target.value)}
-                  className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn font-mono font-semibold"
-                />
-              </div>
+              <DateInput
+                value={newDate}
+                onChange={setNewDate}
+                label="Receipt Date (Optional)"
+                placeholder="DD/MM/YYYY"
+                badgeColor="emerald"
+              />
             </div>
+
+            {/* Insertion Position in List (Only when adding a new source) */}
+            {!lockedSource && (
+              <div className="bg-black/30 border border-emerald-500/20 p-3.5 rounded-xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[10px] uppercase text-emerald-400 font-bold tracking-wider flex items-center gap-1.5">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-emerald-400" />
+                    لسٹ میں مقام و نمبر شمار (Position in List / Serial Number)
+                  </label>
+                  <span className="text-[10px] text-zinc-400">
+                    کل موجودہ سورسز: <span className="text-emerald-400 font-bold font-mono">{fundDistinctSources.length}</span>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                  <label className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                    newPositionMode === 'end' ? 'bg-emerald-950/60 border-emerald-500 text-white' : 'bg-pine-bar/50 border-pine-border text-zinc-400 hover:text-zinc-200'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="newPositionMode"
+                      checked={newPositionMode === 'end'}
+                      onChange={() => setNewPositionMode('end')}
+                      className="text-emerald-500"
+                    />
+                    <span className="text-[11px] font-bold">At the End (سب سے آخر میں)</span>
+                  </label>
+
+                  <label className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                    newPositionMode === 'start' ? 'bg-emerald-950/60 border-emerald-500 text-white' : 'bg-pine-bar/50 border-pine-border text-zinc-400 hover:text-zinc-200'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="newPositionMode"
+                      checked={newPositionMode === 'start'}
+                      onChange={() => setNewPositionMode('start')}
+                      className="text-emerald-500"
+                    />
+                    <span className="text-[11px] font-bold">At Top (#1 سب سے اوپر)</span>
+                  </label>
+
+                  <label className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                    newPositionMode === 'after' ? 'bg-emerald-950/60 border-emerald-500 text-white' : 'bg-pine-bar/50 border-pine-border text-zinc-400 hover:text-zinc-200'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="newPositionMode"
+                      checked={newPositionMode === 'after'}
+                      onChange={() => setNewPositionMode('after')}
+                      className="text-emerald-500"
+                    />
+                    <span className="text-[11px] font-bold">After Source (فلاں کے بعد)</span>
+                  </label>
+
+                  <label className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
+                    newPositionMode === 'custom' ? 'bg-emerald-950/60 border-emerald-500 text-white' : 'bg-pine-bar/50 border-pine-border text-zinc-400 hover:text-zinc-200'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="newPositionMode"
+                      checked={newPositionMode === 'custom'}
+                      onChange={() => setNewPositionMode('custom')}
+                      className="text-emerald-500"
+                    />
+                    <span className="text-[11px] font-bold">Custom Serial # (مخصوص نمبر)</span>
+                  </label>
+                </div>
+
+                {newPositionMode === 'after' && (
+                  <div className="mt-2 pt-2 border-t border-emerald-500/10">
+                    <label className="block text-[10px] text-zinc-300 mb-1">
+                      کس سورس کے بعد داخل کرنا ہے؟ (Select Preceding Source):
+                    </label>
+                    <select
+                      value={positionAfterSourceId}
+                      onChange={(e) => setPositionAfterSourceId(e.target.value)}
+                      className="w-full bg-pine-bar border border-emerald-500/40 py-2 px-3 text-xs text-white rounded-lg focus:outline-none cursor-pointer"
+                    >
+                      <option value="">-- فلاں سورس منتخب کریں (مثلاً #20) --</option>
+                      {fundDistinctSources.map((s) => (
+                        <option key={s.sourceId} value={s.sourceId} className="bg-zinc-900 text-white">
+                          #{s.rank} - {s.source} ({s.entriesCount} اندراجات)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {newPositionMode === 'custom' && (
+                  <div className="mt-2 pt-2 border-t border-emerald-500/10 flex flex-wrap items-center gap-3">
+                    <label className="text-[10px] text-zinc-300">
+                      مطلوبہ نمبر شمار (Target Serial Number e.g. 21):
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={fundDistinctSources.length + 1}
+                      value={customPositionNumber}
+                      onChange={(e) => setCustomPositionNumber(e.target.value)}
+                      placeholder={`1 سے ${fundDistinctSources.length + 1} تک`}
+                      className="w-44 bg-pine-bar border border-emerald-500/40 py-1.5 px-3 text-xs text-white rounded-lg focus:outline-none font-mono"
+                    />
+                    <span className="text-[10px] text-emerald-400/80">
+                      (مثال: اگر 50 ریکارڈز ہیں اور آپ 21 لکھیں گے تو نیا سورس 21 ویں نمبر پر آ جائے گا)
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div>
               <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Extra Details / Memo</label>
               <textarea
@@ -5389,6 +5660,7 @@ function OtherFundRegister(props: any) {
                 onClick={() => {
                   setShowAddForm(false);
                   setLockedSource(null);
+                  setLockedSourceId(null);
                   setNewSource('');
                 }}
                 className="py-2.5 px-4 border border-pine-border hover:bg-pine-hover text-zinc-200 text-xs uppercase rounded-lg font-bold tracking-wider"
@@ -5457,7 +5729,7 @@ function OtherFundRegister(props: any) {
               onChange={(e) => setSortType(e.target.value)}
               className="w-full bg-pine-bar/60 border border-pine-border text-xs rounded-lg text-white pl-3 pr-8 py-1.5 focus:outline-none focus:border-pine-btn cursor-pointer appearance-none font-semibold text-ellipsis"
             >
-              <option value="none" className="bg-zinc-900">Default Sorting</option>
+              <option value="none" className="bg-zinc-900">Default Custom Order (قدرتی ترتیب / نمبر شمار)</option>
               <option value="highest-amount" className="bg-zinc-900">Highest Amount first (Sab Se Zyada) ↑</option>
               <option value="lowest-amount" className="bg-zinc-900">Lowest Amount first (Sab Se Kam) ↓</option>
               <option value="enter-amount" className="bg-zinc-900">Enter Amount (Search by Amount) 🔍</option>
@@ -5490,11 +5762,11 @@ function OtherFundRegister(props: any) {
         <table className="w-full text-left font-sans text-[9px] xs:text-[10px] sm:text-xs border-collapse">
           <thead>
             <tr className="bg-pine-bar text-pine-text-heading font-button text-[8px] xs:text-[9px] sm:text-[10px] uppercase tracking-tight border-b border-pine-border">
-              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Receipt Date</th>
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4"># / Receipt Date</th>
               <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Source / Contributor Name</th>
               <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-right font-semibold">Registered Amount</th>
               <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4">Reference Details</th>
-              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-center w-20">Actions</th>
+              <th className="py-1.5 px-1.5 sm:py-2.5 sm:px-4 text-center w-28">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-pine-border/40 font-mono">
@@ -5505,31 +5777,79 @@ function OtherFundRegister(props: any) {
                   {/* Group Header Row */}
                   <tr className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs bg-pine-bar/10">
                     <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">
-                      <button 
-                        onClick={() => toggleSource(group.sourceId)}
-                        className="flex items-center gap-1 hover:text-white transition-colors"
-                      >
-                        {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        {group.entries.length} Entries
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-600/40 font-mono text-[10px] px-2 py-0.5 rounded-full font-bold">
+                          #{groupIdx + 1}
+                        </span>
+                        <button 
+                          onClick={() => toggleSource(group.sourceId)}
+                          className="flex items-center gap-1 hover:text-white transition-colors"
+                        >
+                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                          {group.entries.length} Entries
+                        </button>
+                      </div>
                     </td>
                     <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
-                      <div className="flex items-center gap-2">
-                        <span>{group.source}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-white text-xs">{group.source}</span>
                         {isFundAdminUnlocked ? (
-                          <button
-                            onClick={() => {
-                              setNewSource(group.source);
-                              setLockedSource(group.source);
-                              setLockedSourceId(group.sourceId);
-                              setShowAddForm(true);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded text-[9px] uppercase tracking-wider transition-colors"
-                            title="Add New Entry to this Source"
-                          >
-                            <Plus className="w-3 h-3" /> Add Entry
-                          </button>
+                          <div className="inline-flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                setNewSource(group.source);
+                                setNewPositionMode('end');
+                                setLockedSource(group.source);
+                                setLockedSourceId(group.sourceId);
+                                setShowAddForm(true);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                              title="Add New Entry to this Source"
+                            >
+                              <Plus className="w-3 h-3" /> Add Entry
+                            </button>
+                            
+                            {/* Move Up */}
+                            <button
+                              type="button"
+                              disabled={groupIdx === 0}
+                              onClick={() => handleMoveSource(group.sourceId, 'up')}
+                              className={`p-1 rounded border transition-colors cursor-pointer ${
+                                groupIdx === 0 ? 'opacity-20 cursor-not-allowed border-zinc-800 text-zinc-600' : 'bg-pine-bar/60 hover:bg-emerald-900/40 text-zinc-300 hover:text-emerald-300 border-pine-border'
+                              }`}
+                              title="Move Up (# اوپر کریں)"
+                            >
+                              <ArrowUp className="w-3 h-3" />
+                            </button>
+
+                            {/* Move Down */}
+                            <button
+                              type="button"
+                              disabled={groupIdx === groupedSources.length - 1}
+                              onClick={() => handleMoveSource(group.sourceId, 'down')}
+                              className={`p-1 rounded border transition-colors cursor-pointer ${
+                                groupIdx === groupedSources.length - 1 ? 'opacity-20 cursor-not-allowed border-zinc-800 text-zinc-600' : 'bg-pine-bar/60 hover:bg-emerald-900/40 text-zinc-300 hover:text-emerald-300 border-pine-border'
+                              }`}
+                              title="Move Down (# نیچے کریں)"
+                            >
+                              <ArrowDown className="w-3 h-3" />
+                            </button>
+
+                            {/* Set Position Dialog */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReorderModalSource({ sourceId: group.sourceId, source: group.source, currentRank: groupIdx + 1 });
+                                setTargetRankInput(String(groupIdx + 1));
+                              }}
+                              className="p-1 px-1.5 text-[9px] font-mono font-bold bg-pine-bar/60 hover:bg-emerald-900/50 text-emerald-400 border border-emerald-500/30 rounded flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Change Serial # / Position (نمبر شمار تبدیل کریں)"
+                            >
+                              <ArrowUpDown className="w-2.5 h-2.5" />
+                              <span>#{groupIdx + 1}</span>
+                            </button>
+                          </div>
                         ) : (
                           <button
                             onClick={() => {
@@ -5540,8 +5860,8 @@ function OtherFundRegister(props: any) {
                               setPasswordModalPurpose('add');
                               setPasswordModalOpen(true);
                             }}
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 rounded text-[9px] uppercase tracking-wider transition-colors"
-                            title="Unlock to Add Entry"
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 rounded text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
+                            title="Unlock to Add Entry / Reorder"
                           >
                             <Lock className="w-3 h-3" /> Add Entry
                           </button>
@@ -5553,7 +5873,7 @@ function OtherFundRegister(props: any) {
                       {/* Print Individual Source Statement Button */}
                       <button
                         onClick={() => printOtherDonationSourceStatement(group.source, group.entries, fund)}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded text-[9px] uppercase tracking-wider transition-colors"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
                         title="Print Statement for this Source"
                       >
                         <Printer className="w-3 h-3" /> Print Individual Report
@@ -5566,8 +5886,8 @@ function OtherFundRegister(props: any) {
                   {/* Group Entries (Visible if Expanded) */}
                   {isExpanded && group.entries.map((o, idx) => (
                     <tr key={o.id} className="hover:bg-pine-hover/10 text-[9px] xs:text-[10px] sm:text-xs bg-black/20">
-                      <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted pl-6 sm:pl-8 border-l-2 border-pine-border/40">
-                        {o.date}
+                      <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted pl-6 sm:pl-8 border-l-2 border-pine-border/40 font-mono">
+                        {formatDateStr(o.date)}
                       </td>
                       <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans text-zinc-300">
                         <span className="opacity-50 text-[10px] uppercase font-bold tracking-widest mr-2">#{idx + 1}</span>
@@ -5640,6 +5960,72 @@ function OtherFundRegister(props: any) {
         </table>
       </div>
 
+      {/* Reorder Source Modal Dialog */}
+      {reorderModalSource && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-gradient-to-b from-pine-card to-pine-bar border-2 border-emerald-500/40 p-6 rounded-2xl shadow-2xl space-y-4 animate-fade-in">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-emerald-500/15 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <ArrowUpDown className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h3 className="text-sm font-button uppercase font-extrabold text-white tracking-wider">
+                سورس کا نمبر شمار تبدیل کریں
+              </h3>
+              <p className="text-xs text-emerald-300 font-bold mt-1">
+                "{reorderModalSource.source}"
+              </p>
+              <p className="text-[11px] text-pine-text-muted mt-1 font-sans">
+                موجودہ نمبر: <span className="font-bold text-white font-mono">#{reorderModalSource.currentRank}</span> (کل سورسز: {fundDistinctSources.length})
+              </p>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const num = parseInt(targetRankInput, 10);
+              if (!isNaN(num) && num >= 1) {
+                handleSetSourcePosition(reorderModalSource.sourceId, num);
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-[10px] uppercase text-zinc-300 mb-1 font-bold">
+                  نیا مطلوبہ نمبر شمار داخل کریں (1 تا {fundDistinctSources.length}):
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  max={fundDistinctSources.length}
+                  value={targetRankInput}
+                  onChange={(e) => setTargetRankInput(e.target.value)}
+                  className="w-full bg-pine-bar border border-emerald-500/50 py-2.5 px-3 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-400 font-mono text-center font-bold"
+                  placeholder={`مثلاً 21`}
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReorderModalSource(null);
+                    setTargetRankInput('');
+                  }}
+                  className="flex-1 py-2 border border-pine-border hover:bg-pine-hover text-xs text-zinc-300 rounded-lg font-bold"
+                >
+                  منسوخ (Cancel)
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-xs text-white rounded-lg font-bold shadow-lg shadow-emerald-950/30"
+                >
+                  نمبر تبدیل کریں (Save)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Edit Donation Modal Overlay */}
       {editingEntry && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[200] flex items-center justify-center p-4">
@@ -5658,15 +6044,13 @@ function OtherFundRegister(props: any) {
                 date: editingEntry.date || ''
               });
             }} className="space-y-3.5">
-              <div>
-                <label className="block text-[10px] uppercase text-zinc-400 mb-1">Receipt Date (Optional)</label>
-                <input 
-                  type="date"
-                  value={editingEntry.date}
-                  onChange={(e) => setEditingEntry({ ...editingEntry, date: e.target.value })}
-                  className="w-full bg-pine-bar border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none focus:border-pine-btn"
-                />
-              </div>
+              <DateInput
+                value={editingEntry.date}
+                onChange={(val) => setEditingEntry({ ...editingEntry, date: val })}
+                label="Receipt Date (Optional)"
+                placeholder="DD/MM/YYYY"
+                badgeColor="emerald"
+              />
 
               <div>
                 <label className="block text-[10px] uppercase text-zinc-400 mb-1">
@@ -6151,15 +6535,13 @@ function ExpensesRegister({
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Debit Date (Optional)</label>
-                <input
-                  type="date"
-                  value={newExpDate}
-                  onChange={(e) => setNewExpDate(e.target.value)}
-                  className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn font-mono font-semibold"
-                />
-              </div>
+              <DateInput
+                value={newExpDate}
+                onChange={setNewExpDate}
+                label="Debit Date (Optional)"
+                placeholder="DD/MM/YYYY"
+                badgeColor="rose"
+              />
             </div>
             <div>
               <label className="block text-[10px] uppercase text-pine-text-body mb-1 font-bold">Reference / Voucher Details</label>
@@ -6284,7 +6666,7 @@ function ExpensesRegister({
           <tbody className="divide-y divide-pine-border/40 font-mono">
             {sortedExpenses.map((e) => (
               <tr key={e.id} className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs">
-                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{e.date}</td>
+                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{formatDateStr(e.date)}</td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
                   <span>{e.name}</span>
                   {e.monthKey ? (
@@ -6371,15 +6753,13 @@ function ExpensesRegister({
                 date: editingExpense.date || ''
               });
             }} className="space-y-3.5">
-              <div>
-                <label className="block text-[10px] uppercase text-zinc-400 mb-1">Debit Date (Optional)</label>
-                <input 
-                  type="date"
-                  value={editingExpense.date}
-                  onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
-                  className="w-full bg-pine-bar border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none focus:border-rose-500"
-                />
-              </div>
+              <DateInput
+                value={editingExpense.date}
+                onChange={(val) => setEditingExpense({ ...editingExpense, date: val })}
+                label="Debit Date (Optional)"
+                placeholder="DD/MM/YYYY"
+                badgeColor="rose"
+              />
 
               <div>
                 <label className="block text-[10px] uppercase text-zinc-400 mb-1">

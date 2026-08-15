@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { PrayerTiming } from '../types';
+import { PrayerTiming, formatDateStr } from '../types';
 import { Clock, CheckCircle } from 'lucide-react';
 import TiltCard from './TiltCard';
 
@@ -300,14 +300,16 @@ export default function NamazSection({ prayerTimings }: NamazSectionProps) {
           Masjid Al Habib Noorani, Wah Cantt standard timings. Real-time next prayer coordinates synchronized under Pakistan standard timezone.
         </p>
 
-        {/* Karachi clock board (Hijri date completely removed) */}
+        {/* Karachi clock board */}
         <div className="flex flex-wrap mt-6 gap-4 justify-center items-center">
-          <div className="inline-flex gap-4 justify-center items-center py-2 px-6 rounded-full bg-pine-bar/60 border border-pine-border shadow-inner">
+          <div className="inline-flex flex-wrap gap-2 md:gap-4 justify-center items-center py-2 px-6 rounded-full bg-pine-bar/60 border border-pine-border shadow-inner">
             <div className="text-xs text-pine-text-muted font-button uppercase tracking-wider">
               Pakistan Time:
             </div>
-            <div className="text-sm md:text-base font-mono font-semibold text-pine-btn-hover">
-              {karachiTime.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            <div className="text-sm md:text-base font-mono font-semibold text-pine-btn-hover flex items-center gap-2">
+              <span className="text-emerald-400 font-bold">{formatDateStr(karachiTime)}</span>
+              <span className="text-zinc-500">•</span>
+              <span>{karachiTime.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
             </div>
           </div>
         </div>

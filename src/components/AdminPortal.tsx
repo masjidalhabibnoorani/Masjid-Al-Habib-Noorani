@@ -7,13 +7,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Admin, Announcement, PrayerTiming, HistorySection, Activity, MapSettings, 
   Administrator, FundModule, FundMember, FundMemberTransaction, OtherFundEntry, 
-  Expense, ProtectedPagePassword, Project, AuditLog, resolveImageUrl, formatDateStr, formatDateTimeStr, ShopRentRecord, ZakatEntry,
+  Expense, ProtectedPagePassword, Project, AuditLog, resolveImageUrl, formatDateStr, formatDateTimeStr, toHtmlDateValue, ShopRentRecord, ZakatEntry,
   ReligiousStaff
 } from '../types';
 import { useToast } from './Toast';
 import { GREGORIAN_MONTHS, ISLAMIC_MONTHS, PortalDatabase } from '../data';
 import TiltCard from './TiltCard';
 import Counter from './Counter';
+import DateInput from './DateInput';
 
 const formatTime12Hour = (timeStr: string): string => {
   if (!timeStr) return '';
@@ -1666,15 +1667,13 @@ export default function AdminPortal({
                         className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 rounded-lg text-xs placeholder-pine-text-muted/40 text-white focus:outline-none focus:border-pine-btn"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs uppercase text-pine-text-body mb-1 font-bold">Expiry Date</label>
-                      <input
-                        type="date"
-                        value={newAnn.expiryDate}
-                        onChange={(e) => setNewAnn({ ...newAnn, expiryDate: e.target.value })}
-                        className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 rounded-lg text-xs text-white focus:outline-none focus:border-pine-btn"
-                      />
-                    </div>
+                    <DateInput
+                      value={newAnn.expiryDate}
+                      onChange={(val) => setNewAnn({ ...newAnn, expiryDate: val })}
+                      label="Expiry Date"
+                      placeholder="DD/MM/YYYY"
+                      badgeColor="amber"
+                    />
 
                     {/* Image ON/OFF and Link */}
                     <div className="space-y-3 pt-1 border-t border-pine-border/40">
@@ -2608,15 +2607,13 @@ export default function AdminPortal({
                             className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg"
                           />
                         </div>
-                        <div>
-                          <label className="block text-xs uppercase text-pine-text-body mb-1">Payment Date (Optional)</label>
-                          <input
-                            type="date"
-                            value={newTransactionForm.paymentDate}
-                            onChange={(e) => setNewTransactionForm({ ...newTransactionForm, paymentDate: e.target.value })}
-                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg font-mono focus:outline-none"
-                          />
-                        </div>
+                        <DateInput
+                          value={newTransactionForm.paymentDate}
+                          onChange={(val) => setNewTransactionForm({ ...newTransactionForm, paymentDate: val })}
+                          label="Payment Date (Optional)"
+                          placeholder="DD/MM/YYYY"
+                          badgeColor="emerald"
+                        />
                       </div>
 
                       <button type="submit" className="w-full py-2 bg-pine-btn hover:bg-pine-btn-hover text-xs font-button uppercase text-white rounded-lg transition-colors font-bold">
@@ -2705,15 +2702,13 @@ export default function AdminPortal({
                       </div>
 
                       <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <label className="block text-xs uppercase text-pine-text-body mb-1">Receipt Date (Optional)</label>
-                          <input
-                            type="date"
-                            value={newOtherForm.date}
-                            onChange={(e) => setNewOtherForm({ ...newOtherForm, date: e.target.value })}
-                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg font-mono focus:outline-none"
-                          />
-                        </div>
+                        <DateInput
+                          value={newOtherForm.date}
+                          onChange={(val) => setNewOtherForm({ ...newOtherForm, date: val })}
+                          label="Receipt Date (Optional)"
+                          placeholder="DD/MM/YYYY"
+                          badgeColor="emerald"
+                        />
                       </div>
 
                       <div>
@@ -2803,15 +2798,13 @@ export default function AdminPortal({
                       </div>
 
                       <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <label className="block text-xs uppercase text-pine-text-body mb-1">Expense Date (Optional)</label>
-                          <input
-                            type="date"
-                            value={newExpenseForm.date}
-                            onChange={(e) => setNewExpenseForm({ ...newExpenseForm, date: e.target.value })}
-                            className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-xs text-white rounded-lg font-mono focus:outline-none"
-                          />
-                        </div>
+                        <DateInput
+                          value={newExpenseForm.date}
+                          onChange={(val) => setNewExpenseForm({ ...newExpenseForm, date: val })}
+                          label="Expense Date (Optional)"
+                          placeholder="DD/MM/YYYY"
+                          badgeColor="rose"
+                        />
                       </div>
 
                       <div>
@@ -4525,15 +4518,13 @@ export default function AdminPortal({
                       className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs uppercase text-pine-text-body mb-1 font-bold">Expiry Date</label>
-                    <input
-                      type="date"
-                      value={editingAnn.expiryDate}
-                      onChange={(e) => setEditingAnn({ ...editingAnn, expiryDate: e.target.value })}
-                      className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
-                    />
-                  </div>
+                  <DateInput
+                    value={editingAnn.expiryDate}
+                    onChange={(val) => setEditingAnn({ ...editingAnn, expiryDate: val })}
+                    label="Expiry Date"
+                    placeholder="DD/MM/YYYY"
+                    badgeColor="amber"
+                  />
                   <div className="flex items-center gap-2 py-1">
                     <input
                       type="checkbox"
@@ -4818,16 +4809,14 @@ export default function AdminPortal({
                       className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs uppercase text-pine-text-body mb-1 font-bold">Logged Date</label>
-                    <input
-                      type="date"
-                      required
-                      value={editingOther.date}
-                      onChange={(e) => setEditingOther({ ...editingOther, date: e.target.value })}
-                      className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none font-mono"
-                    />
-                  </div>
+                  <DateInput
+                    value={editingOther.date}
+                    onChange={(val) => setEditingOther({ ...editingOther, date: val })}
+                    label="Logged Date"
+                    placeholder="DD/MM/YYYY"
+                    required
+                    badgeColor="emerald"
+                  />
                   <div>
                     <label className="block text-xs uppercase text-pine-text-body mb-1 font-bold">Amount outright (Rs)</label>
                     <input
@@ -4899,16 +4888,14 @@ export default function AdminPortal({
                       className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs uppercase text-pine-text-body mb-1 font-bold">Billing Date</label>
-                    <input
-                      type="date"
-                      required
-                      value={editingExpense.date}
-                      onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
-                      className="w-full bg-pine-bar border border-pine-border py-2 px-3 text-xs text-white rounded-lg focus:outline-none font-mono"
-                    />
-                  </div>
+                  <DateInput
+                    value={editingExpense.date}
+                    onChange={(val) => setEditingExpense({ ...editingExpense, date: val })}
+                    label="Billing Date"
+                    placeholder="DD/MM/YYYY"
+                    required
+                    badgeColor="rose"
+                  />
                   <div>
                     <label className="block text-xs uppercase text-pine-text-body mb-1 font-bold">Amount Paid (Rs)</label>
                     <input

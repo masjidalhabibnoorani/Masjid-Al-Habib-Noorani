@@ -100,6 +100,7 @@ export interface OtherFundEntry {
   amount: number;
   details: string;
   monthKey?: string;
+  customOrder?: number;
 }
 
 export interface Expense {
@@ -213,33 +214,180 @@ export interface ReligiousStaff {
 export function formatDateStr(dateStr: string | Date | undefined | null): string {
   if (!dateStr) return '';
   try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '';
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    return `${dd}-${mm}-${yyyy}`;
+    if (dateStr instanceof Date) {
+      if (isNaN(dateStr.getTime())) return '';
+      const dd = String(dateStr.getDate()).padStart(2, '0');
+      const mm = String(dateStr.getMonth() + 1).padStart(2, '0');
+      const yyyy = String(dateStr.getFullYear());
+      return `${dd}/${mm}/${yyyy}`;
+    }
+    const str = String(dateStr).trim();
+    if (!str) return '';
+
+    // Match DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+    const dmyMatch = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+    if (dmyMatch) {
+      const dd = String(dmyMatch[1]).padStart(2, '0');
+      const mm = String(dmyMatch[2]).padStart(2, '0');
+      const yyyy = dmyMatch[3];
+      return `${dd}/${mm}/${yyyy}`;
+    }
+
+    // Match YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
+    const ymdMatch = str.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+    if (ymdMatch) {
+      const yyyy = ymdMatch[1];
+      const mm = String(ymdMatch[2]).padStart(2, '0');
+      const dd = String(ymdMatch[3]).padStart(2, '0');
+      return `${dd}/${mm}/${yyyy}`;
+    }
+
+    // Only attempt generic date parsing if string looks like a full date (e.g. ISO string or month name with at least 8 chars)
+    if (str.length >= 8 && (str.includes('T') || /[a-zA-Z]/.test(str))) {
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = String(d.getFullYear());
+        return `${dd}/${mm}/${yyyy}`;
+      }
+    }
+
+    return str;
   } catch {
-    return '';
+    return String(dateStr || '');
   }
 }
 
 export function formatDateTimeStr(dateStr: string | Date | undefined | null): string {
   if (!dateStr) return '';
   try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '';
+    if (dateStr instanceof Date) {
+      if (isNaN(dateStr.getTime())) return '';
+      const dd = String(dateStr.getDate()).padStart(2, '0');
+      const mm = String(dateStr.getMonth() + 1).padStart(2, '0');
+      const yyyy = String(dateStr.getFullYear());
+      let hr = dateStr.getHours();
+      const min = String(dateStr.getMinutes()).padStart(2, '0');
+      const ampm = hr >= 12 ? 'PM' : 'AM';
+      hr = hr % 12;
+      hr = hr ? hr : 12;
+      const hrStr = String(hr).padStart(2, '0');
+      return `${dd}/${mm}/${yyyy} ${hrStr}:${min} ${ampm}`;
+    }
+
+    const str = String(dateStr).trim();
+    if (!str) return '';
+
+    // If ISO with time like YYYY-MM-DDTHH:mm:ss or YYYY-MM-DD HH:mm:ss
+    const isoMatch = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})[T\s](\d{1,2}):(\d{1,2})/);
+    if (isoMatch) {
+      const yyyy = isoMatch[1];
+      const mm = String(isoMatch[2]).padStart(2, '0');
+      const dd = String(isoMatch[3]).padStart(2, '0');
+      let hr = parseInt(isoMatch[4], 10);
+      const min = String(isoMatch[5]).padStart(2, '0');
+      const ampm = hr >= 12 ? 'PM' : 'AM';
+      hr = hr % 12;
+      hr = hr ? hr : 12;
+      const hrStr = String(hr).padStart(2, '0');
+      return `${dd}/${mm}/${yyyy} ${hrStr}:${min} ${ampm}`;
+    }
+
+    const d = new Date(str);
+    if (isNaN(d.getTime())) {
+      return formatDateStr(str);
+    }
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
+    const yyyy = String(d.getFullYear());
     let hr = d.getHours();
     const min = String(d.getMinutes()).padStart(2, '0');
     const ampm = hr >= 12 ? 'PM' : 'AM';
     hr = hr % 12;
     hr = hr ? hr : 12;
     const hrStr = String(hr).padStart(2, '0');
-    return `${dd}-${mm}-${yyyy} ${hrStr}:${min} ${ampm}`;
+    return `${dd}/${mm}/${yyyy} ${hrStr}:${min} ${ampm}`;
+  } catch {
+    return formatDateStr(dateStr);
+  }
+}
+
+export function toHtmlDateValue(dateStr: string | Date | undefined | null): string {
+  if (!dateStr) return '';
+  try {
+    if (dateStr instanceof Date) {
+      if (isNaN(dateStr.getTime())) return '';
+      const yyyy = String(dateStr.getFullYear());
+      const mm = String(dateStr.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateStr.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    const str = String(dateStr).trim();
+    if (!str) return '';
+
+    // If already YYYY-MM-DD
+    const ymdMatch = str.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
+    if (ymdMatch) {
+      const yyyy = ymdMatch[1];
+      const mm = String(ymdMatch[2]).padStart(2, '0');
+      const dd = String(ymdMatch[3]).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // If DD/MM/YYYY
+    const dmyMatch = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
+    if (dmyMatch) {
+      const dd = String(dmyMatch[1]).padStart(2, '0');
+      const mm = String(dmyMatch[2]).padStart(2, '0');
+      const yyyy = dmyMatch[3];
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return '';
+    const yyyy = String(d.getFullYear());
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   } catch {
     return '';
   }
+}
+
+export function parseDateToDate(dateStr: string | Date | undefined | null): Date | null {
+  if (!dateStr) return null;
+  if (dateStr instanceof Date) {
+    return isNaN(dateStr.getTime()) ? null : dateStr;
+  }
+  const str = String(dateStr).trim();
+  if (!str) return null;
+
+  // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+  const dmyMatch = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
+  if (dmyMatch) {
+    const day = parseInt(dmyMatch[1], 10);
+    const month = parseInt(dmyMatch[2], 10) - 1;
+    const year = parseInt(dmyMatch[3], 10);
+    const d = new Date(year, month, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // YYYY-MM-DD or YYYY/MM/DD
+  const ymdMatch = str.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
+  if (ymdMatch) {
+    const year = parseInt(ymdMatch[1], 10);
+    const month = parseInt(ymdMatch[2], 10) - 1;
+    const day = parseInt(ymdMatch[3], 10);
+    const d = new Date(year, month, day);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+export function parseDateToTimestamp(dateStr: string | Date | undefined | null): number {
+  const d = parseDateToDate(dateStr);
+  return d ? d.getTime() : 0;
 }
