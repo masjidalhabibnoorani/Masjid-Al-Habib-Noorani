@@ -96,6 +96,7 @@ export interface OtherFundEntry {
   fundId: string;
   date?: string;
   source: string;
+  sourceId?: string;
   amount: number;
   details: string;
   monthKey?: string;

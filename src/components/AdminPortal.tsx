@@ -834,7 +834,7 @@ export default function AdminPortal({
     let finalMonthKey = newOtherForm.monthKey;
     if (!finalMonthKey) {
       if (matchedFund?.type === 'masjid') finalMonthKey = 'January';
-      else if (matchedFund?.type === 'bazm') finalMonthKey = 'Rabi-ul-Awwal';
+      else if (matchedFund?.type === 'bazm') finalMonthKey = ISLAMIC_MONTHS[0];
       else {
         const pObj = projects.find(p => p.id === newOtherForm.fundId || p.fundModuleId === newOtherForm.fundId);
         finalMonthKey = pObj?.dynamicMonths?.[0] || 'Phase 1 Setup';
@@ -891,7 +891,7 @@ export default function AdminPortal({
     let finalMonthKey = newExpenseForm.monthKey;
     if (!finalMonthKey) {
       if (matchedFund?.type === 'masjid') finalMonthKey = 'January';
-      else if (matchedFund?.type === 'bazm') finalMonthKey = 'Rabi-ul-Awwal';
+      else if (matchedFund?.type === 'bazm') finalMonthKey = ISLAMIC_MONTHS[0];
       else {
         const pObj = projects.find(p => p.id === newExpenseForm.fundId || p.fundModuleId === newExpenseForm.fundId);
         finalMonthKey = pObj?.dynamicMonths?.[0] || 'Phase 1 Setup';

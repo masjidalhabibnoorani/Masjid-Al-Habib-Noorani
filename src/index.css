@@ -172,10 +172,10 @@
   }
 }
 
-/* HIGH FIDELITY UNIFIED PRINTING STYLESHEET */
+/* HIGH FIDELITY UNIFIED PRINTING STYLESHEET FOR A4 PAPER */
 @page {
   size: A4 portrait;
-  margin: 12mm;
+  margin: 8mm 6mm 10mm 6mm;
 }
 
 @media print {
@@ -187,7 +187,11 @@
     margin: 0 !important;
     padding: 0 !important;
     min-height: auto !important;
-    font-size: 11pt !important;
+    font-size: 9.5pt !important;
+    line-height: 1.3 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   /* Universal element visibility lock */
@@ -201,16 +205,18 @@
     visibility: visible !important;
   }
 
-  /* Position absolute layouts to completely occupy single page grids */
+  /* Position absolute layouts to completely occupy single page grids without overflow */
   .print-receipt-area {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     box-shadow: none !important;
-    border: 1px solid #000000 !important;
-    padding: 24px !important;
-    border-radius: 8px !important;
+    border: 2px solid #000000 !important;
+    padding: 16px !important;
+    border-radius: 6px !important;
     background: #ffffff !important;
     color: #000000 !important;
   }
@@ -220,6 +226,8 @@
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     box-shadow: none !important;
     border: none !important;
     padding: 0 !important;
@@ -227,17 +235,22 @@
     color: #000000 !important;
   }
 
-  /* Table styling adjustments for printers with multi-page support */
+  /* Table styling adjustments for printers with multi-page support and fixed width constraint */
   table {
     border-collapse: collapse !important;
     width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
     color: #000000 !important;
     background: #ffffff !important;
     page-break-inside: auto !important;
+    word-wrap: break-word !important;
+    box-sizing: border-box !important;
   }
 
   tr {
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
     page-break-after: auto !important;
   }
 
@@ -250,9 +263,10 @@
   }
 
   th, td {
-    border: 1px solid #666666 !important;
+    border: 1px solid #000000 !important;
     color: #000000 !important;
     padding: 4px 6px !important;
+    word-break: break-word !important;
   }
 
   th {
@@ -260,10 +274,16 @@
     font-weight: bold !important;
   }
 
+  .no-break, .info-card, .summary-card, .summary-grid, .summary-stats, .chart-box, .amount-box, .receipt-box {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
   /* Force browsers to output background colors/borders correctly */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    box-sizing: border-box !important;
   }
 
   /* Completely suppress scrollbars, background layers and interactive markers */

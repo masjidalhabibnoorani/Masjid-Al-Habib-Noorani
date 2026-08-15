@@ -17,7 +17,8 @@ import { useToast } from './Toast';
 import { 
   Lock, Calendar, Users, DollarSign, ArrowLeft, Download, Printer, Sliders,
   Search, ShieldAlert, Plus, Edit, Trash, ChevronRight, User, Phone, CheckCircle, Info,
-  Check, PlusCircle, Trash2, Edit2, Save, UserPlus, X, Building2, HeartHandshake, Award
+  Check, PlusCircle, Trash2, Edit2, Save, UserPlus, X, Building2, HeartHandshake, Award,
+  History, FileText, UserCheck, Layers, Clock, ListFilter, Sparkles, ChevronDown, ChevronUp, ArrowUpDown
 } from 'lucide-react';
 
 interface FundDetailsViewProps {
@@ -54,8 +55,114 @@ interface OtherRegisterProps {
 }
 
 // ----------------------------------------------------
-// SECTION: OTHER FUND ACHIEVED
+// SECTION: OTHER FUND ACHIEVED & DYNAMIC ORG BRANDING HELPERS
 // ----------------------------------------------------
+
+export const getFundOrgInfo = (fund?: { type?: string; name?: string } | null) => {
+  const isBazm = fund?.type === 'bazm' || (fund?.name && fund.name.toLowerCase().includes('bazm'));
+  const isProject = fund?.type === 'project';
+
+  if (isBazm) {
+    return {
+      isBazm: true,
+      isProject: false,
+      orgName: 'BAZM-E-RAZA',
+      subOrgName: 'Bazm-e-Raza Islamic Welfare Trust',
+      tagline: 'Wah Cantt, Punjab, Pakistan • Markazi Idara',
+      expensesReportTitle: 'BAZM-E-RAZA EXPENDITURES REPORT',
+      expensesLabel: 'Bazm-e-Raza Expenses',
+      expensesTableTitle: 'Bazm-e-Raza Expenses (Rs)',
+      commitmentsTitle: 'COMMITMENTS & PENDING DUES REPORT — BAZM-E-RAZA',
+      generalLedgerTitle: 'GENERAL REGISTRY LEDGER REPORT — BAZM-E-RAZA',
+      individualStatementTitle: 'INDIVIDUAL CONTRIBUTION STATEMENT — BAZM-E-RAZA',
+      othersTitle: 'OTHER GENERAL ACHIEVED DONATIONS REPORT — BAZM-E-RAZA',
+      portfolioTitle: 'FINANCIAL STATEMENT & LEDGER SUMMARY — BAZM-E-RAZA',
+      receiptHeader: 'Bazm-e-Raza Islamic Welfare Trust',
+      badgeLabel: 'Bazm-e-Raza Official',
+      noticeEntityName: 'Bazm-e-Raza Islamic Welfare Trust',
+      noticePurposeText: "taake bazm o idaray ka kaam bila ta'atul jaari reh sake."
+    };
+  }
+
+  if (isProject) {
+    const projName = fund?.name || 'Special Project';
+    return {
+      isBazm: false,
+      isProject: true,
+      orgName: projName.toUpperCase(),
+      subOrgName: `${projName} • Masjid Al-Habib Noorani`,
+      tagline: 'Wah Cantt, Punjab, Pakistan • Development Project',
+      expensesReportTitle: `${projName.toUpperCase()} EXPENDITURES REPORT`,
+      expensesLabel: 'Project Expenses',
+      expensesTableTitle: `${projName} Expenses (Rs)`,
+      commitmentsTitle: `COMMITMENTS & PENDING DUES REPORT — ${projName.toUpperCase()}`,
+      generalLedgerTitle: `GENERAL REGISTRY LEDGER REPORT — ${projName.toUpperCase()}`,
+      individualStatementTitle: `INDIVIDUAL CONTRIBUTION STATEMENT — ${projName.toUpperCase()}`,
+      othersTitle: `OTHER GENERAL ACHIEVED DONATIONS REPORT — ${projName.toUpperCase()}`,
+      portfolioTitle: `FINANCIAL STATEMENT & LEDGER SUMMARY — ${projName.toUpperCase()}`,
+      receiptHeader: `${projName} Trust`,
+      badgeLabel: 'Project Official',
+      noticeEntityName: `${projName} Management Committee`,
+      noticePurposeText: "taake project ka kaam bila ta'atul jaari reh sake."
+    };
+  }
+
+  return {
+    isBazm: false,
+    isProject: false,
+    orgName: 'MASJID AL-HABIB NOORANI',
+    subOrgName: 'Masjid Al-Habib Noorani Community Trust',
+    tagline: 'Wah Cantt, Punjab, Pakistan • Markazi Masjid',
+    expensesReportTitle: 'MOSQUE EXPENDITURES REPORT',
+    expensesLabel: 'Mosque Expenses',
+    expensesTableTitle: 'Mosque Expenses (Rs)',
+    commitmentsTitle: 'COMMITMENTS & PENDING DUES REPORT — MASJID NOORANI',
+    generalLedgerTitle: 'GENERAL REGISTRY LEDGER REPORT — MASJID NOORANI',
+    individualStatementTitle: 'INDIVIDUAL CONTRIBUTION STATEMENT — MASJID NOORANI',
+    othersTitle: 'OTHER GENERAL ACHIEVED DONATIONS REPORT — MASJID NOORANI',
+    portfolioTitle: 'FINANCIAL STATEMENT & LEDGER SUMMARY — MASJID NOORANI',
+    receiptHeader: 'Masjid Al-Habib Noorani Community Trust',
+    badgeLabel: 'Masjid Official',
+    noticeEntityName: 'Masjid Al-Habib Noorani Community Trust',
+    noticePurposeText: "taake masjid o idaray ka kaam bila ta'atul jaari reh sake."
+  };
+};
+
+export const getShortMonthName = (m: string) => {
+  const map: Record<string, string> = {
+    'After 12 Rabi-ul-Awwal': '12-Aft',
+    'Before 12 Rabi-ul-Awwal': '12-Bef',
+    'Muharram': 'Muh',
+    'Safar': 'Saf',
+    'Rabi-ul-Awwal': 'R-1',
+    'Rabi-us-Sani': 'R-2',
+    'Jamadi-ul-Awwal': 'J-1',
+    'Jamadi-us-Sani': 'J-2',
+    'Jumada-al-Awwal': 'J-1',
+    'Jumada-as-Sani': 'J-2',
+    'Rajab': 'Raj',
+    'Shaban': 'Shb',
+    'Ramadan': 'Ram',
+    'Shawwal': 'Shw',
+    'Dhul-Qadah': 'D-Q',
+    'Dhul-Hijjah': 'D-H',
+    'Zul-Qadah': 'Z-Q',
+    'Zul-Hijjah': 'Z-H',
+    'January': 'Jan',
+    'February': 'Feb',
+    'March': 'Mar',
+    'April': 'Apr',
+    'May': 'May',
+    'June': 'Jun',
+    'July': 'Jul',
+    'August': 'Aug',
+    'September': 'Sep',
+    'October': 'Oct',
+    'November': 'Nov',
+    'December': 'Dec',
+  };
+  return map[m] || (m.length > 6 ? m.substring(0, 6) : m);
+};
 
 // Helper function to build standardized A4 report pages with mobile/desktop download & print controls
 const createPrintReportHtml = ({
@@ -68,7 +175,9 @@ const createPrintReportHtml = ({
   contentHtml: string;
 }) => {
   const isLandscape = orientation === 'landscape';
-  const maxWidth = isLandscape ? '297mm' : '210mm';
+  const a4Width = isLandscape ? '297mm' : '210mm';
+  const a4Height = isLandscape ? '210mm' : '297mm';
+  const printMargin = isLandscape ? '4mm 4mm 5mm 4mm' : '6mm 6mm 8mm 6mm';
 
   return `<!DOCTYPE html>
 <html lang="ur" dir="ltr">
@@ -76,28 +185,31 @@ const createPrintReportHtml = ({
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${title}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     @page {
       size: A4 ${orientation};
-      margin: 12mm 12mm 15mm 12mm;
+      margin: ${printMargin};
     }
     * {
       box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
     html, body {
       margin: 0;
       padding: 0;
-      background-color: #f1f5f9;
+      background-color: #cbd5e1;
       color: #000000;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: ${isLandscape ? '9px' : '11.5px'};
-      line-height: 1.4;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: ${isLandscape ? '7.5pt' : '9pt'};
+      line-height: 1.3;
     }
     
-    /* Top Action Bar for Mobile & Desktop */
+    /* Top Sticky Action & Scale Bar for Mobile & Desktop */
     #report-toolbar {
       position: sticky;
       top: 0;
@@ -105,15 +217,16 @@ const createPrintReportHtml = ({
       right: 0;
       background: #0f172a;
       color: #ffffff;
-      padding: 10px 16px;
+      padding: 8px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid #3b82f6;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      border-bottom: 2px solid #2563eb;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.35);
       z-index: 999999;
-      margin-bottom: 20px;
       font-family: system-ui, -apple-system, sans-serif;
+      gap: 10px;
+      flex-wrap: wrap;
     }
     #report-toolbar .title-badge {
       display: flex;
@@ -126,28 +239,53 @@ const createPrintReportHtml = ({
       padding: 4px 10px;
       border-radius: 6px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       border: 1px solid #334155;
+    }
+    #report-toolbar .zoom-controls {
+      display: inline-flex;
+      align-items: center;
+      background: #1e293b;
+      padding: 2px 5px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      gap: 3px;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    #report-toolbar .zoom-btn {
+      background: transparent;
+      border: none;
+      color: #f8fafc;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    #report-toolbar .zoom-btn:hover, #report-toolbar .zoom-btn.active {
+      background: #3b82f6;
+      color: #ffffff;
     }
     #report-toolbar .btn-group {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
       flex-wrap: wrap;
     }
-    #report-toolbar button {
+    #report-toolbar button.action-btn {
       border: none;
-      padding: 8px 16px;
+      padding: 7px 14px;
       border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 11.5px;
+      font-weight: 800;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
+      gap: 5px;
+      transition: all 0.15s ease-in-out;
       font-family: inherit;
     }
     #report-toolbar .btn-download {
@@ -156,6 +294,7 @@ const createPrintReportHtml = ({
     }
     #report-toolbar .btn-download:hover {
       background: #047857;
+      transform: translateY(-1px);
     }
     #report-toolbar .btn-print {
       background: #2563eb;
@@ -163,6 +302,7 @@ const createPrintReportHtml = ({
     }
     #report-toolbar .btn-print:hover {
       background: #1d4ed8;
+      transform: translateY(-1px);
     }
     #report-toolbar .btn-close {
       background: #475569;
@@ -172,91 +312,197 @@ const createPrintReportHtml = ({
       background: #334155;
     }
 
-    #report-container {
-      width: 100%;
-      max-width: ${maxWidth};
-      margin: 0 auto;
-      background: #ffffff;
-      padding: 12mm 15mm;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      border-radius: 4px;
+    /* Screen Stage Wrapper to center real A4 Paper View */
+    #stage-wrapper {
+      padding: 20px 10px 50px 10px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow-x: auto;
     }
 
+    /* True Physical A4 Sheet Container */
+    #report-container {
+      width: ${a4Width};
+      min-height: ${a4Height};
+      background: #ffffff;
+      padding: ${isLandscape ? '5mm 6mm' : '8mm 10mm'};
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18), 0 0 1px rgba(0,0,0,0.25);
+      border-radius: 2px;
+      box-sizing: border-box;
+      transform-origin: top center;
+      transition: transform 0.2s ease;
+      color: #000000;
+    }
+
+    /* Universal Clean Tables for A4 Fit */
+    table {
+      width: 100% !important;
+      max-width: 100% !important;
+      table-layout: fixed !important;
+      border-collapse: collapse !important;
+      word-wrap: break-word !important;
+      box-sizing: border-box !important;
+      page-break-inside: auto;
+      margin-top: 3px;
+      margin-bottom: 6px;
+    }
+    tr {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      page-break-after: auto;
+    }
+    thead {
+      display: table-header-group !important; /* Repeats table header at top of 2nd/3rd A4 pages */
+    }
+    tfoot {
+      display: table-footer-group !important;
+    }
+    th, td {
+      border: 1px solid #000000 !important;
+      color: #000000 !important;
+      padding: ${isLandscape ? '2.5px 2px' : '4px 5px'} !important;
+      word-break: break-word !important;
+      overflow-wrap: break-word !important;
+      box-sizing: border-box !important;
+    }
+    th {
+      background-color: #e2e8f0 !important;
+      font-weight: 800 !important;
+    }
+    .urdu-text {
+      font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Segoe UI', Tahoma, sans-serif;
+      line-height: 1.6;
+    }
+    .mono-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+    }
+    .no-break, .info-card, .summary-card, .summary-grid, .summary-stats, .chart-box, .amount-box, .receipt-box {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Native Print Rules: Strips screen wrappers and applies exact A4 zero offsets */
     @media print {
       #report-toolbar, .no-print {
         display: none !important;
+        visibility: hidden !important;
       }
-      body {
+      html, body {
         background: #ffffff !important;
         padding: 0 !important;
         margin: 0 !important;
+        width: 100% !important;
+      }
+      #stage-wrapper {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        overflow: visible !important;
       }
       #report-container {
-        max-width: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
         padding: 0 !important;
         margin: 0 !important;
         box-shadow: none !important;
         border-radius: 0 !important;
+        border: none !important;
+        transform: none !important;
       }
-    }
-
-    /* Page-break rules for clean A4 multi-page overflow */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      page-break-inside: auto;
-    }
-    tr {
-      page-break-inside: avoid;
-      page-break-after: auto;
-    }
-    thead {
-      display: table-header-group; /* Repeats table header at the top of 2nd, 3rd A4 pages */
-    }
-    tfoot {
-      display: table-footer-group;
-    }
-    .info-card, .summary-card, .summary-grid, .summary-stats, .chart-box, .amount-box, .no-break, .receipt-box {
-      page-break-inside: avoid;
-      break-inside: avoid;
     }
   </style>
 </head>
 <body>
   <div id="report-toolbar" class="no-print">
     <div class="title-badge">
-      <span class="badge">📄 A4 Paper Report</span>
+      <span class="badge">📄 A4 Paper Layout (${isLandscape ? 'Landscape' : 'Portrait'})</span>
+      <div class="zoom-controls">
+        <span>View:</span>
+        <button type="button" class="zoom-btn" onclick="setZoom(1.0, this)">100%</button>
+        <button type="button" class="zoom-btn" onclick="setZoom(0.85, this)">85%</button>
+        <button type="button" class="zoom-btn" onclick="setZoom(0.70, this)">70%</button>
+        <button type="button" class="zoom-btn active" onclick="fitToScreen(this)">Auto Fit</button>
+      </div>
     </div>
     <div class="btn-group">
-      <button type="button" class="btn-download" onclick="downloadReportPDF()">
-        📥 Download PDF (ڈاؤن لوڈ کریں)
+      <button type="button" class="action-btn btn-download" onclick="downloadReportPDF()">
+        📥 Download PDF (پی ڈی ایف ڈاؤن لوڈ)
       </button>
-      <button type="button" class="btn-print" onclick="window.print()">
+      <button type="button" class="action-btn btn-print" onclick="window.print()">
         🖨️ Print A4 Paper (پرنٹ کریں)
       </button>
-      <button type="button" class="btn-close" onclick="window.close()">
+      <button type="button" class="action-btn btn-close" onclick="window.close()">
         ✕ Close
       </button>
     </div>
   </div>
 
-  <div id="report-container">
-    ${contentHtml}
+  <div id="stage-wrapper">
+    <div id="report-container">
+      ${contentHtml}
+    </div>
   </div>
 
   <script>
+    function setZoom(scale, btn) {
+      var container = document.getElementById('report-container');
+      if (container) {
+        container.style.transform = 'scale(' + scale + ')';
+        if (scale < 1) {
+          container.style.marginBottom = '-' + Math.round((1 - scale) * container.offsetHeight) + 'px';
+        } else {
+          container.style.marginBottom = '0px';
+        }
+      }
+      var buttons = document.querySelectorAll('.zoom-btn');
+      buttons.forEach(function(b) { b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+    }
+
+    function fitToScreen(btn) {
+      var container = document.getElementById('report-container');
+      if (!container) return;
+      var availWidth = window.innerWidth - 24;
+      var targetWidth = ${isLandscape ? 1122 : 794}; // Approx px width of A4
+      var scale = 1;
+      if (availWidth < targetWidth) {
+        scale = Math.max(0.35, availWidth / targetWidth);
+      }
+      setZoom(scale, btn);
+    }
+
+    // Auto-fit on small screen initial load
+    window.addEventListener('load', function() {
+      if (window.innerWidth < ${isLandscape ? 1200 : 860}) {
+        fitToScreen(document.querySelector('.zoom-btn.active'));
+      }
+    });
+
     function downloadReportPDF() {
       var element = document.getElementById('report-container') || document.body;
       var toolbar = document.getElementById('report-toolbar');
+      var oldTransform = element.style.transform;
+      var oldMargin = element.style.marginBottom;
+      var oldBoxShadow = element.style.boxShadow;
+      
+      // Reset zoom transform for pristine unscaled PDF rendering
+      element.style.transform = 'none';
+      element.style.marginBottom = '0px';
+      element.style.boxShadow = 'none';
+
       if (toolbar) toolbar.style.display = 'none';
 
       var filename = '${title.replace(/[^a-zA-Z0-9_\-]/g, '_')}_A4.pdf';
 
       var opt = {
-        margin:       [10, 10, 12, 10],
+        margin:       ${isLandscape ? '[4, 4, 5, 4]' : '[6, 6, 8, 6]'},
         filename:     filename,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        html2canvas:  { scale: 2, useCORS: true, letterRendering: true, scrollX: 0, scrollY: 0 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: '${orientation}' },
         pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
       };
@@ -264,12 +510,21 @@ const createPrintReportHtml = ({
       if (typeof html2pdf !== 'undefined') {
         html2pdf().set(opt).from(element).save().then(function() {
           if (toolbar) toolbar.style.display = 'flex';
+          element.style.transform = oldTransform;
+          element.style.marginBottom = oldMargin;
+          element.style.boxShadow = oldBoxShadow;
         }).catch(function(err) {
           if (toolbar) toolbar.style.display = 'flex';
+          element.style.transform = oldTransform;
+          element.style.marginBottom = oldMargin;
+          element.style.boxShadow = oldBoxShadow;
           window.print();
         });
       } else {
         if (toolbar) toolbar.style.display = 'flex';
+        element.style.transform = oldTransform;
+        element.style.marginBottom = oldMargin;
+        element.style.boxShadow = oldBoxShadow;
         window.print();
       }
     }
@@ -361,12 +616,14 @@ export default function FundDetailsView({
       alert('Popup blocker active! Barah-e-karam popups allow karein taake report new tab me open ho sake.');
       return;
     }
+
+    const orgInfo = getFundOrgInfo(fund);
     
     const contentHtml = `
   <div class="receipt-box" style="border: 3px double #000000; padding: 24px; border-radius: 8px; background: #ffffff;">
     <div style="border-bottom: 2px solid #000000; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <h2 style="margin: 0; font-size: 16px; font-weight: 850; text-transform: uppercase; color: #000000;">Masjid Al-Habib Noorani Community Trust</h2>
+        <h2 style="margin: 0; font-size: 16px; font-weight: 850; text-transform: uppercase; color: #000000;">${orgInfo.receiptHeader}</h2>
         <p style="margin: 2px 0 0; font-size: 10px; font-weight: bold; color: #000000;">Wah Cantt, Punjab, Pakistan</p>
         <div style="font-size: 9px; color: #374151; margin-top: 1px;">Official Receipt • Tasdeeq Shuda Raseed</div>
       </div>
@@ -723,7 +980,7 @@ export default function FundDetailsView({
     <div class="header">
       <div style="display: flex; align-items: center;">
         <div class="title-area">
-          <h2>Masjid Al-Habib Noorani Community Trust</h2>
+          <h2>${getFundOrgInfo(fund).receiptHeader}</h2>
           <p>Wah Cantt, Punjab, Pakistan</p>
           <div class="sub">Official Receipt • Tasdeeq Shuda Raseed</div>
         </div>
@@ -880,7 +1137,8 @@ export default function FundDetailsView({
         if (t.monthKey !== 'khatm') {
           if (portfolioMonthFilter !== null) {
             const fundMonths = getMonths();
-            if (t.monthKey === fundMonths[portfolioMonthFilter]) {
+            const targetM = fundMonths[portfolioMonthFilter];
+            if (t.monthKey === targetM || (targetM === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal')) {
               total += t.amount;
             }
           } else {
@@ -931,7 +1189,8 @@ export default function FundDetailsView({
      if (portfolioMonthFilter === 'additional') {
        return !o.monthKey;
      }
-     return o.monthKey === monthsList[portfolioMonthFilter];
+     const targetM = monthsList[portfolioMonthFilter];
+     return o.monthKey === targetM || (targetM === 'After 12 Rabi-ul-Awwal' && o.monthKey === 'Rabi-ul-Awwal');
   }).reduce((sum, o) => sum + o.amount, 0);
 
   const getPortfolioExpensesSum = () => currentExpenses.filter(e => {
@@ -939,7 +1198,8 @@ export default function FundDetailsView({
      if (portfolioMonthFilter === 'additional') {
        return !e.monthKey;
      }
-     return e.monthKey === monthsList[portfolioMonthFilter];
+     const targetM = monthsList[portfolioMonthFilter];
+     return e.monthKey === targetM || (targetM === 'After 12 Rabi-ul-Awwal' && e.monthKey === 'Rabi-ul-Awwal');
   }).reduce((sum, e) => sum + e.amount, 0);
 
   const getPortfolioSumTotalAchieved = () => getPortfolioFixedSum() + getPortfolioOtherSum();
@@ -1405,7 +1665,9 @@ export default function FundDetailsView({
                   {monthsList.map((m, idx) => (
                     <option key={m} value={idx}>{m}</option>
                   ))}
-                  <option value="additional" className="text-purple-400 font-bold">Additional Time</option>
+                  {fund.type !== 'bazm' && (
+                    <option value="additional" className="text-purple-400 font-bold">Additional Time</option>
+                  )}
                 </select>
                 <div className="relative inline-block text-left">
                   <button 
@@ -1860,13 +2122,13 @@ export default function FundDetailsView({
                     // Collect monthly transactions and expenses values
                     let tMonthTotal = 0;
                     currentMembers.forEach(mem => {
-                      const list = transactions.filter(t => t.memberId === mem.id && t.monthKey === m);
+                      const list = transactions.filter(t => t.memberId === mem.id && (t.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal')));
                       tMonthTotal += list.reduce((s, item) => s + item.amount, 0);
                     });
-                    const otherMTotal = currentOthers.filter(o => o.monthKey === m).reduce((s, item) => s + item.amount, 0);
+                    const otherMTotal = currentOthers.filter(o => o.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && o.monthKey === 'Rabi-ul-Awwal')).reduce((s, item) => s + item.amount, 0);
 
                     const income = tMonthTotal + otherMTotal;
-                    const expMTotal = currentExpenses.filter(e => e.monthKey === m).reduce((s, item) => s + item.amount, 0);
+                    const expMTotal = currentExpenses.filter(e => e.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && e.monthKey === 'Rabi-ul-Awwal')).reduce((s, item) => s + item.amount, 0);
                     const maxScalingLimit = Math.max(1, getPortfolioSumTotalAchieved(), getPortfolioExpensesSum()) || 10000;
                     const incHeight = Math.max(4, Math.min(100, (income / maxScalingLimit) * 100));
                     const expHeight = Math.max(4, Math.min(100, (expMTotal / maxScalingLimit) * 100));
@@ -1882,13 +2144,13 @@ export default function FundDetailsView({
                         <div className="w-2.5 bg-emerald-500 rounded-t transition-all duration-300 group-hover:bg-emerald-400" style={{ height: `${incHeight}%` }} />
                         {/* Expense Bar */}
                         <div className="w-2.5 bg-rose-500/70 rounded-t transition-all duration-300 group-hover:bg-rose-450" style={{ height: `${expHeight}%` }} />
-                        <span className="text-[9px] font-mono text-pine-text-muted mt-2 rotate-45 origin-left">{m.substring(0, 3)}</span>
+                        <span className="text-[9px] font-mono text-pine-text-muted mt-2 rotate-45 origin-left">{getShortMonthName(m)}</span>
                       </div>
                     );
                   })}
 
                   {/* Additional Time bar */}
-                  {(() => {
+                  {fund.type !== 'bazm' && (() => {
                     const addOtherTotal = currentOthers.filter(o => !o.monthKey).reduce((s, item) => s + item.amount, 0);
                     const addExpTotal = currentExpenses.filter(e => !e.monthKey).reduce((s, item) => s + item.amount, 0);
                     const maxScalingLimit = Math.max(1, getPortfolioSumTotalAchieved(), getPortfolioExpensesSum()) || 10000;
@@ -1941,15 +2203,15 @@ export default function FundDetailsView({
                       {monthsList.map((m, idx) => {
                         let receipts = 0;
                         currentMembers.forEach(mem => {
-                          const trans = transactions.filter(t => t.memberId === mem.id && t.monthKey === m);
+                          const trans = transactions.filter(t => t.memberId === mem.id && (t.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal')));
                           receipts += trans.reduce((s, it) => s + it.amount, 0);
                         });
                         
-                        const otherReceipts = currentOthers.filter(o => o.monthKey === m).reduce((s, o) => s + o.amount, 0);
+                        const otherReceipts = currentOthers.filter(o => o.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && o.monthKey === 'Rabi-ul-Awwal')).reduce((s, o) => s + o.amount, 0);
 
                         const totalInflow = receipts + otherReceipts;
 
-                        const monthExpenses = currentExpenses.filter(e => e.monthKey === m).reduce((s, e) => s + e.amount, 0);
+                        const monthExpenses = currentExpenses.filter(e => e.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && e.monthKey === 'Rabi-ul-Awwal')).reduce((s, e) => s + e.amount, 0);
 
                         const statementNet = totalInflow - monthExpenses;
                         return (
@@ -1965,7 +2227,7 @@ export default function FundDetailsView({
                       })}
 
                       {/* Additional Time Row */}
-                      {(() => {
+                      {fund.type !== 'bazm' && (() => {
                         const addReceipts = currentOthers.filter(o => !o.monthKey).reduce((s, o) => s + o.amount, 0);
                         const addExpenses = currentExpenses.filter(e => !e.monthKey).reduce((s, e) => s + e.amount, 0);
                         const addNet = addReceipts - addExpenses;
@@ -2281,8 +2543,10 @@ export const printMemberStatement = (
   member: FundMember,
   memberTrans: FundMemberTransaction[],
   months: string[],
-  fundName: string
+  fundName: string,
+  fund?: FundModule
 ) => {
+  const orgInfo = getFundOrgInfo(fund || { name: fundName });
   const paidSum = memberTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
   const balance = member.requiredAmount - paidSum;
   const generatedDate = formatDateTimeStr(new Date());
@@ -2295,8 +2559,8 @@ export const printMemberStatement = (
 
   const contentHtml = `
   <div style="border-bottom: 4px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center;">
-    <h2 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">MASJID AL-HABIB NOORANI</h2>
-    <h3 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">INDIVIDUAL FINANCIAL STATEMENT REPORT — ${fundName.toUpperCase()}</h3>
+    <h2 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">${orgInfo.orgName}</h2>
+    <h3 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">${orgInfo.individualStatementTitle} — ${fundName.toUpperCase()}</h3>
     <div style="font-size: 8.5px; font-family: monospace; color: #000000; margin-top: 6px;">
       Report Generated: ${generatedDate}
     </div>
@@ -2377,7 +2641,7 @@ export const printMemberStatement = (
   </table>`;
 
   const reportHtml = createPrintReportHtml({
-    title: `${member.name}_Individual_Statement_A4`,
+    title: `${member.name.replace(/\s+/g, '_')}_Individual_Statement_A4`,
     orientation: 'portrait',
     contentHtml
   });
@@ -2392,17 +2656,26 @@ export const printGeneralRegistryReport = (
   allFundMembers: FundMember[],
   transactions: FundMemberTransaction[],
   months: string[],
-  fund: FundModule
+  fund: FundModule,
+  filterLabel?: string,
+  activeMonthFilter?: string
 ) => {
+  const orgInfo = getFundOrgInfo(fund);
   const generatedDate = formatDateTimeStr(new Date());
   const isProject = fund.type === 'project';
   const totalGoal = orderedMembers.reduce((sum, m) => sum + m.requiredAmount, 0);
 
-  // Calculate dynamic totals across all active members
+  const displayMonths = activeMonthFilter ? [activeMonthFilter] : months;
+
+  // Calculate dynamic totals across filtered members
   let totalPaid = 0;
   orderedMembers.forEach(m => {
     const mTrans = transactions.filter(t => t.memberId === m.id);
-    totalPaid += mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+    if (activeMonthFilter) {
+      totalPaid += mTrans.filter(t => t.monthKey === activeMonthFilter).reduce((s, x) => s + x.amount, 0);
+    } else {
+      totalPaid += mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+    }
   });
   const totalOutstanding = totalGoal - totalPaid;
 
@@ -2414,16 +2687,17 @@ export const printGeneralRegistryReport = (
 
   const contentHtml = `
   <div style="padding-bottom: 8px; margin-bottom: 12px; text-align: center; border-bottom: 3px double #000000;">
-    <h2 style="font-size: 16px; font-weight: 800; color: #000000; margin: 0; text-transform: uppercase;">MASJID AL-HABIB NOORANI</h2>
-    <h3 style="font-size: 10px; font-weight: 700; color: #000000; margin: 2px 0 0; text-transform: uppercase;">GENERAL REGISTRY LEDGER REPORT — ${fund.name.toUpperCase()}</h3>
+    <h2 style="font-size: 16px; font-weight: 800; color: #000000; margin: 0; text-transform: uppercase;">${orgInfo.orgName}</h2>
+    <h3 style="font-size: 10px; font-weight: 700; color: #000000; margin: 2px 0 0; text-transform: uppercase;">${orgInfo.generalLedgerTitle} — ${fund.name.toUpperCase()}</h3>
     <div style="font-size: 8px; font-family: monospace; color: #000000; margin-top: 4px;">
-      Report Generated: ${generatedDate} | Total ${orderedMembers.length} active contributors list
+      Report Generated: ${generatedDate} | Total ${orderedMembers.length} contributors listed
+      ${filterLabel && filterLabel !== 'None' && filterLabel !== 'All Members' ? `<br><span style="font-size: 9.5px; font-weight: 800; background: #ffffff; border: 1.5px solid #000000; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-top: 5px; text-transform: uppercase;">🔍 Active Filter: ${filterLabel}</span>` : ''}
     </div>
   </div>
 
-  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;" class="no-break">
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px;" class="no-break">
     <div style="border: 1px solid #000000; background-color: #f3f4f6; padding: 6px; border-radius: 4px; text-align: center;">
-      <span style="font-size: 8px; text-transform: uppercase; color: #374151; display: block; font-weight: bold;">Total Contributors</span>
+      <span style="font-size: 8px; text-transform: uppercase; color: #374151; display: block; font-weight: bold;">Filtered Contributors</span>
       <strong style="font-size: 11px; font-family: monospace; color: #000000;">${orderedMembers.length} Members</strong>
     </div>
     <div style="border: 1px solid #000000; background-color: #f3f4f6; padding: 6px; border-radius: 4px; text-align: center;">
@@ -2440,34 +2714,39 @@ export const printGeneralRegistryReport = (
     </div>
   </div>
 
-  <table style="width: 100%; border-collapse: collapse; font-size: 9px; font-family: monospace;">
+  <table style="width: 100%; border-collapse: collapse; font-size: 8.5px; font-family: monospace;">
     <thead>
       <tr>
-        <th style="width: 3%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; padding: 5px 3px; text-align: center;">Sr</th>
-        <th style="text-align: left; padding-left: 6px; width: 20%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000;">Name of Contributor</th>
-        ${!isProject ? '<th style="width: 6%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">Prev Due</th>' : ''}
-        ${months.map(m => `<th style="width: 5%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">${m.substring(0, 4)}</th>`).join('')}
+        <th style="width: 3%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; padding: 4px 2px; text-align: center;">Sr</th>
+        <th style="text-align: left; padding-left: 4px; width: 18%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000;">Name of Contributor</th>
+        ${!isProject && !activeMonthFilter ? '<th style="width: 5%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">Prev Due</th>' : ''}
+        ${displayMonths.map(m => `<th style="background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; padding: 4px 2px; text-align: center;">${getShortMonthName(m)}</th>`).join('')}
         <th style="width: 7%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">Required</th>
         <th style="width: 7%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">Paid</th>
-        <th style="width: 7%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">Outstanding</th>
+        <th style="width: 7%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; text-align: center;">Balance</th>
       </tr>
     </thead>
     <tbody>
       ${orderedMembers.map((m) => {
         const naturalSNo = allFundMembers.findIndex(x => x.id === m.id) + 1;
         const mTrans = transactions.filter(t => t.memberId === m.id);
-        const paid = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+        let paid = 0;
+        if (activeMonthFilter) {
+          paid = mTrans.filter(t => t.monthKey === activeMonthFilter).reduce((s, x) => s + x.amount, 0);
+        } else {
+          paid = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+        }
         const outstanding = m.requiredAmount - paid;
 
         return `
           <tr>
-            <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 4px 3px; text-align: center;">${naturalSNo}</td>
-            <td style="text-align: left; font-family: sans-serif; font-weight: 700; padding-left: 6px; border: 1px solid #000000; color: #000000;">${m.name}</td>
-            ${!isProject ? `<td style="border: 1px solid #000000; text-align: center;">${m.remainingPrevious > 0 ? `${m.remainingPrevious.toLocaleString()}` : '—'}</td>` : ''}
-            ${months.map(month => {
+            <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 3px 2px; text-align: center;">${naturalSNo}</td>
+            <td style="text-align: left; font-family: sans-serif; font-weight: 700; padding-left: 4px; border: 1px solid #000000; color: #000000;">${m.name}</td>
+            ${!isProject && !activeMonthFilter ? `<td style="border: 1px solid #000000; text-align: center; font-size: 8px;">${m.remainingPrevious > 0 ? `${m.remainingPrevious.toLocaleString()}` : '—'}</td>` : ''}
+            ${displayMonths.map(month => {
               const txList = mTrans.filter(t => t.monthKey === month);
               const mSum = txList.reduce((sum, item) => sum + item.amount, 0);
-              return `<td style="border: 1px solid #000000; text-align: center;">${mSum > 0 ? `${mSum.toLocaleString()}` : '—'}</td>`;
+              return `<td style="border: 1px solid #000000; text-align: center; font-size: 8px;">${mSum > 0 ? `${mSum.toLocaleString()}` : '—'}</td>`;
             }).join('')}
             <td style="font-weight: bold; background-color: #f9fafb; border: 1px solid #000000; text-align: center;">${m.requiredAmount.toLocaleString()}</td>
             <td style="font-weight: bold; background-color: #f9fafb; border: 1px solid #000000; text-align: center;">${paid > 0 ? paid.toLocaleString() : '—'}</td>
@@ -2478,7 +2757,7 @@ export const printGeneralRegistryReport = (
         `;
       }).join('')}
       <tr style="background-color: #e5e7eb; font-weight: 800;">
-        <td colspan="2" style="text-align: left; padding-left: 6px; border: 1px solid #000000;">GRAND TOTAL</td>
+        <td colspan="2" style="text-align: left; padding-left: 4px; border: 1px solid #000000;">GRAND TOTAL</td>
         ${!isProject ? `<td style="border: 1px solid #000000; text-align: center;">${orderedMembers.reduce((sum, m) => sum + m.remainingPrevious, 0).toLocaleString()}</td>` : ''}
         ${months.map(month => {
           const sum = orderedMembers.reduce((acc, m) => {
@@ -2508,8 +2787,10 @@ export const printGeneralRegistryReport = (
 
 export const printExpensesStatement = (
   filteredExpenses: Expense[],
-  filterLabel: string
+  filterLabel: string,
+  fund?: FundModule
 ) => {
+  const orgInfo = getFundOrgInfo(fund);
   const generatedDate = formatDateTimeStr(new Date());
   const totalAmount = filteredExpenses.reduce((sum, item) => sum + item.amount, 0);
 
@@ -2521,11 +2802,11 @@ export const printExpensesStatement = (
 
   const contentHtml = `
   <div style="border-bottom: 4px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center;">
-    <h1 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">MASJID AL-HABIB NOORANI</h1>
-    <h2 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">MOSQUE EXPENDITURES REPORT</h2>
+    <h1 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">${orgInfo.orgName}</h1>
+    <h2 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">${orgInfo.expensesReportTitle}</h2>
     <div style="font-size: 8.5px; font-family: monospace; color: #000000; margin-top: 6px;">
       Report Generated: ${generatedDate}
-      ${filterLabel ? `<div style="background-color: #ffffff; border: 2px solid #000000; padding: 6px 12px; border-radius: 4px; font-size: 14px; color: #000000; font-weight: 800; margin-top: 10px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">Month Filtered: ${filterLabel.toUpperCase()}</div>` : ''}
+      ${filterLabel && filterLabel !== 'None' ? `<div style="background-color: #ffffff; border: 1.5px solid #000000; padding: 4px 10px; border-radius: 4px; font-size: 11px; color: #000000; font-weight: 800; margin-top: 8px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Filter Applied: ${filterLabel}</div>` : ''}
     </div>
   </div>
 
@@ -2577,7 +2858,7 @@ export const printExpensesStatement = (
   </table>`;
 
   const reportHtml = createPrintReportHtml({
-    title: `Expenses_Report_Masjid_Al_Habib_Noorani_A4`,
+    title: `${orgInfo.orgName.replace(/\s+/g, '_')}_Expenses_Report_A4`,
     orientation: 'portrait',
     contentHtml
   });
@@ -2587,12 +2868,14 @@ export const printExpensesStatement = (
   printWindow.document.close();
 };
 
-export const printOtherDonationsStatement = (
-  filteredOthers: OtherFundEntry[],
-  filterLabel: string
+export const printOtherDonationSourceStatement = (
+  sourceName: string,
+  entries: OtherFundEntry[],
+  fund?: FundModule
 ) => {
+  const orgInfo = getFundOrgInfo(fund);
   const generatedDate = formatDateTimeStr(new Date());
-  const totalAmount = filteredOthers.reduce((sum, item) => sum + item.amount, 0);
+  const totalAmount = entries.reduce((sum, item) => sum + item.amount, 0);
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -2602,11 +2885,11 @@ export const printOtherDonationsStatement = (
 
   const contentHtml = `
   <div style="border-bottom: 4px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center;">
-    <h1 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">MASJID AL-HABIB NOORANI</h1>
-    <h2 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">OTHER GENERAL ACHIEVED DONATIONS REPORT</h2>
+    <h1 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">${orgInfo.orgName}</h1>
+    <h2 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">${orgInfo.othersTitle} - INDIVIDUAL REPORT</h2>
     <div style="font-size: 8.5px; font-family: monospace; color: #000000; margin-top: 6px;">
       Report Generated: ${generatedDate}
-      ${filterLabel ? `<div style="background-color: #ffffff; border: 2px solid #000000; padding: 6px 12px; border-radius: 4px; font-size: 14px; color: #000000; font-weight: 800; margin-top: 10px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">Month Filtered: ${filterLabel.toUpperCase()}</div>` : ''}
+      <div style="background-color: #ffffff; border: 1.5px solid #000000; padding: 4px 10px; border-radius: 4px; font-size: 12px; color: #000000; font-weight: 800; margin-top: 8px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">👤 Contributor: ${sourceName}</div>
     </div>
   </div>
 
@@ -2617,7 +2900,92 @@ export const printOtherDonationsStatement = (
     </div>
     <div>
       <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">Total Entries count</span>
-      <strong style="font-size: 13px; font-family: monospace; color: #000000;">${filteredOthers.length} Records</strong>
+      <strong style="font-size: 13px; font-family: monospace; color: #000000;">${entries.length} Records</strong>
+    </div>
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">System Status</span>
+      <strong style="color: #000000; text-transform: uppercase; font-size: 11px;">DIGITALLY VERIFIED</strong>
+    </div>
+  </div>
+
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 11px;">
+    <thead>
+      <tr>
+        <th style="width: 5%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">Sr</th>
+        <th style="background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">Period / Category</th>
+        <th style="text-align: center; width: 15%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000;">Date</th>
+        <th style="text-align: right; width: 20%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000;">Amount Paid (Rs)</th>
+        <th style="background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 12px; border: 1px solid #000000; text-align: left;">Reference Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${entries.map((item, idx) => `
+        <tr>
+          <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 6px 12px;">${idx + 1}</td>
+          <td style="font-weight: 700; color: #000000; border: 1px solid #000000; padding: 6px 12px;">${item.monthKey || 'Additional Time Donation'}</td>
+          <td style="text-align: center; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 12px;">${formatDateStr(item.date)}</td>
+          <td style="text-align: right; font-weight: bold; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 12px;">
+            ${item.amount.toLocaleString()} Rs
+          </td>
+          <td style="color: #000000; border: 1px solid #000000; padding: 6px 12px;">${item.details || '—'}</td>
+        </tr>
+      `).join('')}
+      <tr style="background-color: #e5e7eb; font-weight: bold;">
+        <td colspan="3" style="font-weight: 800; border: 1px solid #000000; padding: 6px 12px;">TOTAL CONTRIBUTIONS</td>
+        <td style="text-align: right; font-weight: 900; font-family: monospace; color: #000000; font-size: 12px; border: 1px solid #000000; padding: 6px 12px;">
+          ${totalAmount.toLocaleString()} Rs
+        </td>
+        <td style="border: 1px solid #000000; padding: 6px 12px;"></td>
+      </tr>
+    </tbody>
+  </table>`;
+
+  const reportHtml = createPrintReportHtml({
+    title: `${orgInfo.orgName.replace(/\s+/g, '_')}_Individual_Other_Donation_Report_A4`,
+    orientation: 'portrait',
+    contentHtml
+  });
+
+  printWindow.document.open();
+  printWindow.document.write(reportHtml);
+  printWindow.document.close();
+};
+
+export const printOtherDonationsStatement = (
+  groupedSources: { source: string; sourceId: string; totalAmount: number; entries: OtherFundEntry[] }[],
+  filterLabel: string,
+  fund?: FundModule
+) => {
+  const orgInfo = getFundOrgInfo(fund);
+  const generatedDate = formatDateTimeStr(new Date());
+  
+  const totalAmount = groupedSources.reduce((sum, g) => sum + g.totalAmount, 0);
+  const totalEntriesCount = groupedSources.reduce((sum, g) => sum + g.entries.length, 0);
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Popup blocker active! Barah-e-karam popups allow karein taake report new tab me open ho sake.');
+    return;
+  }
+
+  const contentHtml = `
+  <div style="border-bottom: 4px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center;">
+    <h1 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">${orgInfo.orgName}</h1>
+    <h2 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">${orgInfo.othersTitle}</h2>
+    <div style="font-size: 8.5px; font-family: monospace; color: #000000; margin-top: 6px;">
+      Report Generated: ${generatedDate}
+      ${filterLabel && filterLabel !== 'None' ? `<div style="background-color: #ffffff; border: 1.5px solid #000000; padding: 4px 10px; border-radius: 4px; font-size: 11px; color: #000000; font-weight: 800; margin-top: 8px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px;">🔍 Filter Applied: ${filterLabel}</div>` : ''}
+    </div>
+  </div>
+
+  <div style="border: 1px solid #000000; border-radius: 4px; padding: 12px; background-color: #f3f4f6; margin-bottom: 20px; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;" class="no-break">
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">Total Collections</span>
+      <strong style="font-size: 13px; font-family: monospace; color: #000000;">${totalAmount.toLocaleString()} Rs</strong>
+    </div>
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">Total Entries count</span>
+      <strong style="font-size: 13px; font-family: monospace; color: #000000;">${totalEntriesCount} Records</strong>
     </div>
     <div>
       <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">System Status</span>
@@ -2636,16 +3004,26 @@ export const printOtherDonationsStatement = (
       </tr>
     </thead>
     <tbody>
-      ${filteredOthers.map((item, idx) => `
-        <tr>
-          <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 6px 12px;">${idx + 1}</td>
-          <td style="font-weight: 700; color: #000000; border: 1px solid #000000; padding: 6px 12px;">${item.source}</td>
-          <td style="text-align: center; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 12px;">${formatDateStr(item.date)}</td>
-          <td style="text-align: right; font-weight: bold; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 12px;">
-            ${item.amount.toLocaleString()} Rs
+      ${groupedSources.map((group, groupIdx) => `
+        <tr style="background-color: #f9fafb; border-bottom: 2px solid #000000;">
+          <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 6px 12px;">${groupIdx + 1}</td>
+          <td colspan="2" style="font-weight: 800; color: #000000; border: 1px solid #000000; padding: 6px 12px; font-size: 13px;">${group.source} <span style="font-weight: normal; font-size: 10px; margin-left: 8px;">(${group.entries.length} Entries)</span></td>
+          <td style="text-align: right; font-weight: 900; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 12px; font-size: 13px;">
+            ${group.totalAmount.toLocaleString()} Rs
           </td>
-          <td style="color: #000000; border: 1px solid #000000; padding: 6px 12px;">${item.details || '—'}</td>
+          <td style="color: #000000; border: 1px solid #000000; padding: 6px 12px; font-weight: bold;">Group Total</td>
         </tr>
+        ${group.entries.map((item, itemIdx) => `
+          <tr>
+            <td style="color: #000000; border: 1px solid #000000; padding: 4px 12px; text-align: center; font-size: 9px;">${groupIdx + 1}.${itemIdx + 1}</td>
+            <td style="color: #374151; border: 1px solid #000000; padding: 4px 12px; font-size: 10px; padding-left: 20px;">Entry ${itemIdx + 1}</td>
+            <td style="text-align: center; font-family: monospace; color: #374151; border: 1px solid #000000; padding: 4px 12px; font-size: 10px;">${formatDateStr(item.date)}</td>
+            <td style="text-align: right; font-family: monospace; color: #374151; border: 1px solid #000000; padding: 4px 12px; font-size: 10px;">
+              ${item.amount.toLocaleString()} Rs
+            </td>
+            <td style="color: #374151; border: 1px solid #000000; padding: 4px 12px; font-size: 10px;">${item.details || '—'}</td>
+          </tr>
+        `).join('')}
       `).join('')}
       <tr style="background-color: #e5e7eb; font-weight: bold;">
         <td colspan="3" style="font-weight: 800; border: 1px solid #000000; padding: 6px 12px;">GRAND TOTAL DONATIONS</td>
@@ -2658,7 +3036,92 @@ export const printOtherDonationsStatement = (
   </table>`;
 
   const reportHtml = createPrintReportHtml({
-    title: `Other_Donations_Report_A4`,
+    title: `${orgInfo.orgName.replace(/\s+/g, '_')}_Other_Donations_Report_A4`,
+    orientation: 'portrait',
+    contentHtml
+  });
+
+  printWindow.document.open();
+  printWindow.document.write(reportHtml);
+  printWindow.document.close();
+};
+
+export const printCommitmentsReport = (
+  commitments: Commitment[],
+  fundName: string,
+  filterLabel?: string,
+  fund?: FundModule
+) => {
+  const orgInfo = getFundOrgInfo(fund || { name: fundName });
+  const generatedDate = formatDateTimeStr(new Date());
+  const totalAmountDue = commitments.reduce((sum, c) => sum + c.amountDue, 0);
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Popup blocker active! Barah-e-karam popups allow karein taake report new tab me open ho sake.');
+    return;
+  }
+
+  const contentHtml = `
+  <div style="border-bottom: 4px double #000000; padding-bottom: 12px; margin-bottom: 20px; text-align: center;">
+    <h1 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">${orgInfo.orgName}</h1>
+    <h2 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">${orgInfo.commitmentsTitle} — ${fundName.toUpperCase()}</h2>
+    <div style="font-size: 8.5px; font-family: monospace; color: #000000; margin-top: 6px;">
+      Report Generated: ${generatedDate}
+      ${filterLabel && filterLabel !== 'None' ? `<div style="background-color: #ffffff; border: 1.5px solid #000000; padding: 4px 10px; border-radius: 4px; font-size: 11px; color: #000000; font-weight: 800; margin-top: 8px; display: inline-block; text-transform: uppercase;">🔍 Filter Applied: ${filterLabel}</div>` : ''}
+    </div>
+  </div>
+
+  <div style="border: 1px solid #000000; border-radius: 4px; padding: 12px; background-color: #f3f4f6; margin-bottom: 20px; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;" class="no-break">
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">Total Pending Dues</span>
+      <strong style="font-size: 14px; font-family: monospace; color: #000000;">${totalAmountDue.toLocaleString()} Rs</strong>
+    </div>
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">Total Commitments</span>
+      <strong style="font-size: 14px; font-family: monospace; color: #000000;">${commitments.length} Persons</strong>
+    </div>
+    <div>
+      <span style="font-size: 8.5px; text-transform: uppercase; color: #000000; display: block; font-weight: bold;">System Status</span>
+      <strong style="color: #000000; text-transform: uppercase; font-size: 11px;">DIGITALLY VERIFIED</strong>
+    </div>
+  </div>
+
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 11px;">
+    <thead>
+      <tr>
+        <th style="width: 6%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 10px; border: 1px solid #000000; text-align: center;">Sr</th>
+        <th style="background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 10px; border: 1px solid #000000; text-align: left;">Person Name / Contact</th>
+        <th style="text-align: right; width: 22%; background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 10px; border: 1px solid #000000;">Amount Due (Rs)</th>
+        <th style="background-color: #e5e7eb; color: #000000; font-weight: 700; text-transform: uppercase; padding: 8px 10px; border: 1px solid #000000; text-align: left;">Commitment Details / Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${commitments.map((c, idx) => `
+        <tr>
+          <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 6px 10px; text-align: center;">${idx + 1}</td>
+          <td style="font-weight: 700; color: #000000; border: 1px solid #000000; padding: 6px 10px;">
+            <div>${c.name}</div>
+            ${c.phone ? `<div style="font-size: 9px; color: #374151; font-family: monospace;">📞 ${c.phone}</div>` : ''}
+          </td>
+          <td style="text-align: right; font-weight: bold; font-family: monospace; color: #000000; border: 1px solid #000000; padding: 6px 10px;">
+            ${c.amountDue.toLocaleString()} Rs
+          </td>
+          <td style="color: #000000; border: 1px solid #000000; padding: 6px 10px;">${c.notes || '—'}</td>
+        </tr>
+      `).join('')}
+      <tr style="background-color: #e5e7eb; font-weight: bold;">
+        <td colspan="2" style="font-weight: 800; border: 1px solid #000000; padding: 6px 10px;">GRAND TOTAL PENDING</td>
+        <td style="text-align: right; font-weight: 900; font-family: monospace; color: #000000; font-size: 13px; border: 1px solid #000000; padding: 6px 10px;">
+          ${totalAmountDue.toLocaleString()} Rs
+        </td>
+        <td style="border: 1px solid #000000; padding: 6px 10px;"></td>
+      </tr>
+    </tbody>
+  </table>`;
+
+  const reportHtml = createPrintReportHtml({
+    title: `${orgInfo.orgName.replace(/\s+/g, '_')}_Commitments_Report_A4`,
     orientation: 'portrait',
     contentHtml
   });
@@ -2678,6 +3141,7 @@ export const printAnalyticalPortfolioStatement = (
   overrideMonthFilter?: { monthIndex: number | 'additional'; name: string },
   showVisuals: boolean = true
 ) => {
+  const orgInfo = getFundOrgInfo(fund);
   const generatedDate = formatDateTimeStr(new Date());
   
   // Totals calculations
@@ -2690,11 +3154,11 @@ export const printAnalyticalPortfolioStatement = (
     currentMembers.forEach(mem => {
       const list = transactions.filter(t => t.memberId === mem.id && t.monthKey !== 'khatm');
       list.forEach(tx => {
-         if (overrideMonthFilter) {
-            if (tx.monthKey === filterMonthKey) {
+         if (overrideMonthFilter && filterMonthKey) {
+            if (tx.monthKey === filterMonthKey || (filterMonthKey === 'After 12 Rabi-ul-Awwal' && tx.monthKey === 'Rabi-ul-Awwal')) {
                totalFixed += tx.amount;
             }
-         } else {
+         } else if (!overrideMonthFilter) {
            totalFixed += tx.amount;
          }
       });
@@ -2706,7 +3170,8 @@ export const printAnalyticalPortfolioStatement = (
      if (overrideMonthFilter.monthIndex === 'additional') {
        return !o.monthKey;
      }
-     return o.monthKey === months[overrideMonthFilter.monthIndex as number];
+     const filterMonthKey = months[overrideMonthFilter.monthIndex as number];
+     return o.monthKey === filterMonthKey || (filterMonthKey === 'After 12 Rabi-ul-Awwal' && o.monthKey === 'Rabi-ul-Awwal');
   }).reduce((sum, o) => sum + o.amount, 0);
 
   const totalExpenses = currentExpenses.filter(e => {
@@ -2714,7 +3179,8 @@ export const printAnalyticalPortfolioStatement = (
      if (overrideMonthFilter.monthIndex === 'additional') {
        return !e.monthKey;
      }
-     return e.monthKey === months[overrideMonthFilter.monthIndex as number];
+     const filterMonthKey = months[overrideMonthFilter.monthIndex as number];
+     return e.monthKey === filterMonthKey || (filterMonthKey === 'After 12 Rabi-ul-Awwal' && e.monthKey === 'Rabi-ul-Awwal');
   }).reduce((sum, e) => sum + e.amount, 0);
 
   const combinedIncome = totalFixed + totalOthers;
@@ -2724,18 +3190,20 @@ export const printAnalyticalPortfolioStatement = (
   let maxMValue = 1000;
   const addOtherInVal = currentOthers.filter(o => !o.monthKey).reduce((sum, item) => sum + item.amount, 0);
   const addExpOutVal = currentExpenses.filter(e => !e.monthKey).reduce((sum, item) => sum + item.amount, 0);
-  if (addOtherInVal > maxMValue) maxMValue = addOtherInVal;
-  if (addExpOutVal > maxMValue) maxMValue = addExpOutVal;
+  if (fund.type !== 'bazm') {
+    if (addOtherInVal > maxMValue) maxMValue = addOtherInVal;
+    if (addExpOutVal > maxMValue) maxMValue = addExpOutVal;
+  }
 
   const monthlyData = months.map((m, idx) => {
     let fixedMIn = 0;
     currentMembers.forEach(mem => {
-      const list = transactions.filter(t => t.memberId === mem.id && t.monthKey === m);
+      const list = transactions.filter(t => t.memberId === mem.id && (t.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal')));
       fixedMIn += list.reduce((sum, item) => sum + item.amount, 0);
     });
 
-    const otherMIn = currentOthers.filter(o => o.monthKey === m).reduce((sum, item) => sum + item.amount, 0);
-    const expMOut = currentExpenses.filter(e => e.monthKey === m).reduce((sum, item) => sum + item.amount, 0);
+    const otherMIn = currentOthers.filter(o => o.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && o.monthKey === 'Rabi-ul-Awwal')).reduce((sum, item) => sum + item.amount, 0);
+    const expMOut = currentExpenses.filter(e => e.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && e.monthKey === 'Rabi-ul-Awwal')).reduce((sum, item) => sum + item.amount, 0);
 
     const totalIn = fixedMIn + otherMIn;
     if (totalIn > maxMValue) maxMValue = totalIn;
@@ -2760,12 +3228,12 @@ export const printAnalyticalPortfolioStatement = (
         <!-- Expense bar -->
         <rect x="${xOffset + 13}" y="${140 - outHeight}" width="11" height="${Math.max(1, outHeight)}" fill="#f43f5e" rx="1" />
         <!-- Month Label -->
-        <text x="${xOffset + 12}" y="154" font-family="sans-serif" font-size="8px" text-anchor="middle" fill="#111827" font-weight="bold">${data.month.substring(0, 3)}</text>
+        <text x="${xOffset + 12}" y="154" font-family="sans-serif" font-size="8px" text-anchor="middle" fill="#111827" font-weight="bold">${getShortMonthName(data.month)}</text>
       </g>
     `;
   }).join('');
 
-  if (!overrideMonthFilter || overrideMonthFilter.monthIndex === 'additional') {
+  if ((!overrideMonthFilter || overrideMonthFilter.monthIndex === 'additional') && fund.type !== 'bazm') {
     const addInHeight = (addOtherInVal / maxMValue) * 110;
     const addOutHeight = (addExpOutVal / maxMValue) * 110;
     const xOffset = 35 + monthlyData.length * 43;
@@ -2815,180 +3283,50 @@ export const printAnalyticalPortfolioStatement = (
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
-    alert('Allow popups to print reports!');
+    alert('Popup blocker active! Barah-e-karam popups allow karein taake report new tab me open ho sake.');
     return;
   }
 
-  const reportHtml = `
-<!DOCTYPE html>
-<html lang="ur" dir="ltr">
-<head>
-  <meta charset="UTF-8">
-  <title>Analytical Portfolio Statement - ${fund.name}</title>
-  <style>
-    @page {
-      size: A4 portrait;
-      margin: 10mm;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      color: #000000;
-      background-color: #ffffff;
-      line-height: 1.4;
-      font-size: 11px;
-    }
-    .print-header {
-      border-bottom: 4px double #000000;
-      padding-bottom: 8px;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-    .print-header h1 {
-      font-size: 16px;
-      font-weight: 800;
-      color: #000000;
-      margin: 0;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .print-header h2 {
-      font-size: 10px;
-      font-weight: 700;
-      color: #000000;
-      margin: 4px 0 0;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    .print-meta {
-      font-size: 8px;
-      font-family: monospace;
-      color: #000000;
-      margin-top: 4px;
-    }
-    .summary-card {
-      border: 1px solid #000000;
-      border-radius: 4px;
-      padding: 8px;
-      background-color: #f3f4f6;
-      margin-bottom: 12px;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      text-align: center;
-      gap: 8px;
-    }
-    .stat-box {
-      border-right: 1px solid #000000;
-    }
-    .stat-box:last-child {
-      border-right: none;
-    }
-    .stat-box span {
-      font-size: 7.5px;
-      text-transform: uppercase;
-      color: #000000;
-      letter-spacing: 0.5px;
-      display: block;
-      margin-bottom: 2px;
-      font-weight: bold;
-    }
-    .stat-box strong {
-      font-size: 11px;
-      font-family: monospace;
-      color: #000000;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 15px;
-      font-size: 10px;
-    }
-    th {
-      background-color: #e5e7eb;
-      color: #000000;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 5px 8px;
-      border: 1px solid #000000;
-      text-align: left;
-    }
-    td {
-      padding: 4px 8px;
-      border: 1px solid #000000;
-      color: #000000;
-    }
-    tr:nth-child(even) td {
-      background-color: #f9fafb;
-    }
-    .highlight-row {
-      background-color: #e5e7eb !important;
-      font-weight: bold;
-    }
-    .charts-row {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .chart-box {
-      border: 1.5px solid #000000;
-      border-radius: 5px;
-      padding: 8px;
-      background-color: #ffffff;
-    }
-    .chart-title {
-      font-size: 8.5px;
-      font-weight: bold;
-      text-transform: uppercase;
-      border-bottom: 1px solid #000000;
-      padding-bottom: 4px;
-      margin-top: 0;
-      margin-bottom: 6px;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="print-header">
-    <h1>MASJID AL-HABIB NOORANI</h1>
-    <h2>COMPREHENSIVE FINANCIAL PORTFOLIO STATUS — ${fund.name.toUpperCase()}</h2>
-    <div class="print-meta">
+  const contentHtml = `
+  <div style="border-bottom: 4px double #000000; padding-bottom: 12px; margin-bottom: 16px; text-align: center;">
+    <h1 style="font-size: 18px; font-weight: 800; color: #000000; margin: 0; letter-spacing: 1px; text-transform: uppercase;">${orgInfo.orgName}</h1>
+    <h2 style="font-size: 11px; font-weight: 700; color: #000000; margin: 4px 0 0; letter-spacing: 0.5px; text-transform: uppercase;">${orgInfo.portfolioTitle} — ${fund.name.toUpperCase()}</h2>
+    <div style="font-size: 8.5px; font-family: monospace; color: #000000; margin-top: 6px;">
       Report Generated: ${generatedDate} | System Code: AHNT-PORTFOLIO-${fund.id.toUpperCase()}
       ${overrideMonthFilter ? `<br><span style="font-size: 10px; color: #000000; font-weight: bold; margin-top: 4px; display: inline-block;">Filters Applied: Month ${overrideMonthFilter.name}</span>` : '<br><span style="font-size: 9px; margin-top: 4px; display: inline-block;">Period: Complete Ledger Lifecycle</span>'}
     </div>
   </div>
 
-  <div class="summary-card">
-    <div class="stat-box">
-      <span>Monthly Registry</span>
-      <strong>${totalFixed.toLocaleString()} Rs</strong>
+  <div style="border: 1px solid #000000; border-radius: 4px; padding: 10px; background-color: #f3f4f6; margin-bottom: 16px; display: grid; grid-template-columns: repeat(5, 1fr); text-align: center; gap: 8px;" class="summary-card no-break">
+    <div style="border-right: 1px solid #000000; padding-right: 4px;">
+      <span style="font-size: 8px; text-transform: uppercase; color: #000000; display: block; margin-bottom: 2px; font-weight: bold;">Monthly Registry</span>
+      <strong style="font-size: 12px; font-family: monospace; color: #000000;">${totalFixed.toLocaleString()} Rs</strong>
     </div>
-    <div class="stat-box">
-      <span>Other Donations</span>
-      <strong>${totalOthers.toLocaleString()} Rs</strong>
+    <div style="border-right: 1px solid #000000; padding-right: 4px;">
+      <span style="font-size: 8px; text-transform: uppercase; color: #000000; display: block; margin-bottom: 2px; font-weight: bold;">Other Donations</span>
+      <strong style="font-size: 12px; font-family: monospace; color: #000000;">${totalOthers.toLocaleString()} Rs</strong>
     </div>
-    <div class="stat-box">
-      <span>Sum Combined</span>
-      <strong>${combinedIncome.toLocaleString()} Rs</strong>
+    <div style="border-right: 1px solid #000000; padding-right: 4px;">
+      <span style="font-size: 8px; text-transform: uppercase; color: #000000; display: block; margin-bottom: 2px; font-weight: bold;">Sum Combined</span>
+      <strong style="font-size: 12px; font-family: monospace; color: #000000;">${combinedIncome.toLocaleString()} Rs</strong>
     </div>
-    <div class="stat-box">
-      <span> Mosq Expenses</span>
-      <strong>${totalExpenses.toLocaleString()} Rs</strong>
+    <div style="border-right: 1px solid #000000; padding-right: 4px;">
+      <span style="font-size: 8px; text-transform: uppercase; color: #000000; display: block; margin-bottom: 2px; font-weight: bold;">${orgInfo.expensesLabel}</span>
+      <strong style="font-size: 12px; font-family: monospace; color: #000000;">${totalExpenses.toLocaleString()} Rs</strong>
     </div>
-    <div class="stat-box">
-      <span>Net Reserve</span>
-      <strong>${netReserve.toLocaleString()} Rs</strong>
+    <div>
+      <span style="font-size: 8px; text-transform: uppercase; color: #000000; display: block; margin-bottom: 2px; font-weight: bold;">Net Reserve</span>
+      <strong style="font-size: 12px; font-family: monospace; color: #000000; font-weight: 900;">${netReserve.toLocaleString()} Rs</strong>
     </div>
   </div>
 
   ${showVisuals ? `
   <!-- CHARTS REPORTING ROW -->
-  <div class="charts-row">
+  <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 10px; margin-bottom: 16px;" class="no-break">
     <!-- Trend Analysis Bar Chart -->
-    <div class="chart-box">
-      <h3 class="chart-title">Income vs Expense Trend</h3>
-      <svg width="100%" height="150" viewBox="0 0 620 170" style="background-color: #f9fafb;">
+    <div style="border: 1px solid #000000; border-radius: 4px; padding: 8px; background-color: #ffffff;" class="chart-box">
+      <h3 style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000000; padding-bottom: 4px; margin-top: 0; margin-bottom: 6px; text-align: center;">Income vs Expense Trend</h3>
+      <svg width="100%" height="140" viewBox="0 0 620 170" style="background-color: #f9fafb;">
         <!-- Grid horizontal lines -->
         <line x1="30" y1="30" x2="600" y2="30" stroke="#cccccc" stroke-width="0.5" stroke-dasharray="2,2" />
         <line x1="30" y1="85" x2="600" y2="85" stroke="#cccccc" stroke-width="0.5" stroke-dasharray="2,2" />
@@ -3011,10 +3349,10 @@ export const printAnalyticalPortfolioStatement = (
     </div>
 
     <!-- Grand Budget Flow column 2 -->
-    <div class="chart-box">
-      <h3 class="chart-title">Grand Budget Allocation / میزانیہ خاکہ</h3>
+    <div style="border: 1px solid #000000; border-radius: 4px; padding: 8px; background-color: #ffffff;" class="chart-box">
+      <h3 style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000000; padding-bottom: 4px; margin-top: 0; margin-bottom: 6px; text-align: center;">Grand Budget Allocation / میزانیہ خاکہ</h3>
       <div style="padding: 2px; text-align: center;">
-        <svg width="100%" height="150" viewBox="0 0 180 150">
+        <svg width="100%" height="140" viewBox="0 0 180 150">
           <text x="45" y="15" font-family="sans-serif" font-size="8px" font-weight="bold" text-anchor="middle" fill="#111827">INCOME / کل آمدن</text>
           
           <rect x="30" y="25" width="30" height="100" fill="#e5e7eb" rx="2" stroke="#000000" stroke-width="0.5" />
@@ -3037,8 +3375,8 @@ export const printAnalyticalPortfolioStatement = (
     </div>
 
     <!-- Contributor Distribution horizontal breakdown -->
-    <div class="chart-box">
-      <h3 class="chart-title">Contributor Status Share</h3>
+    <div style="border: 1px solid #000000; border-radius: 4px; padding: 8px; background-color: #ffffff;" class="chart-box">
+      <h3 style="font-size: 8.5px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000000; padding-bottom: 4px; margin-top: 0; margin-bottom: 6px; text-align: center;">Contributor Status Share</h3>
       <div style="padding: 2px 5px;">
         <div style="font-size: 8px; font-weight: bold; margin-bottom: 8px; text-align: center; color: #374151;">
           Total Contributors: ${totalCount} Active
@@ -3103,22 +3441,21 @@ export const printAnalyticalPortfolioStatement = (
   </div>
   ` : ''}
 
-  <div style="margin-bottom: 12px; font-size: 10px; border: 1.5px solid #000000; padding: 6px; border-radius: 4px; background-color: #f3f4f6; display: flex; justify-content: space-between; align-items: center;">
+  <div style="margin-bottom: 14px; font-size: 10.5px; border: 1.5px solid #000000; padding: 8px 12px; border-radius: 4px; background-color: #f3f4f6; display: flex; justify-content: space-between; align-items: center;" class="no-break">
     <strong>Net Reserve Savings Balance / بقایا بچت:</strong> 
-    <span style="font-family: monospace; font-size: 12px; font-weight: 900; color: #000000;">
+    <span style="font-family: monospace; font-size: 14px; font-weight: 900; color: #000000;">
       ${netReserve.toLocaleString()} Rs
     </span>
   </div>
 
-  <table>
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10px;">
     <thead>
       <tr>
-        <th style="width: 5%;">Sr</th>
-        <th>Month / Phase Details</th>
-        <th style="text-align: right; width: 22%;">Monthly Registry Income (Rs)</th>
-        <th style="text-align: right; width: 22%;">Other Donations Income (Rs)</th>
-        <th style="text-align: right; width: 22%;">Mosque Expenses (Rs)</th>
-        <th style="text-align: right; width: 22%;">Net Monthly Balance (Rs)</th>
+        <th style="width: 6%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; padding: 6px 8px; text-align: left;">Sr</th>
+        <th style="width: 26%; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; padding: 6px 8px; text-align: left;">Month / Phase Details</th>
+        <th style="width: 22%; text-align: right; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; padding: 6px 8px;">Monthly Registry Income (Rs)</th>
+        <th style="width: 22%; text-align: right; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; padding: 6px 8px;">Other Donations Income (Rs)</th>
+        <th style="width: 24%; text-align: right; background-color: #e5e7eb; color: #000000; font-weight: 700; border: 1px solid #000000; padding: 6px 8px;">${orgInfo.expensesTableTitle}</th>
       </tr>
     </thead>
     <tbody>
@@ -3127,89 +3464,73 @@ export const printAnalyticalPortfolioStatement = (
         
         let fixedMIn = 0;
         currentMembers.forEach(mem => {
-          const list = transactions.filter(t => t.memberId === mem.id && t.monthKey === m);
+          const list = transactions.filter(t => t.memberId === mem.id && (t.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal')));
           fixedMIn += list.reduce((sum, item) => sum + item.amount, 0);
         });
 
-        const otherMIn = currentOthers.filter(o => o.monthKey === m).reduce((sum, item) => sum + item.amount, 0);
-
-        const expMOut = currentExpenses.filter(e => e.monthKey === m).reduce((sum, item) => sum + item.amount, 0);
-
-        const mNet = (fixedMIn + otherMIn) - expMOut;
+        const otherMIn = currentOthers.filter(o => o.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && o.monthKey === 'Rabi-ul-Awwal')).reduce((sum, item) => sum + item.amount, 0);
+        const expMOut = currentExpenses.filter(e => e.monthKey === m || (m === 'After 12 Rabi-ul-Awwal' && e.monthKey === 'Rabi-ul-Awwal')).reduce((sum, item) => sum + item.amount, 0);
 
         return `
           <tr>
-            <td style="color: #000000; font-weight: bold;">${(idx + 1).toString().padStart(2, '0')}</td>
-            <td style="font-weight: 700; color: #000000;">${m}</td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #000000;">
+            <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 5px 8px;">${(idx + 1).toString().padStart(2, '0')}</td>
+            <td style="font-weight: 700; color: #000000; border: 1px solid #000000; padding: 5px 8px;">${m}</td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #000000; border: 1px solid #000000; padding: 5px 8px;">
               ${fixedMIn > 0 ? `${fixedMIn.toLocaleString()} Rs` : '—'}
             </td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #000000;">
+            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #000000; border: 1px solid #000000; padding: 5px 8px;">
               ${otherMIn > 0 ? `${otherMIn.toLocaleString()} Rs` : '—'}
             </td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #000000;">
+            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #000000; border: 1px solid #000000; padding: 5px 8px;">
               ${expMOut > 0 ? `${expMOut.toLocaleString()} Rs` : '—'}
-            </td>
-            <td style="text-align: right; font-family: monospace; font-weight: 900; color: #000000;">
-              ${mNet.toLocaleString()} Rs
             </td>
           </tr>
         `;
       }).join('')}
 
       ${(() => {
-        const showAdditionalRow = !overrideMonthFilter || overrideMonthFilter.monthIndex === 'additional';
+        const showAdditionalRow = (!overrideMonthFilter || overrideMonthFilter.monthIndex === 'additional') && fund.type !== 'bazm';
         if (!showAdditionalRow) return '';
         const addOtherIn = currentOthers.filter(o => !o.monthKey).reduce((sum, item) => sum + item.amount, 0);
         const addExpOut = currentExpenses.filter(e => !e.monthKey).reduce((sum, item) => sum + item.amount, 0);
-        const addNet = addOtherIn - addExpOut;
         
         return `
           <tr style="background-color: rgba(16, 185, 129, 0.05);">
-            <td style="color: #000000; font-weight: bold;">—</td>
-            <td style="font-weight: 700; color: #115e59;">Additional Time / اضافی وقت (Optional)</td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #000000;">
+            <td style="color: #000000; font-weight: bold; border: 1px solid #000000; padding: 5px 8px;">—</td>
+            <td style="font-weight: 700; color: #115e59; border: 1px solid #000000; padding: 5px 8px;">Additional Time / اضافی وقت (Optional)</td>
+            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #000000; border: 1px solid #000000; padding: 5px 8px;">
               —
             </td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #115e59;">
+            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #115e59; border: 1px solid #000000; padding: 5px 8px;">
               ${addOtherIn > 0 ? `${addOtherIn.toLocaleString()} Rs` : '—'}
             </td>
-            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #ef4444;">
+            <td style="text-align: right; font-family: monospace; font-weight: bold; color: #ef4444; border: 1px solid #000000; padding: 5px 8px;">
               ${addExpOut > 0 ? `${addExpOut.toLocaleString()} Rs` : '—'}
-            </td>
-            <td style="text-align: right; font-family: monospace; font-weight: 900; color: ${addNet >= 0 ? '#115e59' : '#b91c1c'};">
-              ${addNet.toLocaleString()} Rs
             </td>
           </tr>
         `;
       })()}
 
-      <tr class="highlight-row">
-        <td colspan="2" style="font-weight: 800;">GRAND TOTALS / کل میزان</td>
-        <td style="text-align: right; font-family: monospace; font-weight: 900; color: #000000;">
+      <tr style="background-color: #e5e7eb; font-weight: 800;">
+        <td colspan="2" style="font-weight: 800; border: 1px solid #000000; padding: 6px 8px;">GRAND TOTALS / کل میزان</td>
+        <td style="text-align: right; font-family: monospace; font-weight: 900; color: #000000; border: 1px solid #000000; padding: 6px 8px;">
           ${totalFixed.toLocaleString()} Rs
         </td>
-        <td style="text-align: right; font-family: monospace; font-weight: 900; color: #000000;">
+        <td style="text-align: right; font-family: monospace; font-weight: 900; color: #000000; border: 1px solid #000000; padding: 6px 8px;">
           ${totalOthers.toLocaleString()} Rs
         </td>
-        <td style="text-align: right; font-family: monospace; font-weight: 900; color: #000000;">
+        <td style="text-align: right; font-family: monospace; font-weight: 900; color: #000000; border: 1px solid #000000; padding: 6px 8px;">
           ${totalExpenses.toLocaleString()} Rs
-        </td>
-        <td style="text-align: right; font-family: monospace; font-weight: 900; color: #000000; font-size: 12px;">
-          ${netReserve.toLocaleString()} Rs
         </td>
       </tr>
     </tbody>
-  </table>
+  </table>`;
 
-  <script>
-    window.onload = function() {
-      window.print();
-    }
-  </script>
-</body>
-</html>
-  `;
+  const reportHtml = createPrintReportHtml({
+    title: `${orgInfo.orgName.replace(/\s+/g, '_')}_Portfolio_Statement_A4`,
+    orientation: 'portrait',
+    contentHtml
+  });
 
   printWindow.document.open();
   printWindow.document.write(reportHtml);
@@ -3241,6 +3562,7 @@ function FixedFundRegister({
   setSelectedReceipt,
   isFundAdminUnlocked = false
 }: FixedRegisterProps) {
+  const orgInfo = getFundOrgInfo(fund);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchAmount, setSearchAmount] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('all');
@@ -3289,7 +3611,7 @@ function FixedFundRegister({
       }
     } else {
       const mKey = type === 'khatm' ? 'khatm' : (monthKey || 'January');
-      const existingList = transactions.filter(t => t.memberId === memberId && t.monthKey === mKey);
+      const existingList = transactions.filter(t => t.memberId === memberId && (t.monthKey === mKey || (mKey === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal')));
       if (existingList.length > 0) {
         const totalAmount = existingList.reduce((sum, t) => sum + t.amount, 0);
         setCellEditAmount(totalAmount);
@@ -3424,12 +3746,12 @@ function FixedFundRegister({
 
   // Pivot amounts aggregators
   const getMonthPayment = (memberId: string, monthKey: string) => {
-    const items = transactions.filter(t => t.memberId === memberId && t.monthKey === monthKey);
+    const items = transactions.filter(t => t.memberId === memberId && (t.monthKey === monthKey || (monthKey === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal')));
     return items.reduce((sum, item) => sum + item.amount, 0);
   };
 
   const getMonthDate = (memberId: string, monthKey: string) => {
-    const items = transactions.filter(t => t.memberId === memberId && t.monthKey === monthKey);
+    const items = transactions.filter(t => t.memberId === memberId && (t.monthKey === monthKey || (monthKey === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal')));
     return items.map(item => formatDateStr(item.paymentDate)).filter(Boolean).join(', ');
   };
 
@@ -3462,21 +3784,21 @@ function FixedFundRegister({
     const { memberId, type, monthKey } = activeCellEdit;
     const mKey = type === 'khatm' ? 'khatm' : (monthKey || 'January');
 
-    const existingList = transactions.filter(t => t.memberId === memberId && t.monthKey === mKey);
+    const existingList = transactions.filter(t => t.memberId === memberId && (t.monthKey === mKey || (mKey === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal')));
     const existing = existingList[0];
 
     let updatedList: FundMemberTransaction[] = [];
     if (shouldDelete) {
       if (existingList.length > 0) {
-        updatedList = transactions.filter(t => !(t.memberId === memberId && t.monthKey === mKey));
+        updatedList = transactions.filter(t => !(t.memberId === memberId && (t.monthKey === mKey || (mKey === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal'))));
         logAudit('DELETE', `On-Sheet Clear Payment (${mKey})`, memberId, JSON.stringify(existingList), 'ENTRIES PURGED');
       } else {
         updatedList = [...transactions];
       }
     } else {
       if (existingList.length > 0) {
-        const otherTxs = transactions.filter(t => !(t.memberId === memberId && t.monthKey === mKey));
-        const updatedTx = { ...existing, amount: cellEditAmount, paymentDate: cellEditDate };
+        const otherTxs = transactions.filter(t => !(t.memberId === memberId && (t.monthKey === mKey || (mKey === 'After 12 Rabi-ul-Awwal' && t.monthKey === 'Rabi-ul-Awwal'))));
+        const updatedTx = { ...existing, monthKey: mKey, amount: cellEditAmount, paymentDate: cellEditDate };
         updatedList = [...otherTxs, updatedTx];
         logAudit('EDIT', `On-Sheet Modify Payment (${mKey})`, memberId, JSON.stringify(existingList), JSON.stringify(updatedTx));
       } else {
@@ -3628,6 +3950,45 @@ function FixedFundRegister({
     return s + (m.requiredAmount - paidSum);
   }, 0);
 
+  // Current active filter descriptor for print reports
+  const getCurrentRegistryFilterLabel = () => {
+    const labels: string[] = [];
+    if (activeFilter !== 'all') {
+      const filterNames: Record<string, string> = {
+        'track': 'On Track',
+        'behind': 'Behind Schedule',
+        'partial-payers': 'Partial Payers',
+        'monthly-defaulters': fund.type === 'project' ? 'Phase Defaulters' : 'Monthly Defaulters',
+        'no-activity': fund.type === 'project' ? 'No Activity (Zero Paid)' : 'No Payment This Year',
+        'no-khatm': 'Khatm-ul-Quran Unpaid',
+        'with-khatm': 'Khatm-ul-Quran Paid',
+        'all-cleared': 'Fully Cleared Dues',
+        'prev-cleared': 'Prev-Year Cleared',
+        'ff-fully-paid': '100% Goal Completed',
+        'ff-75-plus': '75% to 99% Contribution',
+        'ff-50-plus': '50% to 74% Contribution',
+        'ff-25-plus': '25% to 49% Contribution',
+        'ff-zero-paid': 'Below 25% (Zero / Low Paid)',
+        'high-contributors': 'Highest Contributors First',
+        'low-contributors': 'Lowest Contributors First',
+        'highest-amount': 'Highest Contributors First',
+        'lowest-amount': 'Lowest Contributors First',
+        'enter-amount': `Amount Target: ${searchAmount} Rs`
+      };
+      labels.push(`Status: ${filterNames[activeFilter] || activeFilter}`);
+    }
+    if (activeMonthFilter) {
+      labels.push(`Month/Phase: ${activeMonthFilter}`);
+    }
+    if (searchTerm.trim()) {
+      labels.push(`Search: "${searchTerm.trim()}"`);
+    }
+    if (searchAmount.trim() && activeFilter !== 'enter-amount') {
+      labels.push(`Amount: "${searchAmount.trim()}"`);
+    }
+    return labels.join(' | ') || 'All Members';
+  };
+
   return (
     <div className="space-y-6 font-sans">
       
@@ -3656,7 +4017,7 @@ function FixedFundRegister({
           )}
 
           <button 
-            onClick={() => printGeneralRegistryReport(orderedMembers, currentFundMembers, transactions, monthsList, fund)}
+            onClick={() => printGeneralRegistryReport(orderedMembers, currentFundMembers, transactions, monthsList, fund, getCurrentRegistryFilterLabel(), activeMonthFilter || undefined)}
             className="flex items-center gap-1.5 bg-pine-bar hover:bg-pine-hover border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
           >
             <Printer className="w-4 h-4 text-pine-btn-hover" /> Print Filtered Report
@@ -4440,7 +4801,7 @@ function FixedFundRegister({
                 type="button"
                 onClick={() => {
                   if (profileMember) {
-                    printMemberStatement(profileMember, profileTransactions, monthsList, fund.name);
+                    printMemberStatement(profileMember, profileTransactions, monthsList, fund.name, fund);
                   }
                 }}
                 className="py-1.5 px-4 rounded text-xs font-button uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1.5 cursor-pointer shadow"
@@ -4450,7 +4811,7 @@ function FixedFundRegister({
               <MagneticButton 
                 onClick={() => {
                   if (profileMember) {
-                    printMemberStatement(profileMember, profileTransactions, monthsList, fund.name);
+                    printMemberStatement(profileMember, profileTransactions, monthsList, fund.name, fund);
                   }
                 }}
                 className="py-1.5 px-4 text-xs font-button uppercase tracking-wider bg-pine-btn hover:bg-pine-btn-hover cursor-pointer"
@@ -4467,8 +4828,8 @@ function FixedFundRegister({
         <div className="hidden print:block print-report-area min-w-full text-black bg-white p-8 font-sans">
           {/* Print Header */}
           <div className="border-b-4 border-double border-zinc-900 pb-4 text-center">
-            <h2 className="text-xl font-black uppercase tracking-wider text-zinc-900">MASJID AL-HABIB NOORANI</h2>
-            <h3 className="text-xs font-bold tracking-widest text-zinc-650 mt-1 uppercase">INDIVIDUAL FINANCIAL STATEMENT REPORT — {fund.name.toUpperCase()}</h3>
+            <h2 className="text-xl font-black uppercase tracking-wider text-zinc-900">{orgInfo.orgName}</h2>
+            <h3 className="text-xs font-bold tracking-widest text-zinc-650 mt-1 uppercase">{orgInfo.individualStatementTitle} — {fund.name.toUpperCase()}</h3>
             <div className="text-[9px] font-mono text-zinc-500 mt-1.5">
               Report Generated: {formatDateTimeStr(new Date())} | Account Status Summary
             </div>
@@ -4558,8 +4919,8 @@ function FixedFundRegister({
         <div className="hidden print:block print-report-area min-w-full text-black bg-white p-6 font-sans">
           {/* Print Header */}
           <div className="border-b-4 border-double border-zinc-900 pb-4 text-center">
-            <h2 className="text-xl font-black uppercase tracking-wider text-zinc-900">MASJID AL-HABIB NOORANI</h2>
-            <h3 className="text-xs font-bold tracking-widest text-zinc-650 mt-1 uppercase">GENERAL REGISTRY LEDGER REPORT — {fund.name.toUpperCase()}</h3>
+            <h2 className="text-xl font-black uppercase tracking-wider text-zinc-900">{orgInfo.orgName}</h2>
+            <h3 className="text-xs font-bold tracking-widest text-zinc-650 mt-1 uppercase">{orgInfo.generalLedgerTitle} — {fund.name.toUpperCase()}</h3>
             <div className="text-[9px] font-mono text-zinc-500 mt-1.5">
               Report Generated: {formatDateTimeStr(new Date())} | Active filter results: {orderedMembers.length} contributors
             </div>
@@ -4582,7 +4943,12 @@ function FixedFundRegister({
               <span className="text-xs font-mono font-bold text-zinc-900">
                 {orderedMembers.reduce((sum, m) => {
                   const mTrans = transactions.filter(t => t.memberId === m.id);
-                  const paid = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+                  let paid = 0;
+        if (activeMonthFilter) {
+          paid = mTrans.filter(t => t.monthKey === activeMonthFilter).reduce((s, x) => s + x.amount, 0);
+        } else {
+          paid = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+        }
                   return sum + paid;
                 }, 0).toLocaleString()} Rs
               </span>
@@ -4592,7 +4958,12 @@ function FixedFundRegister({
               <span className="text-xs font-mono font-bold text-zinc-950">
                 {orderedMembers.reduce((sum, m) => {
                   const mTrans = transactions.filter(t => t.memberId === m.id);
-                  const paid = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+                  let paid = 0;
+        if (activeMonthFilter) {
+          paid = mTrans.filter(t => t.monthKey === activeMonthFilter).reduce((s, x) => s + x.amount, 0);
+        } else {
+          paid = mTrans.filter(t => t.monthKey !== 'khatm').reduce((s, x) => s + x.amount, 0);
+        }
                   return sum + (m.requiredAmount - paid);
                 }, 0).toLocaleString()} Rs
               </span>
@@ -4695,6 +5066,10 @@ function OtherFundRegister(props: any) {
   const [newDetails, setNewDetails] = useState('');
   const [newMonthKey, setNewMonthKey] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [lockedSource, setLockedSource] = useState<string | null>(null);
+  const [lockedSourceId, setLockedSourceId] = useState<string | null>(null);
+  const [pendingLockedSource, setPendingLockedSource] = useState<string | null>(null);
+  const [pendingLockedSourceId, setPendingLockedSourceId] = useState<string | null>(null);
 
   // Sync state if monthsList changes
   useEffect(() => {
@@ -4706,11 +5081,13 @@ function OtherFundRegister(props: any) {
   const handleAddNewOtherEntry = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSource || !newAmount) return;
+    const newId = 'other_' + Date.now();
     const entry: OtherFundEntry = {
-      id: 'other_' + Date.now(),
+      id: newId,
       fundId: fund.id,
       date: newDate || '',
       source: newSource,
+      sourceId: lockedSourceId ? lockedSourceId : newId,
       amount: Number(newAmount),
       details: newDetails,
       monthKey: newMonthKey
@@ -4729,6 +5106,8 @@ function OtherFundRegister(props: any) {
     setNewDate('');
     setNewMonthKey('');
     setShowAddForm(false);
+    setLockedSource(null);
+    setLockedSourceId(null);
   };
 
   // Month and amount filters details
@@ -4756,12 +5135,43 @@ function OtherFundRegister(props: any) {
   });
 
   // Apply sorting based on sortType
-  const sortedOthers = [...filteredOthers];
-  if (sortType === 'highest-amount') {
-    sortedOthers.sort((a, b) => b.amount - a.amount);
-  } else if (sortType === 'lowest-amount') {
-    sortedOthers.sort((a, b) => a.amount - b.amount);
-  }
+  const groupedSources = React.useMemo(() => {
+    const groups: Record<string, { source: string; sourceId: string; totalAmount: number; entries: OtherFundEntry[] }> = {};
+    
+    // Group all filtered others
+    filteredOthers.forEach(o => {
+      // Group by explicit sourceId or fallback to its own id if unassigned
+      const key = o.sourceId || o.id;
+      const originalSource = (o.source || 'Unknown').trim();
+      
+      if (!groups[key]) {
+        groups[key] = { source: originalSource, sourceId: key, totalAmount: 0, entries: [] };
+      }
+      groups[key].totalAmount += o.amount;
+      groups[key].entries.push(o);
+    });
+
+    // Apply sorting to the groups
+    const result = Object.values(groups);
+    if (sortType === 'highest-amount') {
+      result.sort((a, b) => b.totalAmount - a.totalAmount);
+    } else if (sortType === 'lowest-amount') {
+      result.sort((a, b) => a.totalAmount - b.totalAmount);
+    }
+    
+    // Within each group, sort entries by date oldest to newest
+    result.forEach(group => {
+      group.entries.sort((a, b) => (new Date(a.date).getTime() || 0) - (new Date(b.date).getTime() || 0));
+    });
+    
+    return result;
+  }, [filteredOthers, sortType]);
+
+  const [expandedSources, setExpandedSources] = useState<Record<string, boolean>>({});
+  
+  const toggleSource = (key: string) => {
+    setExpandedSources(prev => ({...prev, [key]: !prev[key]}));
+  };
 
   const getSumOfSelectedList = () => filteredOthers.reduce((sum, o) => sum + o.amount, 0);
 
@@ -4807,6 +5217,15 @@ function OtherFundRegister(props: any) {
       setPasswordModalOpen(false);
       if (passwordModalPurpose === 'add') {
         setShowAddForm(true);
+        if (pendingLockedSource) {
+          setNewSource(pendingLockedSource);
+          setLockedSource(pendingLockedSource);
+          setPendingLockedSource(null);
+        }
+        if (pendingLockedSourceId) {
+          setLockedSourceId(pendingLockedSourceId);
+          setPendingLockedSourceId(null);
+        }
       }
     } else {
       setPasswordErrorMsg('Ghalat password! Please try again.');
@@ -4835,6 +5254,7 @@ function OtherFundRegister(props: any) {
       }
     }
     if (searchTerm) lbl.push(`Keyword: "${searchTerm}"`);
+    if (sortType === 'enter-amount' && searchAmount.trim()) lbl.push(`Amount: ${searchAmount.trim()} Rs`);
     return lbl.join(' | ') || 'None';
   };
 
@@ -4887,7 +5307,7 @@ function OtherFundRegister(props: any) {
             {!isFundAdminUnlocked && <Lock className="w-3 h-3 text-yellow-500 ml-1" />}
           </button>
           <button 
-            onClick={() => printOtherDonationsStatement(filteredOthers, currentFilterLabel())}
+            onClick={() => printOtherDonationsStatement(groupedSources, currentFilterLabel(), fund)}
             className="flex items-center gap-1.5 bg-pine-bar hover:bg-pine-hover border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
           >
             <Printer className="w-4 h-4 text-pine-btn-hover" /> Print Filtered Report
@@ -4911,9 +5331,10 @@ function OtherFundRegister(props: any) {
                   type="text"
                   required
                   value={newSource}
+                  disabled={!!lockedSource}
                   onChange={(e) => setNewSource(e.target.value)}
                   placeholder="e.g. iron scrap waste, friday general box collection"
-                  className="w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn placeholder-pine-text-muted/40 font-semibold"
+                  className={`w-full bg-pine-bar/60 border border-pine-border py-2 px-3 text-white rounded-lg focus:outline-none focus:border-pine-btn placeholder-pine-text-muted/40 font-semibold ${lockedSource ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
               </div>
               <div>
@@ -4965,7 +5386,11 @@ function OtherFundRegister(props: any) {
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setShowAddForm(false)}
+                onClick={() => {
+                  setShowAddForm(false);
+                  setLockedSource(null);
+                  setNewSource('');
+                }}
                 className="py-2.5 px-4 border border-pine-border hover:bg-pine-hover text-zinc-200 text-xs uppercase rounded-lg font-bold tracking-wider"
               >
                 Cancel
@@ -5073,64 +5498,135 @@ function OtherFundRegister(props: any) {
             </tr>
           </thead>
           <tbody className="divide-y divide-pine-border/40 font-mono">
-            {sortedOthers.map((o) => (
-              <tr key={o.id} className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs">
-                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">{o.date}</td>
-                <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
-                  <span>{o.source}</span>
-                  {o.monthKey ? (
-                    <span className="ml-2 bg-emerald-950/60 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block animate-fade-in">
-                      {o.monthKey}
-                    </span>
-                  ) : (
-                    <span className="ml-2 bg-purple-950/60 text-purple-400 border border-purple-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block animate-fade-in">
-                      Additional Time Donation
-                    </span>
-                  )}
-                </td>
-                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-right font-bold text-pine-success">{o.amount.toLocaleString()} Rs</td>
-                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs max-w-[120px] sm:max-w-sm truncate">{o.details}</td>
-                <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
-                  <div className="inline-flex items-center gap-1">
-                    {isFundAdminUnlocked ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setEditingEntry(o)}
-                          className="p-1.5 text-emerald-400 hover:text-white hover:bg-emerald-950/70 border border-emerald-500/20 rounded-lg transition-all cursor-pointer"
-                          title="Edit Record"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(o.id)}
-                          className="p-1.5 text-rose-450 hover:text-white hover:bg-rose-950/70 border border-rose-500/20 rounded-lg transition-all cursor-pointer"
-                          title="Delete Record"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCustomPasswordInput('');
-                          setPasswordErrorMsg('');
-                          setPasswordModalPurpose('edit-delete');
-                          setPasswordModalOpen(true);
-                        }}
-                        className="p-1.5 text-yellow-500 hover:text-white hover:bg-yellow-950/70 border border-yellow-500/20 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1"
-                        title="Unlock to Edit/Delete"
+            {groupedSources.map((group, groupIdx) => {
+              const isExpanded = expandedSources[group.sourceId];
+              return (
+                <React.Fragment key={group.sourceId}>
+                  {/* Group Header Row */}
+                  <tr className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs bg-pine-bar/10">
+                    <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">
+                      <button 
+                        onClick={() => toggleSource(group.sourceId)}
+                        className="flex items-center gap-1 hover:text-white transition-colors"
                       >
-                        <Lock className="w-3.5 h-3.5" />
+                        {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        {group.entries.length} Entries
                       </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {filteredOthers.length === 0 && (
+                    </td>
+                    <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
+                      <div className="flex items-center gap-2">
+                        <span>{group.source}</span>
+                        {isFundAdminUnlocked ? (
+                          <button
+                            onClick={() => {
+                              setNewSource(group.source);
+                              setLockedSource(group.source);
+                              setLockedSourceId(group.sourceId);
+                              setShowAddForm(true);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded text-[9px] uppercase tracking-wider transition-colors"
+                            title="Add New Entry to this Source"
+                          >
+                            <Plus className="w-3 h-3" /> Add Entry
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setPendingLockedSource(group.source);
+                              setPendingLockedSourceId(group.sourceId);
+                              setCustomPasswordInput('');
+                              setPasswordErrorMsg('');
+                              setPasswordModalPurpose('add');
+                              setPasswordModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 rounded text-[9px] uppercase tracking-wider transition-colors"
+                            title="Unlock to Add Entry"
+                          >
+                            <Lock className="w-3 h-3" /> Add Entry
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-right font-bold text-pine-success">{group.totalAmount.toLocaleString()} Rs</td>
+                    <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs">
+                      {/* Print Individual Source Statement Button */}
+                      <button
+                        onClick={() => printOtherDonationSourceStatement(group.source, group.entries, fund)}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded text-[9px] uppercase tracking-wider transition-colors"
+                        title="Print Statement for this Source"
+                      >
+                        <Printer className="w-3 h-3" /> Print Individual Report
+                      </button>
+                    </td>
+                    <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
+                    </td>
+                  </tr>
+
+                  {/* Group Entries (Visible if Expanded) */}
+                  {isExpanded && group.entries.map((o, idx) => (
+                    <tr key={o.id} className="hover:bg-pine-hover/10 text-[9px] xs:text-[10px] sm:text-xs bg-black/20">
+                      <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted pl-6 sm:pl-8 border-l-2 border-pine-border/40">
+                        {o.date}
+                      </td>
+                      <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans text-zinc-300">
+                        <span className="opacity-50 text-[10px] uppercase font-bold tracking-widest mr-2">#{idx + 1}</span>
+                        {o.monthKey ? (
+                          <span className="bg-emerald-950/60 text-emerald-400 border border-emerald-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block">
+                            {o.monthKey}
+                          </span>
+                        ) : (
+                          <span className="bg-purple-950/60 text-purple-400 border border-purple-500/20 text-[8px] font-mono px-1.5 py-0.5 rounded uppercase font-bold inline-block">
+                            Additional Time Donation
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-right font-medium text-emerald-300">{o.amount.toLocaleString()} Rs</td>
+                      <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs max-w-[120px] sm:max-w-sm truncate">{o.details}</td>
+                      <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
+                        <div className="inline-flex items-center gap-1">
+                          {isFundAdminUnlocked ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setEditingEntry(o)}
+                                className="p-1 text-emerald-400 hover:text-white hover:bg-emerald-950/70 border border-emerald-500/20 rounded-md transition-all cursor-pointer"
+                                title="Edit Record"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(o.id)}
+                                className="p-1 text-rose-450 hover:text-white hover:bg-rose-950/70 border border-rose-500/20 rounded-md transition-all cursor-pointer"
+                                title="Delete Record"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCustomPasswordInput('');
+                                setPasswordErrorMsg('');
+                                setPasswordModalPurpose('edit-delete');
+                                setPasswordModalOpen(true);
+                              }}
+                              className="p-1 text-yellow-500 hover:text-white hover:bg-yellow-950/70 border border-yellow-500/20 rounded-md transition-all cursor-pointer"
+                              title="Unlock to Edit/Delete"
+                            >
+                              <Lock className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </React.Fragment>
+              );
+            })}
+            {groupedSources.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-8 text-center text-xs text-pine-text-muted font-sans font-medium">No donation records found.</td>
               </tr>
@@ -5549,6 +6045,7 @@ function ExpensesRegister({
       }
     }
     if (searchTerm) lbl.push(`Keyword: "${searchTerm}"`);
+    if (sortType === 'enter-amount' && searchAmount.trim()) lbl.push(`Amount: ${searchAmount.trim()} Rs`);
     return lbl.join(' | ') || 'None';
   };
 
@@ -5601,7 +6098,7 @@ function ExpensesRegister({
             {!isFundAdminUnlocked && <Lock className="w-3 h-3 text-yellow-500 ml-1" />}
           </button>
           <button 
-            onClick={() => printExpensesStatement(filteredExpenses, currentFilterLabel())}
+            onClick={() => printExpensesStatement(sortedExpenses, currentFilterLabel(), fund)}
             className="flex items-center gap-1.5 bg-pine-bar hover:bg-pine-hover border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
           >
             <Printer className="w-4 h-4 text-pine-btn-hover" /> Print Filtered Report
@@ -6107,83 +6604,111 @@ function CommitmentsRegister({
   logAudit: any;
   isFundAdminUnlocked: boolean;
 }) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredCommitments = commitments.filter(c => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(term) ||
+      (c.phone && c.phone.toLowerCase().includes(term)) ||
+      (c.notes && c.notes.toLowerCase().includes(term))
+    );
+  });
+
+  const currentFilterLabel = () => {
+    if (searchTerm.trim()) return `Search: "${searchTerm.trim()}"`;
+    return 'All Commitments';
+  };
 
   const handlePrintNotice = (c: Commitment) => {
-    const romanUrduTemplate = `
-      Assalam-o-Alaikum, <strong style="color: #000000;">[NAME]</strong> saheb,
-      <br/><br/>
-      Aap ki <strong style="border-bottom: 2px solid #000000; padding: 2px 5px;">[FUND_NAME]</strong> ki mad mein commitment ki tafseel neechay di gayi hai:
-      <br/><br/>
-      <div style="font-size: 1.1em; border: 1px dashed #000000; padding: 15px; border-radius: 4px; background: #f3f4f6; margin: 20px 0; color: #000000;">
-        <strong>Commitment Details / تفاصیل:</strong><br/>
-        [NOTE]
+    const orgInfo = getFundOrgInfo(fund);
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Popup blocker active! Barah-e-karam popups allow karein taake report new tab me open ho sake.');
+      return;
+    }
+
+    const contentHtml = `
+      <div style="border-bottom: 3px double #000000; padding-bottom: 14px; margin-bottom: 24px; text-align: left;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 850; text-transform: uppercase; color: #000000;">${orgInfo.subOrgName}</h2>
+        <p style="margin: 4px 0 0; font-size: 11px; font-weight: bold; color: #374151;">${orgInfo.tagline} • Official Notice</p>
       </div>
-      <br/>
-      Kul raqam jo aap ke zimme hai: <strong style="color: #000000; font-size: 1.2em;">[AMOUNT] rupay</strong>.
-      <br/><br/>
-      Barah-e-karam is raqam ko jald az jald jama karwayein taake kaam jaari reh sake. 
-      <br/>
-      Allah Ta'ala aap ke maal mein barkat ata farmaye.
-      <br/><br/>
-      JazakAllah Khair.
+
+      <div style="font-size: 13px; line-height: 1.8; color: #000000; margin-bottom: 30px;">
+        <p>Assalam-o-Alaikum, <strong style="font-size: 15px; text-decoration: underline;">${c.name}</strong> saheb,</p>
+        <p>Aap ki <strong>${fund.name}</strong> ki mad mein commitment ki tafseel darj zail hai:</p>
+        
+        <div style="border: 1.5px dashed #000000; padding: 14px 18px; border-radius: 6px; background-color: #f3f4f6; margin: 16px 0;">
+          <strong style="text-transform: uppercase; font-size: 11px; display: block; margin-bottom: 4px;">Commitment Details / تفاصیل:</strong>
+          <span style="font-size: 13px;">${c.notes || 'No specific details provided.'}</span>
+          ${c.phone ? `<div style="font-size: 11px; margin-top: 6px; color: #374151;">📞 Contact: <strong>${c.phone}</strong></div>` : ''}
+        </div>
+
+        <p style="font-size: 14px;">
+          Kul raqam jo aap ke zimme hai: <strong style="font-family: monospace; font-size: 18px; color: #000000; background: #e5e7eb; padding: 2px 8px; border-radius: 4px; border: 1px solid #000000;">${c.amountDue.toLocaleString()} Rs</strong>
+        </p>
+
+        <p>${orgInfo.noticePurposeText}</p>
+        <p>Allah Ta'ala aap ke maal o daulat mein barkat ata farmaye. Aameen.</p>
+        
+        <p style="margin-top: 24px; font-weight: bold;">JazakAllah Khair.</p>
+      </div>
+
+      <div style="border-top: 1px dashed #000000; padding-top: 16px; margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10px; color: #000000;" class="no-break">
+        <div>
+          <p style="margin: 0; font-weight: bold;">System Generated Notice • Digital Verification</p>
+          <p style="margin: 2px 0 0; color: #4b5563; font-family: monospace;">Date Generated: ${formatDateStr(new Date())}</p>
+        </div>
+        <div style="text-align: center; border-top: 1px solid #000000; width: 140px; padding-top: 4px;">
+          <span style="font-size: 9px; font-weight: bold; text-transform: uppercase;">Ameen / Trustee</span>
+        </div>
+      </div>
     `;
 
-    const noticeContent = romanUrduTemplate
-      .replace(/\[NAME\]/g, c.name)
-      .replace(/\[PHONE\]/g, c.phone || 'N/A')
-      .replace(/\[AMOUNT\]/g, c.amountDue.toLocaleString())
-      .replace(/\[FUND_NAME\]/g, fund.name)
-      .replace(/\[NOTE\]/g, c.notes || 'No specific details provided.');
+    const reportHtml = createPrintReportHtml({
+      title: `${orgInfo.orgName.replace(/\s+/g, '_')}_Notice_${c.name.replace(/\s+/g, '_')}_A4`,
+      orientation: 'portrait',
+      contentHtml
+    });
 
-    const downloadDoc = `
-<!DOCTYPE html>
-<html lang="ur" dir="ltr">
-<head>
-<meta charset="UTF-8">
-<title>Notice - ${c.name}</title>
-<style>
-  @page { size: A4; margin: 20mm; }
-  body { font-family: Arial, sans-serif; line-height: 1.6; font-size: 16px; width: 100%; margin: 0; box-sizing: border-box; color: #000000; background-color: #ffffff; }
-  .header { text-align: left; border-bottom: 3px double #000000; padding-bottom: 20px; margin-bottom: 30px; }
-  .header h2 { margin: 0; font-size: 24px; color: #000000; font-weight: 850; text-transform: uppercase; }
-  .header p { margin: 5px 0 0; color: #374151; font-size: 14px; font-weight: bold; }
-  .content { margin-bottom: 30px; text-align: left; color: #000000; }
-  .footer { text-align: left; margin-top: 50px; border-top: 1px dashed #000000; padding-top: 20px; font-size: 14px; color: #000000; }
-  @media print {
-    button { display: none; }
-  }
-</style>
-</head>
-<body>
-  <div class="header">
-    <h2>Masjid Al-Habib Noorani Community Trust</h2>
-    <p>Wah Cantt, Punjab, Pakistan</p>
-  </div>
-  
-  <div class="content">${noticeContent}</div>
-  
-  <div class="footer">
-    <p>This is a system generated notice.</p>
-    <p>Date Generated: ${formatDateStr(new Date())}</p>
-  </div>
-  <button onclick="window.print()" style="padding: 10px 20px; background: #000000; color: #fff; border: 2px solid #000000; cursor: pointer; border-radius: 4px; font-weight: bold; text-transform: uppercase;">Print Notice</button>
-</body>
-</html>`;
-
-    const blob = new Blob([downloadDoc], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+    printWindow.document.open();
+    printWindow.document.write(reportHtml);
+    printWindow.document.close();
   };
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">
-      <div className="flex justify-between items-end mb-6 border-b border-pine-border pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-pine-border pb-4">
         <div>
           <h3 className="text-xl font-heading font-extrabold text-white tracking-wide flex items-center gap-2">
             <HeartHandshake className="w-6 h-6 text-pine-btn-hover" /> 
             Commitments & Remaining Balances
           </h3>
           <p className="text-xs text-pine-text-muted mt-1">Pending contributions tracking for {fund.name}.</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => printCommitmentsReport(filteredCommitments, fund.name, currentFilterLabel(), fund)}
+            className="flex items-center gap-1.5 bg-pine-bar hover:bg-pine-hover border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
+          >
+            <Printer className="w-4 h-4 text-pine-btn-hover" /> Print Filtered Report
+          </button>
+        </div>
+      </div>
+
+      {/* Search filter for commitments */}
+      <div className="bg-pine-card border border-pine-border/80 p-3 rounded-xl shadow-md font-sans">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-pine-text-muted" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search commitment by name, phone or note..."
+            className="w-full bg-pine-bar/60 border border-pine-border pl-8 pr-3 py-1.5 text-xs rounded-lg text-white font-sans focus:outline-none focus:border-pine-btn"
+          />
         </div>
       </div>
 
@@ -6199,14 +6724,14 @@ function CommitmentsRegister({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {commitments.length === 0 ? (
+              {filteredCommitments.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="py-6 sm:py-10 text-center text-pine-text-muted text-[9px] sm:text-xs italic">
-                    No active commitments found for this fund.
+                    {commitments.length === 0 ? 'No active commitments found for this fund.' : 'No commitments matching your search.'}
                   </td>
                 </tr>
               ) : (
-                commitments.map((c, i) => (
+                filteredCommitments.map((c, i) => (
                   <tr key={c.id} className="hover:bg-white/5 transition-colors group text-[9px] xs:text-[10px] sm:text-xs">
                     <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-mono text-zinc-500">{i + 1}</td>
                     <td className="py-1 px-1.5 sm:py-2 sm:px-4">

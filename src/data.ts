@@ -30,11 +30,21 @@ export const GREGORIAN_MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Islamic months for Bazm Fund
+// Islamic months for Bazm Fund (13 Sections: After 12 Rabi-ul-Awwal through Before 12 Rabi-ul-Awwal)
 export const ISLAMIC_MONTHS = [
-  'Rabi-ul-Awwal', 'Rabi-us-Sani', 'Jamadi-ul-Awwal', 'Jamadi-us-Sani',
-  'Rajab', 'Shaban', 'Ramadan', 'Shawwal', 'Dhul-Qadah', 'Dhul-Hijjah',
-  'Muharram', 'Safar'
+  'After 12 Rabi-ul-Awwal',
+  'Rabi-us-Sani',
+  'Jamadi-ul-Awwal',
+  'Jamadi-us-Sani',
+  'Rajab',
+  'Shaban',
+  'Ramadan',
+  'Shawwal',
+  'Dhul-Qadah',
+  'Dhul-Hijjah',
+  'Muharram',
+  'Safar',
+  'Before 12 Rabi-ul-Awwal'
 ];
 
 // Initial password seeds
@@ -182,9 +192,9 @@ export const INITIAL_BAZM_MEMBERS: FundMember[] = [
 ];
 
 export const INITIAL_BAZM_TRANSACTIONS: FundMemberTransaction[] = [
-  { id: 'bt-1', memberId: 'bm-1', monthKey: 'Rabi-ul-Awwal', amount: 1000, paymentDate: '2026-03-24' },
+  { id: 'bt-1', memberId: 'bm-1', monthKey: 'After 12 Rabi-ul-Awwal', amount: 1000, paymentDate: '2026-03-24' },
   { id: 'bt-2', memberId: 'bm-1', monthKey: 'Rabi-us-Sani', amount: 1000, paymentDate: '2026-04-20' },
-  { id: 'bt-3', memberId: 'bm-2', monthKey: 'Rabi-ul-Awwal', amount: 2000, paymentDate: '2026-03-22' },
+  { id: 'bt-3', memberId: 'bm-2', monthKey: 'After 12 Rabi-ul-Awwal', amount: 2000, paymentDate: '2026-03-22' },
   { id: 'bt-4', memberId: 'bm-2', monthKey: 'Rabi-us-Sani', amount: 2000, paymentDate: '2026-04-18' },
   { id: 'bt-5', memberId: 'bm-2', monthKey: 'Jamadi-ul-Awwal', amount: 2000, paymentDate: '2026-05-15' }
 ];
