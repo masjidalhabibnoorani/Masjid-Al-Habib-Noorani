@@ -2,33 +2,33 @@
 @import "tailwindcss";
 
 @theme {
-  --color-pine-bg: var(--custom-pine-bg, #284C43);
-  --color-pine-bar: var(--custom-pine-bar, #1A3A32);
-  --color-pine-card: var(--custom-pine-card, #487164);
-  --color-pine-hover: var(--custom-pine-hover, #5D7F71);
-  --color-pine-btn: var(--custom-pine-btn, #01796F);
-  --color-pine-btn-hover: var(--custom-pine-btn-hover, #51A773);
-  --color-pine-active: var(--custom-pine-active, #2A6041);
-  --color-pine-text-heading: var(--text-pine-heading, #F5F5F5);
-  --color-pine-text-body: var(--text-pine-body, #B8D0C0);
-  --color-pine-text-muted: var(--text-pine-muted, #8CA89A);
-  --color-pine-border: var(--custom-pine-border, #2E5E49);
-  --color-pine-success: var(--custom-pine-btn-hover, #51A773);
-  --color-pine-warning: #D4A53A;
-  --color-pine-error: #B54D4D;
+  --color-pine-bg: var(--custom-pine-bg, #06120E);
+  --color-pine-bar: var(--custom-pine-bar, #030A08);
+  --color-pine-card: var(--custom-pine-card, #0C1D18);
+  --color-pine-hover: var(--custom-pine-hover, #152E26);
+  --color-pine-btn: var(--custom-pine-btn, #059669);
+  --color-pine-btn-hover: var(--custom-pine-btn-hover, #10B981);
+  --color-pine-active: var(--custom-pine-active, #047857);
+  --color-pine-text-heading: var(--text-pine-heading, #FFFFFF);
+  --color-pine-text-body: var(--text-pine-body, #E0EDE7);
+  --color-pine-text-muted: var(--text-pine-muted, #89A89C);
+  --color-pine-border: var(--custom-pine-border, #17382E);
+  --color-pine-success: var(--custom-pine-btn-hover, #10B981);
+  --color-pine-warning: #F59E0B;
+  --color-pine-error: #EF4444;
 
   /* Dynamically map all emerald colors to custom theme colors for instant universal theming */
-  --color-emerald-950: var(--custom-pine-bar, #1A3A32);
-  --color-emerald-900: var(--custom-pine-bar, #16332C);
-  --color-emerald-800: var(--custom-pine-active, #2A6041);
-  --color-emerald-700: var(--custom-pine-active, #2A6041);
-  --color-emerald-650: var(--custom-pine-btn, #01796F);
-  --color-emerald-600: var(--custom-pine-btn, #01796F);
-  --color-emerald-500: var(--custom-pine-btn-hover, #51A773);
-  --color-emerald-450: var(--custom-pine-btn-hover, #51A773);
-  --color-emerald-400: var(--custom-pine-btn-hover, #51A773);
-  --color-emerald-350: var(--custom-pine-btn-hover, #51A773);
-  --color-emerald-300: var(--custom-pine-btn-hover, #51A773);
+  --color-emerald-950: var(--custom-pine-bar, #030A08);
+  --color-emerald-900: var(--custom-pine-bar, #06120E);
+  --color-emerald-800: var(--custom-pine-active, #047857);
+  --color-emerald-700: var(--custom-pine-active, #047857);
+  --color-emerald-650: var(--custom-pine-btn, #059669);
+  --color-emerald-600: var(--custom-pine-btn, #059669);
+  --color-emerald-500: var(--custom-pine-btn-hover, #10B981);
+  --color-emerald-450: var(--custom-pine-btn-hover, #10B981);
+  --color-emerald-400: var(--custom-pine-btn-hover, #10B981);
+  --color-emerald-350: var(--custom-pine-btn-hover, #10B981);
+  --color-emerald-300: var(--custom-pine-btn-hover, #10B981);
 
   --font-sans: "Inter", sans-serif;
   --font-heading: "Poppins", sans-serif;
@@ -38,8 +38,8 @@
 
 /* Base scrollbar styles */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: var(--color-pine-bar);
@@ -49,20 +49,60 @@
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-pine-card);
+  background: var(--color-pine-hover);
 }
 
-/* Glassmorphism utility with native srgb color-mix to support dynamic themes */
+/* Glassmorphism utility with native srgb color-mix to support dynamic themes with top-edge specular highlight */
 .glass-panel {
-  background: color-mix(in srgb, var(--color-pine-card, #487164) 95%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-pine-border, #2E5E49) 75%, transparent);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  background: color-mix(in srgb, var(--color-pine-card, #122521) 94%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-pine-border, #1E3E36) 80%, transparent);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-panel-heavy {
-  background: color-mix(in srgb, var(--color-pine-bar, #1A3A32) 98%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-pine-border, #2E5E49) 85%, transparent);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  background: color-mix(in srgb, var(--color-pine-bar, #060E0C) 98%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-pine-border, #1E3E36) 88%, transparent);
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* =========================================================================
+   MOBILE SMOOTHNESS & RENDERING ENGINE PERFORMANCE ENHANCEMENTS
+   ========================================================================= */
+@media (hover: none) and (pointer: coarse) {
+  /* Disable expensive multi-pass GPU backdrop blur on mobile/touch screens to eliminate frame drops and lag */
+  .backdrop-blur-sm,
+  .backdrop-blur,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-3xl {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Disable infinite gradient rotate loops on mobile */
+  .neon-border-glow::after {
+    display: none !important;
+  }
+
+  /* Hardware acceleration for scroll containers */
+  .overflow-x-auto,
+  .overflow-y-auto {
+    transform: translateZ(0);
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Global mobile smoothness and touch optimization */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, input, select {
+  touch-action: manipulation;
 }
 
 /* High Contrast mode refinements */
@@ -70,6 +110,37 @@
   --text-pine-heading: #ffffff !important;
   --text-pine-body: #e2e8f0 !important;
   text-rendering: optimizeLegibility;
+}
+
+/* =========================================================================
+   ROYAL / PRESTIGE LUXURY VISUAL UTILITIES
+   ========================================================================= */
+.text-gradient-luxury {
+  background: linear-gradient(135deg, #FFFFFF 0%, #E2F1EC 45%, #E5C365 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #FFF6D6 0%, #F59E0B 55%, #D97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-emerald {
+  background: linear-gradient(135deg, #ECFDF5 0%, #34D399 50%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-luxury-glow {
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.border-gold-glow {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 25px -4px rgba(245, 158, 11, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .high-contrast h1, 
@@ -151,6 +222,7 @@
   display: inline-block;
   animation: marquee 150s linear infinite;
   padding-left: 100%;
+  will-change: transform;
 }
 
 .ticker-content:hover {

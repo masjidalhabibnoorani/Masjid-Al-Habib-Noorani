@@ -1200,121 +1200,121 @@ export default function AdminPortal({
       <div className="flex-1 flex flex-col md:flex-row">
         
         {/* Sidebar panels menu */}
-        <aside className="w-full md:w-64 bg-pine-bar/65 border-r border-pine-border/60 py-6 px-4 flex flex-col gap-1 z-20">
-          <span className="text-[10px] font-button text-pine-text-muted uppercase tracking-wider px-3 mb-2 block">Public Portal CRUD</span>
+        <aside className="w-full md:w-64 bg-pine-bar/65 border-r border-b md:border-b-0 border-pine-border/60 py-3 md:py-6 px-3 md:px-4 flex flex-row md:flex-col gap-1.5 z-20 overflow-x-auto md:overflow-x-visible no-scrollbar shrink-0">
+          <span className="hidden md:block text-[10px] font-button text-pine-text-muted uppercase tracking-wider px-3 mb-2">Public Portal CRUD</span>
           <button 
             onClick={() => setActiveTab('announcements')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'announcements' ? 'bg-pine-active text-white font-semibold' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'announcements' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <Bell className="w-4 h-4 shrink-0" /> Announcements Marquee
+            <Bell className="w-4 h-4 shrink-0" /> Announcements
           </button>
           <button 
             onClick={() => setActiveTab('namaz')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'namaz' ? 'bg-pine-active text-white font-semibold' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'namaz' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <Clock className="w-4 h-4 shrink-0" /> Prayers Timetable
+            <Clock className="w-4 h-4 shrink-0" /> Timetable
           </button>
           <button 
             onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'history' ? 'bg-pine-active text-white font-semibold' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'history' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <History className="w-4 h-4 shrink-0" /> Historic Cards
+            <History className="w-4 h-4 shrink-0" /> History
           </button>
           <button 
             onClick={() => setActiveTab('activities')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'activities' ? 'bg-pine-active text-white font-semibold' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'activities' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <ActIcon className="w-4 h-4 shrink-0" /> Quranic Programs
+            <ActIcon className="w-4 h-4 shrink-0" /> Programs
           </button>
           <button 
             onClick={() => setActiveTab('map')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'map' ? 'bg-pine-active text-white font-semibold' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'map' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <MapPin className="w-4 h-4 shrink-0" /> Map Embed Set
+            <MapPin className="w-4 h-4 shrink-0" /> Map
           </button>
           <button 
             onClick={() => setActiveTab('administrators')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'administrators' ? 'bg-pine-active text-white font-semibold animate-pulse' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'administrators' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <User className="w-4 h-4 shrink-0 text-pink-300" /> Committee (Intezamia)
+            <User className="w-4 h-4 shrink-0 text-pink-300" /> Committee
           </button>
           <button 
             onClick={() => setActiveTab('religious_staff')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'religious_staff' ? 'bg-pine-active text-white font-semibold animate-pulse' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'religious_staff' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <Award className="w-4 h-4 shrink-0 text-amber-300" /> Scholars & Imams
+            <Award className="w-4 h-4 shrink-0 text-amber-300" /> Scholars
           </button>
 
-          <span className="text-[10px] font-button text-pine-text-muted uppercase tracking-wider px-3 mt-4 mb-2 block">Finances & Dynamic Projects</span>
+          <span className="hidden md:block text-[10px] font-button text-pine-text-muted uppercase tracking-wider px-3 mt-4 mb-2">Finances & Projects</span>
           <button 
             onClick={() => setActiveTab('financials')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'financials' ? 'bg-pine-active text-white font-semibold' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'financials' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <FileCheck className="w-4 h-4 shrink-0" /> Ledger Accounts
+            <FileCheck className="w-4 h-4 shrink-0 text-emerald-400" /> Ledgers
           </button>
           <button 
             onClick={() => setActiveTab('projects')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'projects' ? 'bg-pine-active text-white font-semibold' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'projects' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <PlusCircle className="w-4 h-4 shrink-0" /> Create Projects
+            <PlusCircle className="w-4 h-4 shrink-0 text-amber-400" /> Projects
           </button>
           <button 
             onClick={() => setActiveTab('commitments')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'commitments' ? 'bg-pine-active text-white font-semibold animate-pulse' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'commitments' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <HeartHandshake className="w-4 h-4 shrink-0 text-rose-400" /> Manage Commitments
+            <HeartHandshake className="w-4 h-4 shrink-0 text-rose-400" /> Commitments
           </button>
           <button 
             onClick={() => setActiveTab('passwords')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'passwords' ? 'bg-pine-active text-white font-semibold' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'passwords' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <FolderKey className="w-4 h-4 shrink-0" /> Register Passwords
+            <FolderKey className="w-4 h-4 shrink-0 text-yellow-400" /> Passwords
           </button>
           <button 
             onClick={() => setActiveTab('themes')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'themes' ? 'bg-pine-active text-white font-semibold' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'themes' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <Palette className="w-4 h-4 shrink-0" /> Website Theme Colors
+            <Palette className="w-4 h-4 shrink-0 text-purple-400" /> Themes
           </button>
           <button 
             onClick={() => setActiveTab('ai')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'ai' ? 'bg-pine-active text-white font-semibold animate-pulse' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'ai' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <Bot className="w-4 h-4 shrink-0 text-teal-400" /> Public AI Context
+            <Bot className="w-4 h-4 shrink-0 text-teal-400" /> AI Context
           </button>
           <button 
             onClick={() => setActiveTab('backup')}
-            className={`flex items-center gap-2.5 py-2.5 px-3 rounded text-xs font-button uppercase tracking-wider text-left transition-colors ${
-              activeTab === 'backup' ? 'bg-pine-active text-white font-semibold animate-pulse' : 'hover:bg-pine-hover/10 text-pine-text-muted'
+            className={`flex items-center gap-2 py-2 px-3 rounded text-xs font-button uppercase tracking-wider whitespace-nowrap text-left transition-colors cursor-pointer shrink-0 ${
+              activeTab === 'backup' ? 'bg-pine-active text-white font-semibold shadow-sm' : 'hover:bg-pine-hover/10 text-pine-text-muted'
             }`}
           >
-            <Database className="w-4 h-4 shrink-0 text-amber-400" /> Save & Restore Backup
+            <Database className="w-4 h-4 shrink-0 text-amber-400" /> Backup
           </button>
           
         </aside>

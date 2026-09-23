@@ -25,33 +25,67 @@ export default function TiltCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotate, setRotate] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const rafRef = useRef<number | null>(null);
+
+  const [isTouchDevice] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.matchMedia('(hover: none)').matches;
+  });
+
+  // Mobile / Touch devices render lightweight, instantaneous native divs
+  if (isTouchDevice) {
+    return (
+      <div
+        ref={cardRef}
+        id={id}
+        onClick={onClick}
+        className={`relative glass-panel rounded-2xl p-4 sm:p-6 overflow-hidden border border-pine-border transition-all duration-150 active:scale-[0.99] select-none ${
+          onClick ? 'cursor-pointer' : ''
+        } ${className}`}
+      >
+        <div className="relative z-10">{children}</div>
+      </div>
+    );
+  }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
+    if (!cardRef.current || window.matchMedia('(hover: none)').matches) return;
 
-    const card = cardRef.current;
-    const { left, top, width, height } = card.getBoundingClientRect();
-    const x = e.clientX - left;
-    const y = e.clientY - top;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
 
-    // Centered percentage (-0.5 to 0.5)
-    const pctX = (x / width) - 0.5;
-    const pctY = (y / height) - 0.5;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
 
-    // Maximum tilt angle (e.g. 15 degrees)
-    const maxTilt = 12;
-    // Rotate around Y axis for X mouse moves, and X axis for Y mouse moves
-    const rY = pctX * maxTilt;
-    const rX = -pctY * maxTilt;
+    rafRef.current = requestAnimationFrame(() => {
+      if (!cardRef.current) return;
+      const card = cardRef.current;
+      const { left, top, width, height } = card.getBoundingClientRect();
+      const x = clientX - left;
+      const y = clientY - top;
 
-    setRotate({ x: rX, y: rY });
+      const pctX = (x / width) - 0.5;
+      const pctY = (y / height) - 0.5;
+
+      const maxTilt = 10;
+      const rY = pctX * maxTilt;
+      const rX = -pctY * maxTilt;
+
+      setRotate({ x: rX, y: rY });
+    });
   };
 
   const handleMouseEnter = () => {
-    setIsHovered(true);
+    if (!window.matchMedia('(hover: none)').matches) {
+      setIsHovered(true);
+    }
   };
 
   const handleMouseLeave = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
     setIsHovered(false);
     setRotate({ x: 0, y: 0 });
   };

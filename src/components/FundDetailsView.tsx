@@ -19,8 +19,7 @@ import {
   Lock, Calendar, Users, DollarSign, ArrowLeft, Download, Printer, Sliders,
   Search, ShieldAlert, Plus, Edit, Trash, ChevronRight, User, Phone, CheckCircle, Info,
   Check, PlusCircle, Trash2, Edit2, Save, UserPlus, X, Building2, HeartHandshake, Award,
-  History, FileText, UserCheck, Layers, Clock, ListFilter, Sparkles, ChevronDown, ChevronUp, ArrowUpDown,
-  ArrowUp, ArrowDown
+  History, FileText, UserCheck, Layers, Clock, ListFilter, Sparkles, ChevronDown, ChevronUp, ArrowUpDown, Eye
 } from 'lucide-react';
 
 interface FundDetailsViewProps {
@@ -570,15 +569,20 @@ export default function FundDetailsView({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
-  // Administrative Financial Locking states - only true if we are explicitly viewing from Admin Room
-  const [isFundAdminUnlocked, setIsFundAdminUnlocked] = useState(isAdminView);
+  // Administrative Financial Locking states - strictly true ONLY if explicitly viewing from Admin Room (isAdminView === true).
+  // Visitors coming from Public Website can unlock tabs with passwords to SEEN / VIEW records, but CAN NEVER EDIT.
+  const [isFundAdminUnlocked, _setIsFundAdminUnlocked] = useState(Boolean(isAdminView));
+  const setIsFundAdminUnlocked = (val: boolean | ((prev: boolean) => boolean)) => {
+    if (!isAdminView) return; // Strict security: Public visitors can NEVER unlock editing under any circumstances
+    _setIsFundAdminUnlocked(val);
+  };
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [masterPassInput, setMasterPassInput] = useState('');
   const [masterError, setMasterError] = useState('');
 
   // Automatically authorize tabs and enable editor modes if starting in admin console view
   useEffect(() => {
-    setIsFundAdminUnlocked(isAdminView);
+    _setIsFundAdminUnlocked(Boolean(isAdminView));
     if (isAdminView) {
       setAuthorizedTabs({
         overview: true,
@@ -1228,15 +1232,15 @@ export default function FundDetailsView({
   const getNetBalance = () => getSumTotalAchieved() - getExpensesSum();
 
   return (
-    <div className="min-h-screen bg-pine-bg text-pine-text-body py-12 px-4 md:px-8 select-none relative z-10 font-sans">
+    <div className="min-h-screen bg-pine-bg text-pine-text-body py-8 pb-24 md:pb-12 px-3 sm:px-4 md:px-8 select-none relative z-10 font-sans">
       <div className="max-w-7xl mx-auto">
         
         {/* Navigation title row - Dynamic Back actions */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8 border-b border-pine-border pb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 border-b border-pine-border pb-4">
           {activeTab === 'landing' ? (
             <button 
               onClick={onBack}
-              className="flex items-center gap-2 text-xs font-button uppercase tracking-wider text-pine-text-muted hover:text-white transition-colors duration-200"
+              className="flex items-center gap-2 text-xs font-button uppercase tracking-wider text-pine-text-muted hover:text-white transition-colors duration-200 cursor-pointer"
               id="btn_fund_exit"
             >
               <ArrowLeft className="w-4 h-4" /> Gateway Page
@@ -1249,14 +1253,14 @@ export default function FundDetailsView({
                   setAuthorizedTabs({});
                 }
               }}
-              className="flex items-center gap-2 text-xs font-button uppercase tracking-wider text-pine-btn-hover hover:text-white transition-colors duration-205"
+              className="flex items-center gap-2 text-xs font-button uppercase tracking-wider text-pine-btn-hover hover:text-white transition-colors duration-205 cursor-pointer"
               id="btn_fund_return"
             >
               <ArrowLeft className="w-4 h-4" /> Back to Fund Dashboard
             </button>
           )}
           <div className="text-right">
-            <span className="text-xs font-button uppercase tracking-wider bg-pine-active px-2.5 py-1 rounded text-pine-text-heading">
+            <span className="text-xs font-button uppercase tracking-wider bg-pine-active px-2.5 py-1 rounded text-pine-text-heading border border-pine-border/60">
               {fund.name} Fund Portal
             </span>
           </div>
@@ -1264,13 +1268,123 @@ export default function FundDetailsView({
 
         {/* Dynamic header summary banner if project is loaded */}
         {fund.type === 'project' && project && (
-          <div className="mb-8 glass-panel rounded-2xl p-6 border-l-4 border-pine-btn">
+          <div className="mb-6 glass-panel rounded-2xl p-6 border-l-4 border-pine-btn">
             <h1 className="text-2xl md:text-3xl font-heading font-bold text-pine-text-heading mb-2">{project.name}</h1>
             <p className="text-sm text-pine-text-body mb-4">{project.shortDescription}</p>
             <div className="flex justify-between items-center text-xs font-sans text-pine-text-muted mt-2 border-t border-pine-border/30 pt-4">
               <span>Status: Active Development Campaign</span>
               <span>Auditing keys required for financial balance statements.</span>
             </div>
+          </div>
+        )}
+
+        {/* Executive Quick Balance Strip (Shown across all subtabs) */}
+        {activeTab !== 'landing' && !pendingTabChange && (
+          <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-3 font-sans animate-fade-in">
+            <div className="bg-pine-bar/90 border border-pine-border/80 p-3.5 rounded-xl flex flex-col justify-between shadow-sm">
+              <span className="text-[10px] uppercase font-bold text-pine-text-muted tracking-wider">Net Balance (خالص میزان)</span>
+              <div className="mt-1.5 flex items-baseline gap-1">
+                <span className={`text-lg sm:text-xl font-mono font-bold ${getNetBalance() >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {getNetBalance().toLocaleString()}
+                </span>
+                <span className="text-[10px] text-pine-text-muted font-bold">Rs</span>
+              </div>
+            </div>
+
+            <div className="bg-pine-bar/90 border border-pine-border/80 p-3.5 rounded-xl flex flex-col justify-between shadow-sm">
+              <span className="text-[10px] uppercase font-bold text-emerald-400/90 tracking-wider">Total Inflow (کل آمدن)</span>
+              <div className="mt-1.5 flex items-baseline gap-1">
+                <span className="text-lg sm:text-xl font-mono font-bold text-emerald-400">
+                  {getSumTotalAchieved().toLocaleString()}
+                </span>
+                <span className="text-[10px] text-pine-text-muted font-bold">Rs</span>
+              </div>
+            </div>
+
+            <div className="bg-pine-bar/90 border border-pine-border/80 p-3.5 rounded-xl flex flex-col justify-between shadow-sm">
+              <span className="text-[10px] uppercase font-bold text-rose-400/90 tracking-wider">Total Expenses (کل خرچ)</span>
+              <div className="mt-1.5 flex items-baseline gap-1">
+                <span className="text-lg sm:text-xl font-mono font-bold text-rose-400">
+                  {getExpensesSum().toLocaleString()}
+                </span>
+                <span className="text-[10px] text-pine-text-muted font-bold">Rs</span>
+              </div>
+            </div>
+
+            <div className="bg-pine-bar/90 border border-pine-border/80 p-3.5 rounded-xl flex flex-col justify-between shadow-sm">
+              <span className="text-[10px] uppercase font-bold text-blue-400/90 tracking-wider">Total Donors (کل ممبران)</span>
+              <div className="mt-1.5 flex items-baseline gap-1">
+                <span className="text-lg sm:text-xl font-mono font-bold text-white">
+                  {isFundAdminUnlocked ? (currentMembers.length + currentOthers.length) : currentMembers.length}
+                </span>
+                <span className="text-[10px] text-pine-text-muted font-bold">Accounts</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Direct Subtabs Navigation Switcher Strip (Allows 1-Click tab jumping) */}
+        {activeTab !== 'landing' && !pendingTabChange && (
+          <div className="mb-6 flex items-center gap-1.5 p-1.5 bg-pine-bar/95 border border-pine-border rounded-xl overflow-x-auto no-scrollbar font-sans text-xs shadow-md">
+            <button
+              onClick={() => requestTabChange('landing')}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1.5 whitespace-nowrap transition-all font-semibold cursor-pointer ${
+                activeTab === 'landing' ? 'bg-pine-btn text-white shadow-md' : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Dashboard</span>
+            </button>
+            
+            <button
+              onClick={() => requestTabChange('portfolio')}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1.5 whitespace-nowrap transition-all font-semibold cursor-pointer ${
+                activeTab === 'portfolio' ? 'bg-pine-btn text-white shadow-md' : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Portfolio</span>
+            </button>
+
+            <button
+              onClick={() => requestTabChange('fixed')}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1.5 whitespace-nowrap transition-all font-semibold cursor-pointer ${
+                activeTab === 'fixed' ? 'bg-pine-btn text-white shadow-md' : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5 text-amber-400" />
+              <span>Monthly Fund</span>
+            </button>
+
+            <button
+              onClick={() => requestTabChange('other')}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1.5 whitespace-nowrap transition-all font-semibold cursor-pointer ${
+                activeTab === 'other' ? 'bg-pine-btn text-white shadow-md' : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-blue-400" />
+              <span>Other Donations</span>
+            </button>
+
+            <button
+              onClick={() => requestTabChange('expenses')}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1.5 whitespace-nowrap transition-all font-semibold cursor-pointer ${
+                activeTab === 'expenses' ? 'bg-pine-btn text-white shadow-md' : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+              <span>Expenses</span>
+            </button>
+
+            <button
+              onClick={() => requestTabChange('commitments')}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1.5 whitespace-nowrap transition-all font-semibold cursor-pointer ${
+                activeTab === 'commitments' ? 'bg-pine-btn text-white shadow-md' : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <HeartHandshake className="w-3.5 h-3.5 text-purple-400" />
+              <span>Commitments</span>
+            </button>
           </div>
         )}
 
@@ -1321,20 +1435,31 @@ export default function FundDetailsView({
             <div className="max-w-md mx-auto w-full">
               <div className="glass-panel p-5 rounded-2xl border border-pine-border flex flex-col justify-between text-center">
                 <span className="text-[10px] text-pine-text-muted uppercase tracking-wider block mb-1 font-semibold">Core Contributors</span>
-                {isFundAdminUnlocked ? (
-                  <span className="text-2xl font-mono text-white font-bold block leading-tight">{currentMembers.length} Accounts</span>
-                ) : (
-                  <div className="flex items-center justify-center gap-1.5 py-0.5">
-                    <span className="text-lg font-mono tracking-widest text-pine-text-muted/70 font-extrabold select-none">••</span>
-                    <Lock className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                  </div>
-                )}
+                <span className="text-2xl font-mono text-white font-bold block leading-tight">{currentMembers.length} Accounts</span>
                 <span className="text-[10px] text-pine-text-muted/60 font-sans mt-1 block">Active registered donors in this directory</span>
               </div>
             </div>
 
             {/* Administrators restricted banner logic if locked */}
-            {!isFundAdminUnlocked && (
+            {!isAdminView ? (
+              <div className="glass-panel p-6 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-pine-bar/95 via-emerald-950/20 to-pine-bar flex flex-col md:flex-row items-center justify-between gap-5 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                    <Eye className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-heading font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+                      <span>Public View-Only Mode</span>
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono font-normal">Records sirf dekhne (SEEN) ke liye hain</span>
+                    </h4>
+                    <p className="text-xs text-pine-text-body mt-1 max-w-xl leading-relaxed select-text">
+                      Aap public website se tamam financial records, monthly funds, other donations, aur expenses ko password enter kar ke dekh (SEEN) aur print kar sakte hain. Public website se kisi qism ki tabdeeli (editing / adding / deleting) nahi ho sakti; records ko edit ya add karne ka ikhtiyar sirf Admin Console se login ho kar dastyab hai.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : !isFundAdminUnlocked && (
               <div className="glass-panel p-6 rounded-2xl border border-pine-border bg-gradient-to-r from-pine-bar/95 via-pine-active/5 to-pine-bar flex flex-col md:flex-row items-center justify-between gap-5 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-pine-btn/5 rounded-full blur-2xl pointer-events-none" />
                 <div className="flex items-start gap-4">
@@ -1346,22 +1471,20 @@ export default function FundDetailsView({
                        Mehfooz Shuda Financial Directory (Arakin-e-Committee Mode / Safe-View)
                     </h4>
                     <p className="text-xs text-pine-text-body mt-1 max-w-xl leading-relaxed select-text">
-                      Is public area me registers or records ko tabdeel (edit) nahi kiya ja sakta. Kisi bhi draj shuda transaction ya cell value ko badalne ka ikhtiyar sirf Admin Room ke dastyab ledger management system me dastyab hai.
+                      Kisi bhi draj shuda transaction ya cell value ko badalne ke liye verification darj karein.
                     </p>
                   </div>
                 </div>
                 
-                {isAdminView && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowVerificationModal(true);
-                    }}
-                    className="py-2.5 px-6 bg-gradient-to-r from-yellow-500 via-amber-600 to-amber-700 hover:from-yellow-450 hover:to-amber-600 text-black text-[11px] font-button uppercase tracking-wider font-extrabold rounded-xl shrink-0 flex items-center gap-2 shadow-xl hover:shadow-yellow-950/30 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-                  >
-                    <Lock className="w-3.5 h-3.5" /> ADMINISTRATORS VERIFY
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowVerificationModal(true);
+                  }}
+                  className="py-2.5 px-6 bg-gradient-to-r from-yellow-500 via-amber-600 to-amber-700 hover:from-yellow-450 hover:to-amber-600 text-black text-[11px] font-button uppercase tracking-wider font-extrabold rounded-xl shrink-0 flex items-center gap-2 shadow-xl hover:shadow-yellow-950/30 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                >
+                  <Lock className="w-3.5 h-3.5" /> ADMINISTRATORS VERIFY
+                </button>
               </div>
             )}
 
@@ -2264,7 +2387,8 @@ export default function FundDetailsView({
             setTransactions={setTransactions}
             logAudit={logAudit}
             setSelectedReceipt={setSelectedReceipt}
-            isFundAdminUnlocked={isFundAdminUnlocked}
+            isFundAdminUnlocked={Boolean(isAdminView && isFundAdminUnlocked)}
+            isAdminView={isAdminView}
           />
         )}
 
@@ -2276,10 +2400,11 @@ export default function FundDetailsView({
             monthsList={monthsList}
             setOthers={setOthers}
             logAudit={logAudit}
-            isFundAdminUnlocked={isFundAdminUnlocked}
+            isFundAdminUnlocked={Boolean(isAdminView && isFundAdminUnlocked)}
             setIsFundAdminUnlocked={setIsFundAdminUnlocked}
             setAuthorizedTabs={setAuthorizedTabs}
             passwords={passwords}
+            isAdminView={isAdminView}
           />
         )}
 
@@ -2291,10 +2416,11 @@ export default function FundDetailsView({
             monthsList={monthsList}
             setExpenses={setExpenses}
             logAudit={logAudit}
-            isFundAdminUnlocked={isFundAdminUnlocked}
+            isFundAdminUnlocked={Boolean(isAdminView && isFundAdminUnlocked)}
             setIsFundAdminUnlocked={setIsFundAdminUnlocked}
             setAuthorizedTabs={setAuthorizedTabs}
             passwords={passwords}
+            isAdminView={isAdminView}
           />
         )}
 
@@ -2305,7 +2431,8 @@ export default function FundDetailsView({
             commitments={commitments.filter(c => c.fundId === fund.id)}
             setCommitments={setCommitments}
             logAudit={logAudit}
-            isFundAdminUnlocked={isFundAdminUnlocked}
+            isFundAdminUnlocked={Boolean(isAdminView && isFundAdminUnlocked)}
+            isAdminView={isAdminView}
           />
         )}
 
@@ -2495,6 +2622,59 @@ export default function FundDetailsView({
           </div>
         </div>
       )}
+
+      {/* MOBILE BOTTOM NAVIGATION DOCK (Thumb-Friendly, Fixed Bottom) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#091b17]/95 backdrop-blur-md border-t border-emerald-500/30 py-2 px-3 shadow-2xl flex items-center justify-around text-[10px] select-none font-sans">
+        <button
+          onClick={() => requestTabChange('landing')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'landing' ? 'text-emerald-400 font-bold bg-emerald-950/60' : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Building2 className="w-4 h-4" />
+          <span>Home</span>
+        </button>
+
+        <button
+          onClick={() => requestTabChange('fixed')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'fixed' ? 'text-amber-400 font-bold bg-amber-950/60' : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          <span>Monthly</span>
+        </button>
+
+        <button
+          onClick={() => requestTabChange('other')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'other' ? 'text-blue-400 font-bold bg-blue-950/60' : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Other</span>
+        </button>
+
+        <button
+          onClick={() => requestTabChange('expenses')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'expenses' ? 'text-rose-400 font-bold bg-rose-950/60' : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <ShieldAlert className="w-4 h-4" />
+          <span>Expenses</span>
+        </button>
+
+        <button
+          onClick={() => requestTabChange('portfolio')}
+          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'portfolio' ? 'text-emerald-300 font-bold bg-emerald-950/60' : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <DollarSign className="w-4 h-4" />
+          <span>Summary</span>
+        </button>
+      </div>
 
     </div>
   );
@@ -3550,6 +3730,7 @@ interface FixedRegisterProps {
   logAudit: (action: AuditLog['action'], module: string, recordId: string, oldValue: any, newValue: any) => void;
   setSelectedReceipt: React.Dispatch<React.SetStateAction<any>>;
   isFundAdminUnlocked?: boolean;
+  isAdminView?: boolean;
 }
 
 function FixedFundRegister({
@@ -3562,8 +3743,12 @@ function FixedFundRegister({
   setTransactions,
   logAudit,
   setSelectedReceipt,
-  isFundAdminUnlocked = false
+  isFundAdminUnlocked = false,
+  isAdminView = false
 }: FixedRegisterProps) {
+  // CRITICAL PRIVILEGE SEPARATION:
+  // Public visitors can only SEEN / VIEW records. Editing is strictly reserved for Admin Portal.
+  const canEdit = Boolean(isAdminView && isFundAdminUnlocked);
   const orgInfo = getFundOrgInfo(fund);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchAmount, setSearchAmount] = useState('');
@@ -3760,7 +3945,7 @@ function FixedFundRegister({
   // Saved/mutated action handles
   const handleSavePrevEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeCellEdit) return;
+    if (!canEdit || !activeCellEdit) return;
     const mId = activeCellEdit.memberId;
     const original = members.find(m => m.id === mId);
     if (!original) return;
@@ -3782,7 +3967,7 @@ function FixedFundRegister({
   };
 
   const handleSavePaymentEdit = (shouldDelete = false) => {
-    if (!activeCellEdit) return;
+    if (!canEdit || !activeCellEdit) return;
     const { memberId, type, monthKey } = activeCellEdit;
     const mKey = type === 'khatm' ? 'khatm' : (monthKey || 'January');
 
@@ -3823,7 +4008,7 @@ function FixedFundRegister({
 
   const handleSaveMember = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeMemberEdit) return;
+    if (!canEdit || !activeMemberEdit) return;
 
     if (activeMemberEdit.memberId) {
       // Edit Profile
@@ -3904,11 +4089,12 @@ function FixedFundRegister({
   };
 
   const handleDeleteMember = (mId: string) => {
+    if (!canEdit) return;
     setMemberToDelete(mId);
   };
 
   const confirmDeleteMember = () => {
-    if (!memberToDelete) return;
+    if (!canEdit || !memberToDelete) return;
     const original = members.find(m => m.id === memberToDelete);
     if (!original) return;
     
@@ -4009,13 +4195,17 @@ function FixedFundRegister({
         </div>
 
         <div className="flex gap-2">
-          {isFundAdminUnlocked && (
+          {canEdit ? (
             <button
               onClick={() => setActiveMemberEdit({ name: '', phone: '', requiredAmount: 12000, remainingPrevious: 0, paidPrevious: 0, paidPreviousDate: '' })}
               className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-button uppercase tracking-wider py-2 px-3.5 rounded-lg shadow-md transition-all font-sans"
             >
               <UserPlus className="w-4 h-4" /> Add Contributor
             </button>
+          ) : (
+            <div className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-emerald-950/40 border border-emerald-500/20 text-emerald-300 text-[11px] font-sans font-medium">
+              <Eye className="w-3.5 h-3.5 text-emerald-400" /> View-Only Mode
+            </div>
           )}
 
           <button 
@@ -4152,7 +4342,7 @@ function FixedFundRegister({
       </div>
 
       {/* Massive Pivot table container with solid scroll locks */}
-      <div className="overflow-x-auto overflow-y-auto rounded-xl border border-pine-border bg-[var(--color-pine-bar)] max-h-[65vh] shadow-2xl relative">
+      <div className="overflow-x-auto overflow-y-auto rounded-xl border border-pine-border bg-[var(--color-pine-bar)] max-h-[65vh] shadow-2xl relative overscroll-contain">
         <div className="min-w-max">
           <table className="w-full text-left font-mono text-[9px] xs:text-[10px] sm:text-xs border-collapse">
             <thead>
@@ -4205,7 +4395,7 @@ function FixedFundRegister({
                   <tr key={m.id} className="hover:bg-pine-hover/10 transition-colors group">
                     {/* Sticky S# Column with Admin delete option */}
                     <td className="py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-mono text-pine-text-muted sticky left-0 bg-[var(--color-pine-bar)] z-20 border-r border-pine-border w-8 sm:w-12 text-[8.5px] xs:text-[9.5px] sm:text-xs">
-                      {isFundAdminUnlocked ? (
+                      {canEdit ? (
                         <button 
                           onClick={() => handleDeleteMember(m.id)}
                           className="text-rose-450 hover:text-rose-300 p-0.5 sm:p-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -4214,7 +4404,7 @@ function FixedFundRegister({
                           <Trash2 className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
                         </button>
                       ) : null}
-                      <span className={isFundAdminUnlocked ? "group-hover:hidden" : ""}>{naturalSNo}</span>
+                      <span className={canEdit ? "group-hover:hidden" : ""}>{naturalSNo}</span>
                     </td>
 
                     {/* Sticky Contributor Name with double control option */}
@@ -4226,7 +4416,7 @@ function FixedFundRegister({
                       >
                         {m.name}
                       </span>
-                      {isFundAdminUnlocked && (
+                      {canEdit && (
                         <button 
                           onClick={() => setActiveMemberEdit({
                             memberId: m.id,
@@ -4249,9 +4439,9 @@ function FixedFundRegister({
                       <>
                         {/* Prev Year Remaining Dues */}
                         <td 
-                          onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'prev' }) : null}
+                          onClick={() => canEdit ? setActiveCellEdit({ memberId: m.id, type: 'prev' }) : null}
                           className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-bold text-rose-350 text-[8.5px] xs:text-[9.5px] sm:text-xs ${
-                            isFundAdminUnlocked ? 'hover:bg-pine-btn/25 hover:text-white cursor-pointer' : ''
+                            canEdit ? 'hover:bg-pine-btn/25 hover:text-white cursor-pointer' : ''
                           }`}
                         >
                           {m.remainingPrevious > 0 ? `${m.remainingPrevious.toLocaleString()} Rs` : '0 Rs'}
@@ -4259,9 +4449,9 @@ function FixedFundRegister({
 
                         {/* Prev Year Paid Amount */}
                         <td 
-                          onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'prev' }) : null}
+                          onClick={() => canEdit ? setActiveCellEdit({ memberId: m.id, type: 'prev' }) : null}
                           className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-bold text-emerald-455 text-[8.5px] xs:text-[9.5px] sm:text-xs ${
-                            isFundAdminUnlocked ? 'hover:bg-pine-btn/25 hover:text-white cursor-pointer' : ''
+                            canEdit ? 'hover:bg-pine-btn/25 hover:text-white cursor-pointer' : ''
                           }`}
                         >
                           {m.paidPrevious > 0 ? `${m.paidPrevious.toLocaleString()} Rs` : '0 Rs'}
@@ -4269,9 +4459,9 @@ function FixedFundRegister({
 
                         {/* Prev Year Payment date */}
                         <td 
-                          onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'prev' }) : null}
+                          onClick={() => canEdit ? setActiveCellEdit({ memberId: m.id, type: 'prev' }) : null}
                           className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-mono text-[8px] sm:text-[10px] text-zinc-400 border-r border-pine-border text-[8.5px] xs:text-[9.5px] sm:text-xs ${
-                            isFundAdminUnlocked ? 'hover:bg-pine-btn/25 hover:text-white cursor-pointer' : ''
+                            canEdit ? 'hover:bg-pine-btn/25 hover:text-white cursor-pointer' : ''
                           }`}
                         >
                           {formatDateStr(m.paidPreviousDate) || '-'}
@@ -4283,17 +4473,17 @@ function FixedFundRegister({
                     {fund.type === 'masjid' && (
                       <>
                         <td 
-                          onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'khatm' }) : null}
+                          onClick={() => canEdit ? setActiveCellEdit({ memberId: m.id, type: 'khatm' }) : null}
                           className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-bold font-sans bg-emerald-950/10 text-emerald-400 text-[8.5px] xs:text-[9.5px] sm:text-xs ${
-                            isFundAdminUnlocked ? 'hover:bg-emerald-800/40 cursor-pointer' : ''
+                            canEdit ? 'hover:bg-emerald-800/40 cursor-pointer' : ''
                           }`}
                         >
                           {khatmVal > 0 ? `${khatmVal.toLocaleString()} Rs` : '-'}
                         </td>
                         <td 
-                          onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'khatm' }) : null}
+                          onClick={() => canEdit ? setActiveCellEdit({ memberId: m.id, type: 'khatm' }) : null}
                           className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-mono text-[8px] sm:text-[10px] text-zinc-400 bg-emerald-950/10 border-r border-pine-border text-[8.5px] xs:text-[9.5px] sm:text-xs ${
-                            isFundAdminUnlocked ? 'hover:bg-emerald-800/40 cursor-pointer' : ''
+                            canEdit ? 'hover:bg-emerald-800/40 cursor-pointer' : ''
                           }`}
                         >
                           {khatmDateStr || '-'}
@@ -4308,17 +4498,17 @@ function FixedFundRegister({
                       return (
                         <React.Fragment key={month}>
                           <td 
-                            onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'month', monthKey: month }) : null}
+                            onClick={() => canEdit ? setActiveCellEdit({ memberId: m.id, type: 'month', monthKey: month }) : null}
                             className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-bold border-l border-zinc-700/40 text-white text-[8.5px] xs:text-[9.5px] sm:text-xs ${
-                              isFundAdminUnlocked ? 'hover:bg-pine-btn/30 cursor-pointer' : ''
+                              canEdit ? 'hover:bg-pine-btn/30 cursor-pointer' : ''
                             }`}
                           >
                             {amount > 0 ? `${amount.toLocaleString()} Rs` : '-'}
                           </td>
                           <td 
-                            onClick={() => isFundAdminUnlocked ? setActiveCellEdit({ memberId: m.id, type: 'month', monthKey: month }) : null}
+                            onClick={() => canEdit ? setActiveCellEdit({ memberId: m.id, type: 'month', monthKey: month }) : null}
                             className={`py-0.5 px-0.5 sm:py-2 sm:px-2.5 text-center font-mono text-zinc-450 text-[8px] sm:text-[10px] border-r border-zinc-700/40 text-[8.5px] xs:text-[9.5px] sm:text-xs ${
-                              isFundAdminUnlocked ? 'hover:bg-pine-btn/30 cursor-pointer' : ''
+                              canEdit ? 'hover:bg-pine-btn/30 cursor-pointer' : ''
                             }`}
                           >
                             {pDate || '-'}
@@ -5035,8 +5225,11 @@ function OtherFundRegister(props: any) {
     isFundAdminUnlocked = false,
     setIsFundAdminUnlocked,
     setAuthorizedTabs,
-    passwords = []
+    passwords = [],
+    isAdminView = false
   } = props;
+  // CRITICAL: Public website visitors can ONLY SEEN / VIEW records. Editing is strictly reserved for Admin Portal.
+  const canEdit = Boolean(isAdminView && isFundAdminUnlocked);
   const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonthIdx, setSelectedMonthIdx] = useState<number | 'additional' | null>(null);
@@ -5065,9 +5258,7 @@ function OtherFundRegister(props: any) {
   const [pendingLockedSource, setPendingLockedSource] = useState<string | null>(null);
   const [pendingLockedSourceId, setPendingLockedSourceId] = useState<string | null>(null);
 
-  // Custom Position states when adding new donation source
-  const [newPositionMode, setNewPositionMode] = useState<'end' | 'start' | 'after' | 'custom'>('end');
-  const [positionAfterSourceId, setPositionAfterSourceId] = useState<string>('');
+  // Direct Serial Number position state when adding new donation source
   const [customPositionNumber, setCustomPositionNumber] = useState<string>('');
 
   // Reorder modal state for existing sources
@@ -5110,7 +5301,7 @@ function OtherFundRegister(props: any) {
 
   const handleAddNewOtherEntry = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSource.trim() || !newAmount) return;
+    if (!canEdit || !newSource.trim() || !newAmount) return;
     const newId = 'other_' + Date.now();
     const targetSourceId = lockedSourceId ? lockedSourceId : newId;
     const entry: OtherFundEntry = {
@@ -5148,18 +5339,11 @@ function OtherFundRegister(props: any) {
         return allUpdated;
       }
 
-      // 2. Inserting a NEW source at a specific position / rank
+      // 2. Inserting a NEW source at a direct serial number / position
       const { sourceIds, map } = getFundSourceGroups(currentFundEntries);
-      let targetIndexInSourceIds = sourceIds.length; // default 'end'
+      let targetIndexInSourceIds = sourceIds.length; // default at the end
 
-      if (newPositionMode === 'start') {
-        targetIndexInSourceIds = 0;
-      } else if (newPositionMode === 'after' && positionAfterSourceId) {
-        const foundIdx = sourceIds.indexOf(positionAfterSourceId);
-        if (foundIdx !== -1) {
-          targetIndexInSourceIds = foundIdx + 1;
-        }
-      } else if (newPositionMode === 'custom' && customPositionNumber) {
+      if (customPositionNumber && customPositionNumber.trim()) {
         const num = parseInt(customPositionNumber, 10);
         if (!isNaN(num) && num >= 1) {
           targetIndexInSourceIds = Math.min(Math.max(0, num - 1), sourceIds.length);
@@ -5199,47 +5383,13 @@ function OtherFundRegister(props: any) {
     setShowAddForm(false);
     setLockedSource(null);
     setLockedSourceId(null);
-    setNewPositionMode('end');
-    setPositionAfterSourceId('');
     setCustomPositionNumber('');
-    showToast('Other Donation entry added successfully at chosen position', 'success');
-  };
-
-  // Move source up or down in sequence
-  const handleMoveSource = (sourceId: string, direction: 'up' | 'down') => {
-    setOthers(prevOthers => {
-      const currentFundEntries = prevOthers.filter(item => item.fundId === fund.id);
-      const otherFundsEntries = prevOthers.filter(item => item.fundId !== fund.id);
-      const { sourceIds, map } = getFundSourceGroups(currentFundEntries);
-
-      const currIdx = sourceIds.indexOf(sourceId);
-      if (currIdx === -1) return prevOthers;
-      if (direction === 'up' && currIdx === 0) return prevOthers;
-      if (direction === 'down' && currIdx === sourceIds.length - 1) return prevOthers;
-
-      const targetIdx = direction === 'up' ? currIdx - 1 : currIdx + 1;
-      const newSourceIdsOrder = [...sourceIds];
-      const [moved] = newSourceIdsOrder.splice(currIdx, 1);
-      newSourceIdsOrder.splice(targetIdx, 0, moved);
-
-      const orderedFundEntries: OtherFundEntry[] = [];
-      newSourceIdsOrder.forEach((sId, orderIdx) => {
-        if (map[sId]) {
-          map[sId].entries.forEach(e => {
-            orderedFundEntries.push({ ...e, customOrder: orderIdx + 1 });
-          });
-        }
-      });
-
-      const allUpdated = [...otherFundsEntries, ...orderedFundEntries];
-      PortalDatabase.set('other_fund_entries', allUpdated);
-      return allUpdated;
-    });
-    showToast(`Source moved ${direction === 'up' ? 'up' : 'down'} successfully`, 'success');
+    showToast('Other Donation entry added successfully', 'success');
   };
 
   // Set explicit serial / rank for a source
   const handleSetSourcePosition = (sourceId: string, newPosition1Indexed: number) => {
+    if (!canEdit) return;
     setOthers(prevOthers => {
       const currentFundEntries = prevOthers.filter(item => item.fundId === fund.id);
       const otherFundsEntries = prevOthers.filter(item => item.fundId !== fund.id);
@@ -5339,6 +5489,7 @@ function OtherFundRegister(props: any) {
   const getSumOfSelectedList = () => filteredOthers.reduce((sum, o) => sum + o.amount, 0);
 
   const handleDelete = (id: string) => {
+    if (!canEdit) return;
     const x = others.find(item => item.id === id);
     if (!x) return;
     setDeleteItemId(id);
@@ -5346,7 +5497,7 @@ function OtherFundRegister(props: any) {
   };
 
   const confirmDelete = () => {
-    if (!deleteItemId) return;
+    if (!canEdit || !deleteItemId) return;
     const x = others.find(item => item.id === deleteItemId);
     if (!x) return;
     setOthers(prevOthers => {
@@ -5361,6 +5512,10 @@ function OtherFundRegister(props: any) {
 
   const handleUnlockSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdminView) {
+      setPasswordErrorMsg('Public website se records edit/add karne ki ijazat nahi hai. Records sirf dekhne (SEEN) ke liye hain.');
+      return;
+    }
     const matchedMasterObj = passwords.find((p: any) => p.id === 'admin_dashboard');
     const correctMaster = matchedMasterObj ? matchedMasterObj.passwordValue : 'habib786';
     if (customPasswordInput === correctMaster || customPasswordInput === 'habib786') {
@@ -5396,6 +5551,7 @@ function OtherFundRegister(props: any) {
   };
 
   const handleSaveEdit = (edited: OtherFundEntry) => {
+    if (!canEdit) return;
     const original = others.find(item => item.id === edited.id);
     if (!original) return;
     setOthers(prevOthers => {
@@ -5423,7 +5579,20 @@ function OtherFundRegister(props: any) {
 
   return (
     <div className="space-y-6">
-      {!isFundAdminUnlocked && (
+      {!isAdminView ? (
+        <div className="bg-emerald-950/30 border border-emerald-500/25 p-4 rounded-xl flex items-center justify-between gap-4 font-sans text-xs">
+          <div className="flex items-center gap-3">
+            <Eye className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div>
+              <p className="font-bold text-white uppercase tracking-wider">Public View-Only Mode / صرف دیکھنے کا موڈ</p>
+              <p className="text-[10px] text-zinc-400">Other donations records sirf dekhne (SEEN) ke liye hain. Public website se kisi qism ki tabdeeli ya indraj nahi kiya ja sakta.</p>
+            </div>
+          </div>
+          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-3 py-1 rounded-md shrink-0">
+            View Only
+          </span>
+        </div>
+      ) : !isFundAdminUnlocked && (
         <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-sans text-xs">
           <div className="flex items-center gap-3">
             <Lock className="w-5 h-5 text-yellow-500 shrink-0" />
@@ -5452,23 +5621,19 @@ function OtherFundRegister(props: any) {
           <p className="text-xs text-pine-text-muted font-sans mt-0.5">One-time collections, general Friday boxes, Sadqah collections, and anonymous contributions.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              if (!isFundAdminUnlocked) {
-                setCustomPasswordInput('');
-                setPasswordErrorMsg('');
-                setPasswordModalPurpose('add');
-                setPasswordModalOpen(true);
-              } else {
-                setShowAddForm(!showAddForm);
-              }
-            }}
-            className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all cursor-pointer"
-          >
-            {showAddForm ? <X className="w-4 h-4 text-rose-450" /> : <Plus className="w-4 h-4 text-emerald-400" />} 
-            {showAddForm ? "Close Form" : "Add Other Donation"}
-            {!isFundAdminUnlocked && <Lock className="w-3 h-3 text-yellow-500 ml-1" />}
-          </button>
+          {canEdit ? (
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all cursor-pointer"
+            >
+              {showAddForm ? <X className="w-4 h-4 text-rose-450" /> : <Plus className="w-4 h-4 text-emerald-400" />} 
+              {showAddForm ? "Close Form" : "Add Other Donation"}
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-emerald-950/40 border border-emerald-500/20 text-emerald-300 text-[11px] font-sans font-medium">
+              <Eye className="w-3.5 h-3.5 text-emerald-400" /> View-Only Mode
+            </div>
+          )}
           <button 
             onClick={() => printOtherDonationsStatement(groupedSources, currentFilterLabel(), fund)}
             className="flex items-center gap-1.5 bg-pine-bar hover:bg-pine-hover border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
@@ -5478,10 +5643,8 @@ function OtherFundRegister(props: any) {
         </div>
       </div>
 
-
-
       {/* Inline Direct Inflow Add Form */}
-      {isFundAdminUnlocked && showAddForm && (
+      {canEdit && showAddForm && (
         <div className="glass-panel p-6 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-pine-bar/95 to-pine-bar shadow-xl animate-fade-in">
           <h3 className="text-sm font-button uppercase tracking-wider text-white mb-4 flex items-center gap-1.5">
             <PlusCircle className="w-4 h-4 text-emerald-400" /> {lockedSource ? `Add Entry to: ${lockedSource}` : 'Add Other Donation Source'}
@@ -5535,112 +5698,30 @@ function OtherFundRegister(props: any) {
               />
             </div>
 
-            {/* Insertion Position in List (Only when adding a new source) */}
+            {/* Direct Serial Number input (Only when adding a new source) */}
             {!lockedSource && (
-              <div className="bg-black/30 border border-emerald-500/20 p-3.5 rounded-xl space-y-2.5">
-                <div className="flex items-center justify-between">
+              <div className="bg-black/30 border border-emerald-500/20 p-3 rounded-xl flex flex-wrap items-center justify-between gap-3">
+                <div>
                   <label className="block text-[10px] uppercase text-emerald-400 font-bold tracking-wider flex items-center gap-1.5">
                     <ArrowUpDown className="w-3.5 h-3.5 text-emerald-400" />
-                    لسٹ میں مقام و نمبر شمار (Position in List / Serial Number)
+                    نمبر شمار / Serial Number (Sr. No)
                   </label>
-                  <span className="text-[10px] text-zinc-400">
-                    کل موجودہ سورسز: <span className="text-emerald-400 font-bold font-mono">{fundDistinctSources.length}</span>
-                  </span>
+                  <p className="text-[10px] text-zinc-400 mt-0.5">
+                    (خالی چھوڑنے پر خودکار نمبر <span className="text-emerald-400 font-mono font-bold">#{fundDistinctSources.length + 1}</span> پر آئے گا، یا کوئی بھی نمبر جیسے 21 لکھ دیں)
+                  </p>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
-                  <label className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
-                    newPositionMode === 'end' ? 'bg-emerald-950/60 border-emerald-500 text-white' : 'bg-pine-bar/50 border-pine-border text-zinc-400 hover:text-zinc-200'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="newPositionMode"
-                      checked={newPositionMode === 'end'}
-                      onChange={() => setNewPositionMode('end')}
-                      className="text-emerald-500"
-                    />
-                    <span className="text-[11px] font-bold">At the End (سب سے آخر میں)</span>
-                  </label>
-
-                  <label className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
-                    newPositionMode === 'start' ? 'bg-emerald-950/60 border-emerald-500 text-white' : 'bg-pine-bar/50 border-pine-border text-zinc-400 hover:text-zinc-200'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="newPositionMode"
-                      checked={newPositionMode === 'start'}
-                      onChange={() => setNewPositionMode('start')}
-                      className="text-emerald-500"
-                    />
-                    <span className="text-[11px] font-bold">At Top (#1 سب سے اوپر)</span>
-                  </label>
-
-                  <label className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
-                    newPositionMode === 'after' ? 'bg-emerald-950/60 border-emerald-500 text-white' : 'bg-pine-bar/50 border-pine-border text-zinc-400 hover:text-zinc-200'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="newPositionMode"
-                      checked={newPositionMode === 'after'}
-                      onChange={() => setNewPositionMode('after')}
-                      className="text-emerald-500"
-                    />
-                    <span className="text-[11px] font-bold">After Source (فلاں کے بعد)</span>
-                  </label>
-
-                  <label className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
-                    newPositionMode === 'custom' ? 'bg-emerald-950/60 border-emerald-500 text-white' : 'bg-pine-bar/50 border-pine-border text-zinc-400 hover:text-zinc-200'
-                  }`}>
-                    <input
-                      type="radio"
-                      name="newPositionMode"
-                      checked={newPositionMode === 'custom'}
-                      onChange={() => setNewPositionMode('custom')}
-                      className="text-emerald-500"
-                    />
-                    <span className="text-[11px] font-bold">Custom Serial # (مخصوص نمبر)</span>
-                  </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-zinc-400 font-mono">Sr #</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={fundDistinctSources.length + 1}
+                    value={customPositionNumber}
+                    onChange={(e) => setCustomPositionNumber(e.target.value)}
+                    placeholder={String(fundDistinctSources.length + 1)}
+                    className="w-28 bg-pine-bar border border-emerald-500/40 py-1.5 px-3 text-xs text-white rounded-lg focus:outline-none focus:border-emerald-400 font-mono text-center font-bold"
+                  />
                 </div>
-
-                {newPositionMode === 'after' && (
-                  <div className="mt-2 pt-2 border-t border-emerald-500/10">
-                    <label className="block text-[10px] text-zinc-300 mb-1">
-                      کس سورس کے بعد داخل کرنا ہے؟ (Select Preceding Source):
-                    </label>
-                    <select
-                      value={positionAfterSourceId}
-                      onChange={(e) => setPositionAfterSourceId(e.target.value)}
-                      className="w-full bg-pine-bar border border-emerald-500/40 py-2 px-3 text-xs text-white rounded-lg focus:outline-none cursor-pointer"
-                    >
-                      <option value="">-- فلاں سورس منتخب کریں (مثلاً #20) --</option>
-                      {fundDistinctSources.map((s) => (
-                        <option key={s.sourceId} value={s.sourceId} className="bg-zinc-900 text-white">
-                          #{s.rank} - {s.source} ({s.entriesCount} اندراجات)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {newPositionMode === 'custom' && (
-                  <div className="mt-2 pt-2 border-t border-emerald-500/10 flex flex-wrap items-center gap-3">
-                    <label className="text-[10px] text-zinc-300">
-                      مطلوبہ نمبر شمار (Target Serial Number e.g. 21):
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max={fundDistinctSources.length + 1}
-                      value={customPositionNumber}
-                      onChange={(e) => setCustomPositionNumber(e.target.value)}
-                      placeholder={`1 سے ${fundDistinctSources.length + 1} تک`}
-                      className="w-44 bg-pine-bar border border-emerald-500/40 py-1.5 px-3 text-xs text-white rounded-lg focus:outline-none font-mono"
-                    />
-                    <span className="text-[10px] text-emerald-400/80">
-                      (مثال: اگر 50 ریکارڈز ہیں اور آپ 21 لکھیں گے تو نیا سورس 21 ویں نمبر پر آ جائے گا)
-                    </span>
-                  </div>
-                )}
               </div>
             )}
 
@@ -5778,9 +5859,24 @@ function OtherFundRegister(props: any) {
                   <tr className="hover:bg-pine-hover/5 text-[9px] xs:text-[10px] sm:text-xs bg-pine-bar/10">
                     <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-muted">
                       <div className="flex items-center gap-2">
-                        <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-600/40 font-mono text-[10px] px-2 py-0.5 rounded-full font-bold">
-                          #{groupIdx + 1}
-                        </span>
+                        {canEdit ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReorderModalSource({ sourceId: group.sourceId, source: group.source, currentRank: groupIdx + 1 });
+                              setTargetRankInput(String(groupIdx + 1));
+                            }}
+                            className="bg-emerald-950/90 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/50 hover:border-emerald-400 font-mono text-[10px] px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer shadow-sm flex items-center gap-1"
+                            title="Click to Change Serial # (نمبر شمار تبدیل کریں)"
+                          >
+                            <span>#{groupIdx + 1}</span>
+                            <ArrowUpDown className="w-2.5 h-2.5 opacity-70" />
+                          </button>
+                        ) : (
+                          <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-600/40 font-mono text-[10px] px-2 py-0.5 rounded-full font-bold">
+                            #{groupIdx + 1}
+                          </span>
+                        )}
                         <button 
                           onClick={() => toggleSource(group.sourceId)}
                           className="flex items-center gap-1 hover:text-white transition-colors"
@@ -5793,12 +5889,11 @@ function OtherFundRegister(props: any) {
                     <td className="py-1 px-1.5 sm:py-2 sm:px-4 font-sans font-semibold text-white">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-white text-xs">{group.source}</span>
-                        {isFundAdminUnlocked ? (
-                          <div className="inline-flex items-center gap-1">
+                        {canEdit && (
+                          <div className="inline-flex items-center gap-1.5">
                             <button
                               onClick={() => {
                                 setNewSource(group.source);
-                                setNewPositionMode('end');
                                 setLockedSource(group.source);
                                 setLockedSourceId(group.sourceId);
                                 setShowAddForm(true);
@@ -5810,61 +5905,20 @@ function OtherFundRegister(props: any) {
                               <Plus className="w-3 h-3" /> Add Entry
                             </button>
                             
-                            {/* Move Up */}
-                            <button
-                              type="button"
-                              disabled={groupIdx === 0}
-                              onClick={() => handleMoveSource(group.sourceId, 'up')}
-                              className={`p-1 rounded border transition-colors cursor-pointer ${
-                                groupIdx === 0 ? 'opacity-20 cursor-not-allowed border-zinc-800 text-zinc-600' : 'bg-pine-bar/60 hover:bg-emerald-900/40 text-zinc-300 hover:text-emerald-300 border-pine-border'
-                              }`}
-                              title="Move Up (# اوپر کریں)"
-                            >
-                              <ArrowUp className="w-3 h-3" />
-                            </button>
-
-                            {/* Move Down */}
-                            <button
-                              type="button"
-                              disabled={groupIdx === groupedSources.length - 1}
-                              onClick={() => handleMoveSource(group.sourceId, 'down')}
-                              className={`p-1 rounded border transition-colors cursor-pointer ${
-                                groupIdx === groupedSources.length - 1 ? 'opacity-20 cursor-not-allowed border-zinc-800 text-zinc-600' : 'bg-pine-bar/60 hover:bg-emerald-900/40 text-zinc-300 hover:text-emerald-300 border-pine-border'
-                              }`}
-                              title="Move Down (# نیچے کریں)"
-                            >
-                              <ArrowDown className="w-3 h-3" />
-                            </button>
-
-                            {/* Set Position Dialog */}
+                            {/* Direct Set Serial # Button */}
                             <button
                               type="button"
                               onClick={() => {
                                 setReorderModalSource({ sourceId: group.sourceId, source: group.source, currentRank: groupIdx + 1 });
                                 setTargetRankInput(String(groupIdx + 1));
                               }}
-                              className="p-1 px-1.5 text-[9px] font-mono font-bold bg-pine-bar/60 hover:bg-emerald-900/50 text-emerald-400 border border-emerald-500/30 rounded flex items-center gap-1 transition-colors cursor-pointer"
+                              className="px-2 py-0.5 text-[9px] font-mono font-bold bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/30 rounded flex items-center gap-1 transition-colors cursor-pointer"
                               title="Change Serial # / Position (نمبر شمار تبدیل کریں)"
                             >
                               <ArrowUpDown className="w-2.5 h-2.5" />
-                              <span>#{groupIdx + 1}</span>
+                              <span>Sr #{groupIdx + 1}</span>
                             </button>
                           </div>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setPendingLockedSource(group.source);
-                              setPendingLockedSourceId(group.sourceId);
-                              setCustomPasswordInput('');
-                              setPasswordErrorMsg('');
-                              setPasswordModalPurpose('add');
-                              setPasswordModalOpen(true);
-                            }}
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 rounded text-[9px] uppercase tracking-wider transition-colors cursor-pointer"
-                            title="Unlock to Add Entry / Reorder"
-                          >
-                            <Lock className="w-3 h-3" /> Add Entry
-                          </button>
                         )}
                       </div>
                     </td>
@@ -5905,7 +5959,7 @@ function OtherFundRegister(props: any) {
                       <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs max-w-[120px] sm:max-w-sm truncate">{o.details}</td>
                       <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
                         <div className="inline-flex items-center gap-1">
-                          {isFundAdminUnlocked ? (
+                          {canEdit ? (
                             <>
                               <button
                                 type="button"
@@ -5925,19 +5979,7 @@ function OtherFundRegister(props: any) {
                               </button>
                             </>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCustomPasswordInput('');
-                                setPasswordErrorMsg('');
-                                setPasswordModalPurpose('edit-delete');
-                                setPasswordModalOpen(true);
-                              }}
-                              className="p-1 text-yellow-500 hover:text-white hover:bg-yellow-950/70 border border-yellow-500/20 rounded-md transition-all cursor-pointer"
-                              title="Unlock to Edit/Delete"
-                            >
-                              <Lock className="w-3 h-3" />
-                            </button>
+                            <span className="text-zinc-600 text-xs select-none">—</span>
                           )}
                         </div>
                       </td>
@@ -5961,7 +6003,7 @@ function OtherFundRegister(props: any) {
       </div>
 
       {/* Reorder Source Modal Dialog */}
-      {reorderModalSource && (
+      {canEdit && reorderModalSource && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[200] flex items-center justify-center p-4">
           <div className="w-full max-w-sm bg-gradient-to-b from-pine-card to-pine-bar border-2 border-emerald-500/40 p-6 rounded-2xl shadow-2xl space-y-4 animate-fade-in">
             <div className="text-center">
@@ -6027,7 +6069,7 @@ function OtherFundRegister(props: any) {
       )}
 
       {/* Edit Donation Modal Overlay */}
-      {editingEntry && (
+      {canEdit && editingEntry && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[200] flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-gradient-to-b from-pine-card to-pine-bar border border-pine-border p-6 rounded-2xl shadow-2xl space-y-4">
             <div>
@@ -6123,7 +6165,7 @@ function OtherFundRegister(props: any) {
       )}
 
       {/* Custom Password Verification Modal */}
-      {passwordModalOpen && (
+      {isAdminView && passwordModalOpen && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="max-w-md w-full bg-gradient-to-br from-pine-card to-pine-bar border-2 border-yellow-500/40 p-8 rounded-2xl shadow-2xl relative">
             <button 
@@ -6190,7 +6232,7 @@ function OtherFundRegister(props: any) {
       )}
 
       {/* Custom Delete Confirmation Modal */}
-      {deleteConfirmOpen && (
+      {canEdit && deleteConfirmOpen && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="max-w-md w-full bg-gradient-to-br from-pine-card to-pine-bar border-2 border-rose-500/40 p-8 rounded-2xl shadow-2xl relative">
             <button 
@@ -6255,6 +6297,7 @@ interface ExpensesRegisterProps {
   setIsFundAdminUnlocked?: React.Dispatch<React.SetStateAction<boolean>>;
   setAuthorizedTabs?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   passwords?: ProtectedPagePassword[];
+  isAdminView?: boolean;
 }
 
 function ExpensesRegister({
@@ -6267,7 +6310,10 @@ function ExpensesRegister({
   setIsFundAdminUnlocked,
   setAuthorizedTabs,
   passwords = [],
+  isAdminView = false,
 }: ExpensesRegisterProps) {
+  // CRITICAL: Public website visitors can ONLY SEEN / VIEW records. Editing is strictly reserved for Admin Portal.
+  const canEdit = Boolean(isAdminView && isFundAdminUnlocked);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMonthIdx, setSelectedMonthIdx] = useState<number | 'additional' | null>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -6301,7 +6347,7 @@ function ExpensesRegister({
 
   const handleAddNewExpense = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newExpName || !newExpAmount) return;
+    if (!canEdit || !newExpName || !newExpAmount) return;
     const exp: Expense = {
       id: 'exp_' + Date.now(),
       fundId: fund.id,
@@ -6360,6 +6406,7 @@ function ExpensesRegister({
   const getSumOfSelectedExpenses = () => filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const handleDeleteExpense = (id: string) => {
+    if (!canEdit) return;
     const x = expenses.find(item => item.id === id);
     if (!x) return;
     setDeleteItemId(id);
@@ -6367,7 +6414,7 @@ function ExpensesRegister({
   };
 
   const confirmDeleteExpense = () => {
-    if (!deleteItemId) return;
+    if (!canEdit || !deleteItemId) return;
     const x = expenses.find(item => item.id === deleteItemId);
     if (!x) return;
     setExpenses(prevExpenses => {
@@ -6382,6 +6429,10 @@ function ExpensesRegister({
 
   const handleUnlockExpensesSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdminView) {
+      setPasswordErrorMsg('Public website se records edit/add karne ki ijazat nahi hai. Records sirf dekhne (SEEN) ke liye hain.');
+      return;
+    }
     const matchedMasterObj = passwords.find((p: any) => p.id === 'admin_dashboard');
     const correctMaster = matchedMasterObj ? matchedMasterObj.passwordValue : 'habib786';
     if (customPasswordInput === correctMaster || customPasswordInput === 'habib786') {
@@ -6408,6 +6459,7 @@ function ExpensesRegister({
   };
 
   const handleSaveEditExpense = (edited: Expense) => {
+    if (!canEdit) return;
     const original = expenses.find(item => item.id === edited.id);
     if (!original) return;
     setExpenses(prevExpenses => {
@@ -6435,7 +6487,20 @@ function ExpensesRegister({
 
   return (
     <div className="space-y-6">
-      {!isFundAdminUnlocked && (
+      {!isAdminView ? (
+        <div className="bg-emerald-950/30 border border-emerald-500/25 p-4 rounded-xl flex items-center justify-between gap-4 font-sans text-xs">
+          <div className="flex items-center gap-3">
+            <Eye className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div>
+              <p className="font-bold text-white uppercase tracking-wider">Public View-Only Mode / صرف دیکھنے کا موڈ</p>
+              <p className="text-[10px] text-zinc-400">Expenditures records sirf dekhne (SEEN) ke liye hain. Public website se kisi qism ka kharch add ya edit nahi kiya ja sakta.</p>
+            </div>
+          </div>
+          <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-mono px-3 py-1 rounded-md shrink-0">
+            View Only
+          </span>
+        </div>
+      ) : !isFundAdminUnlocked && (
         <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-sans text-xs">
           <div className="flex items-center gap-3">
             <Lock className="w-5 h-5 text-yellow-500 shrink-0" />
@@ -6464,23 +6529,19 @@ function ExpensesRegister({
           <p className="text-xs text-pine-text-muted font-sans mt-0.5">Expenses including generator fuel, repairs, cleaner wages, imam salaries, utility and electric expenses.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              if (!isFundAdminUnlocked) {
-                setCustomPasswordInput('');
-                setPasswordErrorMsg('');
-                setPasswordModalPurpose('add');
-                setPasswordModalOpen(true);
-              } else {
-                setShowAddExpForm(!showAddExpForm);
-              }
-            }}
-            className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all cursor-pointer"
-          >
-            {showAddExpForm ? <X className="w-4 h-4 text-rose-455" /> : <Plus className="w-4 h-4 text-emerald-400" />} 
-            {showAddExpForm ? "Close Form" : "Add Expense"}
-            {!isFundAdminUnlocked && <Lock className="w-3 h-3 text-yellow-500 ml-1" />}
-          </button>
+          {canEdit ? (
+            <button
+              onClick={() => setShowAddExpForm(!showAddExpForm)}
+              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all cursor-pointer"
+            >
+              {showAddExpForm ? <X className="w-4 h-4 text-rose-455" /> : <Plus className="w-4 h-4 text-emerald-400" />} 
+              {showAddExpForm ? "Close Form" : "Add Expense"}
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-emerald-950/40 border border-emerald-500/20 text-emerald-300 text-[11px] font-sans font-medium">
+              <Eye className="w-3.5 h-3.5 text-emerald-400" /> View-Only Mode
+            </div>
+          )}
           <button 
             onClick={() => printExpensesStatement(sortedExpenses, currentFilterLabel(), fund)}
             className="flex items-center gap-1.5 bg-pine-bar hover:bg-pine-hover border border-pine-border font-button font-bold text-xs uppercase text-white py-2 px-4 rounded-lg shadow-sm transition-all"
@@ -6491,7 +6552,7 @@ function ExpensesRegister({
       </div>
 
       {/* Inline Direct Expense Add Form */}
-      {isFundAdminUnlocked && showAddExpForm && (
+      {canEdit && showAddExpForm && (
         <div className="glass-panel p-6 rounded-2xl border border-rose-500/30 bg-gradient-to-r from-pine-bar/95 to-pine-bar shadow-xl animate-fade-in">
           <h3 className="text-sm font-button uppercase tracking-wider text-white mb-4 flex items-center gap-1.5">
             <PlusCircle className="w-4 h-4 text-rose-455" /> Add Expenses
@@ -6683,7 +6744,7 @@ function ExpensesRegister({
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-pine-text-body font-sans text-[10px] sm:text-xs max-w-[120px] sm:max-w-sm truncate">{e.details}</td>
                 <td className="py-1 px-1.5 sm:py-2 sm:px-4 text-center">
                   <div className="inline-flex items-center gap-1">
-                    {isFundAdminUnlocked ? (
+                    {canEdit ? (
                       <>
                         <button
                           type="button"
@@ -6703,19 +6764,7 @@ function ExpensesRegister({
                         </button>
                       </>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCustomPasswordInput('');
-                          setPasswordErrorMsg('');
-                          setPasswordModalPurpose('edit-delete');
-                          setPasswordModalOpen(true);
-                        }}
-                        className="p-1.5 text-yellow-500 hover:text-white hover:bg-yellow-950/70 border border-yellow-500/20 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1"
-                        title="Unlock to Edit/Delete"
-                      >
-                        <Lock className="w-3.5 h-3.5" />
-                      </button>
+                      <span className="text-zinc-600 text-xs select-none">—</span>
                     )}
                   </div>
                 </td>
@@ -6736,7 +6785,7 @@ function ExpensesRegister({
       </div>
 
       {/* Edit Expense Modal Overlay */}
-      {editingExpense && (
+      {canEdit && editingExpense && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[200] flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-gradient-to-b from-pine-card to-pine-bar border border-pine-border p-6 rounded-2xl shadow-2xl space-y-4">
             <div>
@@ -6852,7 +6901,7 @@ function ExpensesRegister({
       )}
 
       {/* Custom Password Verification Modal */}
-      {passwordModalOpen && (
+      {isAdminView && passwordModalOpen && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="max-w-md w-full bg-gradient-to-br from-pine-card to-pine-bar border-2 border-yellow-500/40 p-8 rounded-2xl shadow-2xl relative">
             <button 
@@ -6919,7 +6968,7 @@ function ExpensesRegister({
       )}
 
       {/* Custom Delete Confirmation Modal */}
-      {deleteConfirmOpen && (
+      {canEdit && deleteConfirmOpen && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="max-w-md w-full bg-gradient-to-br from-pine-card to-pine-bar border-2 border-rose-500/40 p-8 rounded-2xl shadow-2xl relative">
             <button 
@@ -6976,13 +7025,15 @@ function CommitmentsRegister({
   commitments,
   setCommitments,
   logAudit,
-  isFundAdminUnlocked
+  isFundAdminUnlocked,
+  isAdminView = false,
 }: {
   fund: FundModule;
   commitments: Commitment[];
   setCommitments: React.Dispatch<React.SetStateAction<Commitment[]>>;
   logAudit: any;
   isFundAdminUnlocked: boolean;
+  isAdminView?: boolean;
 }) {
   const [searchTerm, setSearchTerm] = useState('');
 

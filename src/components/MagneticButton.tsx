@@ -25,27 +25,54 @@ export default function MagneticButton({
 }: MagneticButtonProps) {
   const ref = useRef<HTMLButtonElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const rafRef = useRef<number | null>(null);
+
+  const [isTouchDevice] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.matchMedia('(hover: none)').matches;
+  });
+
+  if (isTouchDevice) {
+    return (
+      <button
+        ref={ref}
+        id={id}
+        type={type}
+        disabled={disabled}
+        onClick={onClick}
+        className={`relative inline-flex justify-center items-center font-button text-sm tracking-wider uppercase py-3 px-6 rounded-lg font-semibold transition-transform duration-100 active:scale-95 text-pine-text-heading bg-pine-btn border border-pine-border shadow-lg disabled:opacity-50 disabled:pointer-events-none ${className}`}
+      >
+        <span className="relative z-10 pointer-events-none">{children}</span>
+      </button>
+    );
+  }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!ref.current || disabled) return;
+    if (!ref.current || disabled || window.matchMedia('(hover: none)').matches) return;
 
-    const { clientX, clientY } = e;
-    const { left, top, width, height } = ref.current.getBoundingClientRect();
-    
-    // Find centers
-    const centerX = left + width / 2;
-    const centerY = top + height / 2;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
 
-    // Relative offsets
-    const offsetX = clientX - centerX;
-    const offsetY = clientY - centerY;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
 
-    // Control factor (how much displacement is allowed, e.g. max 12px)
-    const factor = 0.22;
-    setPosition({ x: offsetX * factor, y: offsetY * factor });
+    rafRef.current = requestAnimationFrame(() => {
+      if (!ref.current) return;
+      const { left, top, width, height } = ref.current.getBoundingClientRect();
+      const centerX = left + width / 2;
+      const centerY = top + height / 2;
+      const offsetX = clientX - centerX;
+      const offsetY = clientY - centerY;
+      const factor = 0.18;
+      setPosition({ x: offsetX * factor, y: offsetY * factor });
+    });
   };
 
   const handleMouseLeave = () => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
     setPosition({ x: 0, y: 0 });
   };
 

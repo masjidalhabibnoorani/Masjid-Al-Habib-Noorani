@@ -12,6 +12,12 @@ interface ParticlesProps {
 }
 
 export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
+  // Check mobile synchronously at mount time
+  const [isMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  });
+
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -27,16 +33,6 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
 
   // Mouse coordinate targets for smooth GSAP parallax
   const mouse = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // --- Effect 1: Handle WebGL Canvas Initialization ---
   useEffect(() => {
@@ -92,9 +88,9 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
       violetLightRef.current = violetLight;
     }
 
-    // --- 4. 3D Stars Galaxy (Fewer stars on mobile for butter smooth performance) ---
+    // --- 4. 3D Stars Galaxy (Optimized count for silky smooth 60fps performance) ---
     const starsGeometry = new THREE.BufferGeometry();
-    const starsCount = isMobile ? 150 : 1200;
+    const starsCount = isMobile ? 120 : 350;
     const starsPositions = new Float32Array(starsCount * 3);
     const starsColors = new Float32Array(starsCount * 3);
 
@@ -293,6 +289,12 @@ export default function Particles({ dimensionScale = 2 }: ParticlesProps) {
     const clock = new THREE.Clock();
 
     const animate = () => {
+      // Pause loop if browser tab is hidden or in background
+      if (document.hidden) {
+        animId = requestAnimationFrame(animate);
+        return;
+      }
+
       const elapsedTime = clock.getElapsedTime();
 
       if (!isMobile) {

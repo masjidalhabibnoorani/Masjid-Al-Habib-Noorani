@@ -54,154 +54,154 @@ import {
 const THEME_PRESETS = [
   {
     id: 'pine',
-    name: 'Emerald Pine (Standard Dark)',
+    name: 'Emerald Medina Luxury (Premium Dark)',
     colors: {
-      bg: '#142E2B',
-      bar: '#091514',
-      card: '#244541',
-      hover: '#315C57',
-      btn: '#14B8A6',
-      btnHover: '#2DD4BF',
-      active: '#0D9488',
-      border: '#1A3B37',
+      bg: '#06120E',
+      bar: '#030A08',
+      card: '#0C1D18',
+      hover: '#152E26',
+      btn: '#059669',
+      btnHover: '#10B981',
+      active: '#047857',
+      border: '#17382E',
       textHeading: '#FFFFFF',
-      textBody: '#E0EDE5',
-      textMuted: '#A8BCB0',
+      textBody: '#E0EDE7',
+      textMuted: '#89A89C',
     }
   },
   {
     id: 'blue',
-    name: 'Royal Islamic Blue (Dark)',
+    name: 'Royal Islamic Sapphire (Premium Dark)',
     colors: {
-      bg: '#0A1A2F',
-      bar: '#050D17',
-      card: '#162A45',
-      hover: '#20395c',
-      btn: '#3B82F6',
-      btnHover: '#60A5FA',
-      active: '#2563EB',
-      border: '#233A54',
+      bg: '#070F1E',
+      bar: '#030811',
+      card: '#0D1B36',
+      hover: '#14294E',
+      btn: '#2563EB',
+      btnHover: '#3B82F6',
+      active: '#1D4ED8',
+      border: '#1B3564',
       textHeading: '#FFFFFF',
-      textBody: '#CBDCFF',
-      textMuted: '#94B8FF',
+      textBody: '#E2E8F0',
+      textMuted: '#94A3B8',
     }
   },
   {
     id: 'gold',
-    name: 'Desert Medina Gold (Dark)',
+    name: 'Desert Medina Gold (Premium Dark)',
     colors: {
-      bg: '#2d2417',
-      bar: '#1d170f',
-      card: '#3f3220',
-      hover: '#4e3e29',
-      btn: '#b28026',
-      btnHover: '#dfaa46',
-      active: '#8e6113',
-      border: '#4c3f2b',
-      textHeading: '#FFF8EB',
-      textBody: '#DFC296',
-      textMuted: '#AF9671',
+      bg: '#16120B',
+      bar: '#0D0A05',
+      card: '#221C11',
+      hover: '#302718',
+      btn: '#D97706',
+      btnHover: '#F59E0B',
+      active: '#B45309',
+      border: '#3F321F',
+      textHeading: '#FFFBEB',
+      textBody: '#FDE68A',
+      textMuted: '#D97706',
     }
   },
   {
     id: 'rose',
-    name: 'Sufi Crimson Rose (Dark)',
+    name: 'Sufi Crimson Velvet (Premium Dark)',
     colors: {
-      bg: '#3d1620',
-      bar: '#290f15',
-      card: '#5c2230',
-      hover: '#6d2a3a',
-      btn: '#b82a46',
-      btnHover: '#e64e6c',
-      active: '#911f35',
-      border: '#6b2d3c',
-      textHeading: '#FFF0F3',
-      textBody: '#DDA0AC',
-      textMuted: '#B27682',
+      bg: '#1A0B10',
+      bar: '#0E0508',
+      card: '#281119',
+      hover: '#3A1824',
+      btn: '#E11D48',
+      btnHover: '#F43F5E',
+      active: '#BE123C',
+      border: '#451B2A',
+      textHeading: '#FFF1F2',
+      textBody: '#FECDD3',
+      textMuted: '#FB7185',
     }
   },
   {
     id: 'turquoise',
-    name: 'Mughal Mosaic Turquoise (Dark)',
+    name: 'Mughal Mosaic Turquoise (Premium Dark)',
     colors: {
-      bg: '#143D3F',
-      bar: '#0C2627',
-      card: '#295C5E',
-      hover: '#3D7B7D',
-      btn: '#00A896',
-      btnHover: '#00E5C9',
-      active: '#018576',
-      border: '#1F5354',
+      bg: '#081717',
+      bar: '#030C0C',
+      card: '#0F2626',
+      hover: '#163838',
+      btn: '#0D9488',
+      btnHover: '#14B8A6',
+      active: '#0F766E',
+      border: '#1A4343',
       textHeading: '#F0FDFA',
-      textBody: '#99F6E4',
+      textBody: '#CCFBF1',
       textMuted: '#5EEAD4',
     }
   },
   {
     id: 'teal',
-    name: 'Silk Teal & Platinum (Dark)',
+    name: 'Silk Teal & Platinum (Premium Dark)',
     colors: {
-      bg: '#142E2B',
-      bar: '#091514',
-      card: '#244541',
-      hover: '#315C57',
-      btn: '#14B8A6',
-      btnHover: '#2DD4BF',
-      active: '#0D9488',
-      border: '#1A3B37',
+      bg: '#091817',
+      bar: '#040C0B',
+      card: '#102624',
+      hover: '#183835',
+      btn: '#059669',
+      btnHover: '#10B981',
+      active: '#047857',
+      border: '#1B403D',
       textHeading: '#F0FDFA',
-      textBody: '#99F6E4',
-      textMuted: '#2DD4BF',
+      textBody: '#D1FAE5',
+      textMuted: '#6EE7B7',
     }
   },
   {
     id: 'charcoal',
-    name: 'Al-Aqsa Slate & Gold (Dark)',
+    name: 'Al-Aqsa Slate & Gold (Premium Dark)',
     colors: {
-      bg: '#1F2421',
-      bar: '#111413',
-      card: '#323936',
-      hover: '#414A46',
+      bg: '#121614',
+      bar: '#0A0D0B',
+      card: '#1D2421',
+      hover: '#29332F',
       btn: '#D4AF37',
       btnHover: '#F3E5AB',
-      active: '#AA8811',
-      border: '#2A302D',
-      textHeading: '#FDFDFD',
-      textBody: '#D4DCD8',
-      textMuted: '#A3B0AA',
+      active: '#B89428',
+      border: '#2C3732',
+      textHeading: '#FFFFFF',
+      textBody: '#E2E8F0',
+      textMuted: '#94A3B8',
     }
   },
   {
     id: 'luxury-kaabah',
-    name: 'Imperial Kaabah Metallic (Premium Dark)',
+    name: 'Imperial Kaabah Kiswa (Ultra Dark & Gold)',
     colors: {
-      bg: '#0F0F0F',
-      bar: '#050505',
-      card: '#1A1A1A',
-      hover: '#2D2D2D',
-      btn: '#DFBA4F',
-      btnHover: '#F7E39A',
-      active: '#C1992F',
-      border: '#282828',
+      bg: '#09090B',
+      bar: '#040405',
+      card: '#121215',
+      hover: '#1C1C21',
+      btn: '#D4AF37',
+      btnHover: '#F3D279',
+      active: '#B89428',
+      border: '#27272F',
       textHeading: '#FFFFFF',
-      textBody: '#E3E3E3',
-      textMuted: '#A3A3A3',
+      textBody: '#F4F4F5',
+      textMuted: '#A1A1AA',
     }
   },
   {
     id: 'deep-space',
-    name: 'Cosmic Tahajjud Star (Premium Dark)',
+    name: 'Cosmic Tahajjud Indigo (Premium Dark)',
     colors: {
-      bg: '#05070F',
+      bg: '#050711',
       bar: '#020308',
-      card: '#0D1224',
-      hover: '#18203D',
+      card: '#0C1226',
+      hover: '#151F40',
       btn: '#6366F1',
       btnHover: '#818CF8',
       active: '#4F46E5',
-      border: '#1E2958',
+      border: '#1E2B58',
       textHeading: '#FFFFFF',
-      textBody: '#CBD5E1',
+      textBody: '#E2E8F0',
       textMuted: '#94A3B8',
     }
   },
@@ -823,33 +823,36 @@ export default function App() {
   
   // GSAP animations when view state changes
   useEffect(() => {
+    const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (isMobileScreen) return; // Skip heavy entry stagger on mobile for instant fluid responsiveness
+
     if (viewState === 'public') {
       // Stagger entrance of hero elements
       gsap.fromTo("#hero-section h1", 
-        { opacity: 0, y: 40 }, 
-        { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.1 }
+        { opacity: 0, y: 30 }, 
+        { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', delay: 0.05 }
       );
       gsap.fromTo("#hero-section p", 
-        { opacity: 0, y: 30 }, 
-        { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out', delay: 0.3 }
+        { opacity: 0, y: 20 }, 
+        { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', delay: 0.15 }
       );
       gsap.fromTo("#hero-section .pt-8", 
-        { opacity: 0, scale: 0.9, y: 20 }, 
-        { opacity: 1, scale: 1, y: 0, duration: 0.8, ease: 'back.out(1.5)', delay: 0.5 }
+        { opacity: 0, scale: 0.95, y: 15 }, 
+        { opacity: 1, scale: 1, y: 0, duration: 0.6, ease: 'back.out(1.2)', delay: 0.25 }
       );
-      // Animate cards inside sections
-      gsap.fromTo(".glass-panel", 
-        { opacity: 0, y: 40, scale: 0.98 }, 
-        { opacity: 1, y: 0, scale: 1, duration: 1, ease: 'power2.out', stagger: 0.1, delay: 0.4 }
+      // Animate only hero cards, not every glass-panel across the entire page
+      gsap.fromTo("#hero-section .glass-panel", 
+        { opacity: 0, y: 25, scale: 0.98 }, 
+        { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'power2.out', stagger: 0.08, delay: 0.2 }
       );
     } else if (viewState === 'gateway') {
       gsap.fromTo(".text-center h1", 
-        { opacity: 0, scale: 0.95, y: -25 }, 
-        { opacity: 1, scale: 1, y: 0, duration: 1.4, ease: 'power4.out' }
+        { opacity: 0, scale: 0.95, y: -20 }, 
+        { opacity: 1, scale: 1, y: 0, duration: 0.9, ease: 'power4.out' }
       );
       gsap.fromTo(".w-56", 
-        { opacity: 0, y: 35 }, 
-        { opacity: 1, y: 0, duration: 1, ease: 'back.out(1.4)', stagger: 0.15, delay: 0.3 }
+        { opacity: 0, y: 25 }, 
+        { opacity: 1, y: 0, duration: 0.7, ease: 'back.out(1.2)', stagger: 0.1, delay: 0.2 }
       );
     }
   }, [viewState]);
@@ -976,8 +979,8 @@ export default function App() {
         }).join('\n')}
       `}</style>
 
-      {/* Drifting background particles behind text layers */}
-      <Particles />
+      {/* Drifting background particles behind text layers - Only on Gateway & Public to save 100% GPU during admin/fund entries */}
+      {(viewState === 'gateway' || viewState === 'public') && <Particles />}
 
       {/* Screen Routing transitions view */}
       <AnimatePresence mode="wait">
@@ -993,13 +996,18 @@ export default function App() {
           >
             <div className="text-center max-w-xl w-full">
               
+              {/* Sacred Calligraphy Header */}
+              <div className="text-amber-400 font-serif text-lg md:text-xl tracking-widest opacity-95 mb-4 select-none drop-shadow-sm">
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+              </div>
+
               {/* Official Mosque Logo on Landing page */}
               <div className="flex justify-center mb-6">
                 <motion.div 
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-                  className="w-24 h-24 rounded-full bg-pine-bar/60 border-2 border-pine-btn flex items-center justify-center overflow-hidden shadow-2xl p-1"
+                  className="w-28 h-28 rounded-full bg-gradient-to-tr from-amber-500/20 via-emerald-500/30 to-teal-400/20 border-2 border-emerald-500/50 flex items-center justify-center overflow-hidden shadow-[0_0_40px_rgba(16,185,129,0.3)] p-1.5 ring-4 ring-emerald-950/80"
                 >
                   <img 
                     src="https://i.postimg.cc/52Yfptkk/Masjid-Logo.png" 
@@ -1012,14 +1020,16 @@ export default function App() {
 
               {/* Dedicated Title Reveal (Staggered Animation 4) */}
               <div className="mb-4">
-                <span className="text-[11px] font-button text-pine-btn-hover uppercase tracking-widest font-extrabold block">
-                  Masjid Al-Habib Noorani
-                </span>
-                <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-white mt-1.5 tracking-tight uppercase leading-none">
-                  Enter In Website
+                <div className="inline-flex items-center gap-2 py-1 px-4 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-[11px] font-button font-bold uppercase tracking-widest shadow-inner mb-3">
+                  <span>جامع مسجد الحبیب نورانی</span>
+                  <span className="text-amber-400 text-xs">✦</span>
+                  <span>Wah Cantt</span>
+                </div>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-extrabold tracking-tight uppercase leading-none text-gradient-luxury drop-shadow-md">
+                  Official Portal
                 </h1>
-                <p className="text-sm font-sans text-pine-text-muted mt-2">
-                  As a public OR As a administration
+                <p className="text-sm font-sans text-pine-text-muted mt-3 max-w-md mx-auto leading-relaxed">
+                  Enter as a member of the public to view live prayer timings and public funds, or enter as administration.
                 </p>
               </div>
 
@@ -1030,7 +1040,7 @@ export default function App() {
                 <div className="flex flex-col items-center">
                   <MagneticButton 
                     onClick={handlePublicEntrance}
-                    className="w-56"
+                    className="w-60 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 border border-emerald-400/40 shadow-[0_4px_25px_rgba(16,185,129,0.35)] text-white font-bold"
                   >
                     Enter as Public
                   </MagneticButton>
@@ -1043,7 +1053,7 @@ export default function App() {
                 <div className="flex flex-col items-center">
                   <MagneticButton 
                     onClick={() => setShowAdminLogin(true)}
-                    className="w-56 bg-transparent border border-pine-border hover:bg-pine-hover/20 text-white"
+                    className="w-60 glass-panel border border-pine-border hover:border-amber-500/60 hover:shadow-[0_0_25px_rgba(245,158,11,0.25)] text-white font-bold"
                   >
                     Enter as Admin
                   </MagneticButton>
@@ -1199,11 +1209,17 @@ export default function App() {
                     {activeHeroAnnouncements.length > 0 ? (
                       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                         <div className="lg:col-span-7 text-center lg:text-left space-y-4">
-                          <span className="text-[11px] font-button text-pine-btn-hover font-bold uppercase tracking-widest bg-pine-bar/40 py-1.5 px-4 rounded-full border border-pine-border inline-block">
-                            Markazi Jamia Masjid • Masjid Al-Habib Noorani
-                          </span>
+                          {/* Sacred Calligraphy Header */}
+                          <div className="text-amber-400 font-serif text-base md:text-lg tracking-widest opacity-95 select-none drop-shadow-sm">
+                            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                          </div>
+
+                          <div className="inline-flex items-center gap-2 py-1 px-4 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-[11px] font-button font-bold uppercase tracking-widest shadow-inner">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>Markazi Jamia Masjid • Masjid Al-Habib Noorani</span>
+                          </div>
                           
-                          <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-extrabold text-white uppercase tracking-tight leading-none pt-2">
+                          <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-extrabold uppercase tracking-tight leading-none pt-2 text-gradient-luxury drop-shadow-md">
                             Welcome to Masjid Al-Habib Noorani
                           </h1>
                           
@@ -1212,14 +1228,17 @@ export default function App() {
                           </p>
 
                           <div className="pt-8 flex gap-4 justify-center lg:justify-start">
-                            <MagneticButton onClick={() => window.scrollTo({ top: document.getElementById('namaz-timings-section')?.offsetTop, behavior: 'smooth' })}>
+                            <MagneticButton 
+                              onClick={() => window.scrollTo({ top: document.getElementById('namaz-timings-section')?.offsetTop, behavior: 'smooth' })}
+                              className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 border border-emerald-400/40 shadow-[0_4px_25px_rgba(16,185,129,0.3)] text-white font-bold"
+                            >
                               Prayer Clock
                             </MagneticButton>
                             <a 
                               href="#financials-section"
-                              className="py-3 px-6 rounded-lg text-xs font-button uppercase tracking-wider text-white border border-pine-border hover:bg-pine-hover/15 flex items-center gap-1.5 shadow-md"
+                              className="py-3 px-6 rounded-lg text-xs font-button uppercase tracking-wider text-amber-300 border border-amber-500/40 hover:bg-amber-500/10 flex items-center gap-1.5 shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all font-semibold"
                             >
-                              Fund Portfolio <ArrowUpRight className="w-4 h-4 text-pine-success" />
+                              Fund Portfolio <ArrowUpRight className="w-4 h-4 text-amber-400" />
                             </a>
                           </div>
                         </div>
@@ -1264,11 +1283,17 @@ export default function App() {
                       </div>
                     ) : (
                       <div className="max-w-4xl mx-auto text-center space-y-6 py-8">
-                        <span className="text-[11px] font-button text-pine-btn-hover font-bold uppercase tracking-widest bg-pine-bar/40 py-1.5 px-4 rounded-full border border-pine-border inline-block">
-                          Markazi Jamia Masjid • Masjid Al-Habib Noorani
-                        </span>
+                        {/* Sacred Calligraphy Header */}
+                        <div className="text-amber-400 font-serif text-base md:text-lg tracking-widest opacity-95 select-none drop-shadow-sm mb-2">
+                          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                        </div>
+
+                        <div className="inline-flex items-center gap-2 py-1 px-4 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-[11px] font-button font-bold uppercase tracking-widest shadow-inner">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>Markazi Jamia Masjid • Masjid Al-Habib Noorani</span>
+                        </div>
                         
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-extrabold text-white uppercase tracking-tight leading-none pt-2">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-extrabold uppercase tracking-tight leading-none pt-2 text-gradient-luxury drop-shadow-md">
                           Welcome to Masjid Al-Habib Noorani
                         </h1>
                         
@@ -1277,14 +1302,17 @@ export default function App() {
                         </p>
 
                         <div className="pt-4 flex gap-4 justify-center">
-                          <MagneticButton onClick={() => window.scrollTo({ top: document.getElementById('namaz-timings-section')?.offsetTop, behavior: 'smooth' })}>
+                          <MagneticButton 
+                            onClick={() => window.scrollTo({ top: document.getElementById('namaz-timings-section')?.offsetTop, behavior: 'smooth' })}
+                            className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 border border-emerald-400/40 shadow-[0_4px_25px_rgba(16,185,129,0.3)] text-white font-bold"
+                          >
                             Prayer Clock
                           </MagneticButton>
                           <a 
                             href="#financials-section"
-                            className="py-3 px-6 rounded-lg text-xs font-button uppercase tracking-wider text-white border border-pine-border hover:bg-pine-hover/15 flex items-center gap-1.5 shadow-md"
+                            className="py-3 px-6 rounded-lg text-xs font-button uppercase tracking-wider text-amber-300 border border-amber-500/40 hover:bg-amber-500/10 flex items-center gap-1.5 shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all font-semibold"
                           >
-                            Fund Portfolio <ArrowUpRight className="w-4 h-4 text-pine-success" />
+                            Fund Portfolio <ArrowUpRight className="w-4 h-4 text-amber-400" />
                           </a>
                         </div>
                       </div>
